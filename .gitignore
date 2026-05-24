@@ -1,0 +1,12 @@
+node_modules/
+.expo/
+dist/
+web-build/
+.metro-cache/
+*.tsbuildinfo
+.env
+.env.local
+npm-debug.*
+yarn-debug.*
+yarn-error.*
+.DS_Store

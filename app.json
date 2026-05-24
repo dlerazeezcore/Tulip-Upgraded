@@ -1,0 +1,32 @@
+{
+  "expo": {
+    "name": "Tulip Booking",
+    "slug": "tulip-booking",
+    "version": "1.0.0",
+    "scheme": "tulip",
+    "orientation": "portrait",
+    "userInterfaceStyle": "automatic",
+    "icon": "./assets/tulip-logo-full.png",
+    "newArchEnabled": true,
+    "splash": {
+      "backgroundColor": "#1967D2",
+      "resizeMode": "contain"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.tulip.booking"
+    },
+    "android": {
+      "package": "com.tulip.booking",
+      "adaptiveIcon": {
+        "backgroundColor": "#1967D2"
+      }
+    },
+    "web": {
+      "bundler": "metro",
+      "output": "single",
+      "favicon": "./assets/tulip-logo-full.png"
+    },
+    "plugins": ["expo-router", "expo-font"]
+  }
+}
