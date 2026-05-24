@@ -3,9 +3,11 @@ import { View, Text, Pressable } from 'react-native';
 import { ChevronDown, ChevronUp, Plane } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flight, FareFamily } from '@/data/flights';
+import { useMoney } from '@/lib/money';
 
 export function FlightCard({ flight }: { flight: Flight }) {
   const t = useTheme();
+  const money = useMoney();
   const [expanded, setExpanded] = useState(false);
   const [selectedFare, setSelectedFare] = useState<FareFamily['name']>('Light');
 
@@ -79,7 +81,7 @@ export function FlightCard({ flight }: { flight: Flight }) {
         <View style={{ alignItems: 'flex-end' }}>
           <Text style={{ fontSize: 10, color: t.fgMuted }}>from</Text>
           <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
-            ${flight.price}
+            {money(flight.price)}
           </Text>
           {expanded ? (
             <ChevronUp size={16} color={t.fgMuted} />
@@ -137,7 +139,7 @@ export function FlightCard({ flight }: { flight: Flight }) {
                       marginTop: 4,
                     }}
                   >
-                    ${f.price}
+                    {money(f.price)}
                   </Text>
                   <Text style={{ fontSize: 10, color: on ? 'rgba(255,255,255,0.85)' : t.fgMuted, marginTop: 4 }}>
                     {f.bag} · {f.changes === 'No' ? 'No changes' : `${f.changes} changes`}

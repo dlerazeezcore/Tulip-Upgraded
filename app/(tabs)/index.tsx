@@ -10,17 +10,21 @@ import { useTheme } from '@/theme/ThemeContext';
 import { ServiceTile } from '@/components/ServiceTile';
 import { MultiServiceTabs } from '@/components/MultiServiceTabs';
 import { TripCard } from '@/components/TripCard';
+import { ActiveEsimCard } from '@/components/ActiveEsimCard';
+import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { PressableScale } from '@/components/PressableScale';
 import { SERVICES, SERVICE_SLOT } from '@/data/services';
 import { USER } from '@/data/user';
 import { POPULAR_COUNTRIES } from '@/data/esim';
 import { useSearchStore } from '@/state/searchStore';
+import { useMoney } from '@/lib/money';
 
 const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 
 export default function Home() {
   const t = useTheme();
   const router = useRouter();
+  const money = useMoney();
   const activeService = useSearchStore((s) => s.activeService);
   const svc = SERVICES.find((s) => s.id === activeService)!;
 
@@ -56,22 +60,25 @@ export default function Home() {
               Where to next?
             </Text>
           </View>
-          <PressableScale
-            scaleTo={0.92}
-            style={{
-              width: 40,
-              height: 40,
-              borderRadius: 20,
-              backgroundColor: t.bgElev,
-              borderWidth: 1,
-              borderColor: t.border,
-              alignItems: 'center',
-              justifyContent: 'center',
-              ...t.shadow1,
-            }}
-          >
-            <Bell size={18} color={t.fg} strokeWidth={2} />
-          </PressableScale>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <CurrencyPicker />
+            <PressableScale
+              scaleTo={0.92}
+              style={{
+                width: 40,
+                height: 40,
+                borderRadius: 20,
+                backgroundColor: t.bgElev,
+                borderWidth: 1,
+                borderColor: t.border,
+                alignItems: 'center',
+                justifyContent: 'center',
+                ...t.shadow1,
+              }}
+            >
+              <Bell size={18} color={t.fg} strokeWidth={2} />
+            </PressableScale>
+          </View>
         </View>
 
         {/* Hero search — frosted glass over a photo backdrop */}
@@ -99,7 +106,7 @@ export default function Home() {
             tint="dark"
             style={{ padding: 16, gap: 14 }}
           >
-            <MultiServiceTabs />
+            <MultiServiceTabs onDark />
 
             <PressableScale
               onPress={() => router.push(`/search/${svc.id}`)}
@@ -144,6 +151,9 @@ export default function Home() {
 
         {/* Trip card */}
         <TripCard />
+
+        {/* Active eSIM lifecycle — shows even for eSIM-only customers */}
+        <ActiveEsimCard />
 
         {/* Services grid */}
         <View>
@@ -235,7 +245,7 @@ export default function Home() {
                     {c.name}
                   </Text>
                   <Text style={{ fontSize: 11, color: '#fff', opacity: 0.9, marginTop: 2 }}>
-                    eSIM from ${c.from}
+                    eSIM from {money(c.from)}
                   </Text>
                   <View
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}

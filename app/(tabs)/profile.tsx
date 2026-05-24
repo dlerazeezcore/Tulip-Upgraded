@@ -4,11 +4,14 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Star, ChevronRight, CreditCard, User, Moon, Globe, Bell } from 'lucide-react-native';
+import { Star, ChevronRight, CreditCard, User, Moon, Globe, Bell, Coins } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStore } from '@/state/themeStore';
 import { USER } from '@/data/user';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { CurrencyPicker } from '@/components/CurrencyPicker';
+import { useCurrencyStore } from '@/state/currencyStore';
+import { CURRENCIES } from '@/data/currency';
 
 function Row({
   icon,
@@ -61,6 +64,7 @@ export default function Profile() {
   const t = useTheme();
   const mode = useThemeStore((s) => s.mode);
   const toggle = useThemeStore((s) => s.toggle);
+  const currencyName = CURRENCIES[useCurrencyStore((s) => s.code)].name;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -257,6 +261,12 @@ export default function Profile() {
                   thumbColor="#fff"
                 />
               }
+            />
+            <Row
+              icon={<Coins size={16} color={t.fgMuted} />}
+              title="Currency"
+              sub={currencyName}
+              right={<CurrencyPicker />}
             />
             <Row
               icon={<Globe size={16} color={t.fgMuted} />}

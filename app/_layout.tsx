@@ -18,6 +18,7 @@ import {
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 import { useThemeStore } from '@/state/themeStore';
+import { useCurrencyStore } from '@/state/currencyStore';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -48,6 +49,7 @@ function ThemedStack() {
 export default function RootLayout() {
   const hydrate = useThemeStore((s) => s.hydrate);
   const hydrated = useThemeStore((s) => s.hydrated);
+  const hydrateCurrency = useCurrencyStore((s) => s.hydrate);
 
   const [outfitLoaded, outfitError] = useOutfit({ Outfit_400Regular, Outfit_600SemiBold, Outfit_700Bold });
   const [jakartaLoaded, jakartaError] = useJakarta({
@@ -58,7 +60,8 @@ export default function RootLayout() {
 
   useEffect(() => {
     hydrate();
-  }, [hydrate]);
+    hydrateCurrency();
+  }, [hydrate, hydrateCurrency]);
 
   // On web, font loading can occasionally fail or timeout; don't block initial render forever.
   const ready = (outfitLoaded || !!outfitError) && (jakartaLoaded || !!jakartaError) && hydrated;

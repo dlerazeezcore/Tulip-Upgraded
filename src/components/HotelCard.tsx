@@ -6,11 +6,13 @@ import { Star, Heart } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Hotel } from '@/data/hotels';
 import { PressableScale } from './PressableScale';
+import { useMoney } from '@/lib/money';
 
 const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 
 export function HotelCard({ hotel, onPress }: { hotel: Hotel; onPress?: () => void }) {
   const t = useTheme();
+  const money = useMoney();
   return (
     <PressableScale
       onPress={onPress}
@@ -101,7 +103,7 @@ export function HotelCard({ hotel, onPress }: { hotel: Hotel; onPress?: () => vo
               letterSpacing: -0.4,
             }}
           >
-            ${hotel.price}
+            {money(hotel.price)}
           </Text>
           <Text style={{ fontSize: 10, color: t.fgMuted }}>per night</Text>
         </View>
