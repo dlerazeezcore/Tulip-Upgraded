@@ -7,6 +7,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
 import { useMoney } from '@/lib/money';
+import { useIsWideWeb } from '@/lib/responsive';
 import {
   ESIM_COUNTRIES,
   ESIM_REGIONS,
@@ -25,6 +26,7 @@ export default function PlaceDetail() {
   const select = useEsimCart((s) => s.select);
 
   const isRegion = region === '1';
+  const isWide = useIsWideWeb();
   const [type, setType] = useState<PlanType>('fixed');
   const [coverageOpen, setCoverageOpen] = useState(false);
 
@@ -60,7 +62,7 @@ export default function PlaceDetail() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 14, maxWidth: 780, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, gap: 14, maxWidth: isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
       >
         {/* Region coverage */}
@@ -111,10 +113,10 @@ export default function PlaceDetail() {
         </View>
 
         {/* Bundles */}
-        <View style={{ gap: 10 }}>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
           {bundles.map((b) => (
+            <View key={b.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
             <PressableScale
-              key={b.id}
               onPress={() => onSelect(b)}
               scaleTo={0.98}
               style={{
@@ -164,6 +166,7 @@ export default function PlaceDetail() {
                 {money(b.usd)}
               </Text>
             </PressableScale>
+            </View>
           ))}
         </View>
       </ScrollView>

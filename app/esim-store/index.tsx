@@ -9,6 +9,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
 import { useMoney } from '@/lib/money';
+import { useIsWideWeb } from '@/lib/responsive';
 import { ESIM_COUNTRIES, ESIM_REGIONS, POPULAR_COUNTRIES } from '@/data/esim';
 
 type Tab = 'countries' | 'regions';
@@ -19,6 +20,7 @@ export default function EsimStore() {
   const t = useTheme();
   const router = useRouter();
   const money = useMoney();
+  const isWide = useIsWideWeb();
   const [tab, setTab] = useState<Tab>('countries');
   const [q, setQ] = useState('');
 
@@ -45,7 +47,7 @@ export default function EsimStore() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 900, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, gap: 16, maxWidth: isWide ? 1120 : 900, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
       >
         {/* Segmented */}
@@ -80,84 +82,104 @@ export default function EsimStore() {
               />
             </View>
 
-            {/* Popular — vertical photo cards */}
+            {/* Popular — photo cards (grid on web) */}
             {q.trim() === '' && (
               <View style={{ gap: 10 }}>
                 <Text style={{ fontFamily: t.font.display, fontSize: 16, fontWeight: '700', color: t.fg, letterSpacing: -0.3 }}>
                   Popular destinations
                 </Text>
-                {POPULAR_COUNTRIES.map((c) => (
-                  <PressableScale
-                    key={c.iso}
-                    onPress={() => router.push(`/esim-store/${c.iso}`)}
-                    scaleTo={0.98}
-                    style={{ height: 96, borderRadius: 16, overflow: 'hidden', ...t.shadow1 }}
-                  >
-                    <Image
-                      source={c.photo}
-                      placeholder={{ blurhash }}
-                      style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-                      contentFit="cover"
-                      transition={250}
-                    />
-                    <LinearGradient
-                      colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.62)']}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 0 }}
-                      style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 }}
-                    >
-                      <Flag iso={c.iso} size={34} />
-                      <View style={{ flex: 1 }}>
-                        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: '#fff' }}>
-                          {c.name}
-                        </Text>
-                        <Text style={{ fontSize: 12, color: '#fff', opacity: 0.9, marginTop: 1 }}>
-                          From {money(c.from)}
-                        </Text>
-                      </View>
-                      <ChevronRight size={20} color="#fff" />
-                    </LinearGradient>
-                  </PressableScale>
-                ))}
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
+                  {POPULAR_COUNTRIES.map((c) => (
+                    <View key={c.iso} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
+                      <PressableScale
+                        onPress={() => router.push(`/esim-store/${c.iso}`)}
+                        scaleTo={0.98}
+                        style={{ height: 96, borderRadius: 16, overflow: 'hidden', ...t.shadow1 }}
+                      >
+                        <Image
+                          source={c.photo}
+                          placeholder={{ blurhash }}
+                          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
+                          contentFit="cover"
+                          transition={250}
+                        />
+                        <LinearGradient
+                          colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.62)']}
+                          start={{ x: 0, y: 0 }}
+                          end={{ x: 1, y: 0 }}
+                          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 }}
+                        >
+                          <Flag iso={c.iso} size={34} />
+                          <View style={{ flex: 1 }}>
+                            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: '#fff' }}>
+                              {c.name}
+                            </Text>
+                            <Text style={{ fontSize: 12, color: '#fff', opacity: 0.9, marginTop: 1 }}>
+                              From {money(c.from)}
+                            </Text>
+                          </View>
+                          <ChevronRight size={20} color="#fff" />
+                        </LinearGradient>
+                      </PressableScale>
+                    </View>
+                  ))}
+                </View>
               </View>
             )}
 
-            {/* All countries */}
-            <View
-              style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}
-            >
-              {filteredCountries.map((c, i) => (
-                <Pressable
-                  key={c.iso}
-                  onPress={() => router.push(`/esim-store/${c.iso}`)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                    paddingVertical: 12,
-                    paddingHorizontal: 14,
-                    borderBottomWidth: i === filteredCountries.length - 1 ? 0 : 1,
-                    borderBottomColor: t.border,
-                  }}
-                >
-                  <Flag iso={c.iso} size={28} />
-                  <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 14, color: t.fg }}>
-                    {c.name}
-                  </Text>
-                  <Text style={{ fontSize: 12, color: t.fgMuted }}>From {money(c.fromUsd)}</Text>
-                  <ChevronRight size={16} color={t.fgFaint} />
-                </Pressable>
-              ))}
-              {filteredCountries.length === 0 && (
-                <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20 }}>No countries match "{q}"</Text>
-              )}
-            </View>
+            {/* All countries (2-column grid on web, single list on mobile) */}
+            {isWide ? (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
+                {filteredCountries.map((c) => (
+                  <View key={c.iso} style={{ width: '50%', padding: 5 }}>
+                    <Pressable
+                      onPress={() => router.push(`/esim-store/${c.iso}`)}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1 }}
+                    >
+                      <Flag iso={c.iso} size={28} />
+                      <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 14, color: t.fg }}>{c.name}</Text>
+                      <Text style={{ fontSize: 12, color: t.fgMuted }}>From {money(c.fromUsd)}</Text>
+                      <ChevronRight size={16} color={t.fgFaint} />
+                    </Pressable>
+                  </View>
+                ))}
+                {filteredCountries.length === 0 && (
+                  <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20, width: '100%' }}>No countries match "{q}"</Text>
+                )}
+              </View>
+            ) : (
+              <View style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
+                {filteredCountries.map((c, i) => (
+                  <Pressable
+                    key={c.iso}
+                    onPress={() => router.push(`/esim-store/${c.iso}`)}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 12,
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                      borderBottomWidth: i === filteredCountries.length - 1 ? 0 : 1,
+                      borderBottomColor: t.border,
+                    }}
+                  >
+                    <Flag iso={c.iso} size={28} />
+                    <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 14, color: t.fg }}>{c.name}</Text>
+                    <Text style={{ fontSize: 12, color: t.fgMuted }}>From {money(c.fromUsd)}</Text>
+                    <ChevronRight size={16} color={t.fgFaint} />
+                  </Pressable>
+                ))}
+                {filteredCountries.length === 0 && (
+                  <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20 }}>No countries match "{q}"</Text>
+                )}
+              </View>
+            )}
           </>
         ) : (
-          <View style={{ gap: 12 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -6 : 0, gap: isWide ? 0 : 12 }}>
             {ESIM_REGIONS.map((r) => (
+              <View key={r.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 6 : 0 }}>
               <PressableScale
-                key={r.id}
                 onPress={() => router.push(`/esim-store/${r.id}?region=1`)}
                 scaleTo={0.98}
                 style={{ height: 130, borderRadius: 18, overflow: 'hidden', ...t.shadow2 }}
@@ -187,6 +209,7 @@ export default function EsimStore() {
                   </View>
                 </LinearGradient>
               </PressableScale>
+              </View>
             ))}
           </View>
         )}

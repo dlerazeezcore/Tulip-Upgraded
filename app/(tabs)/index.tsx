@@ -19,6 +19,7 @@ import { USER } from '@/data/user';
 import { POPULAR_COUNTRIES } from '@/data/esim';
 import { useSearchStore } from '@/state/searchStore';
 import { useMoney } from '@/lib/money';
+import { useIsWideWeb } from '@/lib/responsive';
 
 const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 
@@ -26,6 +27,7 @@ export default function Home() {
   const t = useTheme();
   const router = useRouter();
   const money = useMoney();
+  const isWide = useIsWideWeb();
   const activeService = useSearchStore((s) => s.activeService);
   const svc = SERVICES.find((s) => s.id === activeService)!;
 
@@ -151,11 +153,22 @@ export default function Home() {
           </BlurView>
         </View>
 
-        {/* Trip card */}
-        <TripCard />
-
-        {/* Active eSIM lifecycle — shows even for eSIM-only customers */}
-        <ActiveEsimCard />
+        {/* Trip card + active eSIM (side by side on desktop) */}
+        {isWide ? (
+          <View style={{ flexDirection: 'row', gap: 18, alignItems: 'flex-start' }}>
+            <View style={{ flex: 1 }}>
+              <TripCard />
+            </View>
+            <View style={{ flex: 1 }}>
+              <ActiveEsimCard />
+            </View>
+          </View>
+        ) : (
+          <>
+            <TripCard />
+            <ActiveEsimCard />
+          </>
+        )}
 
         {/* Services grid */}
         <View>
@@ -206,16 +219,22 @@ export default function Home() {
             Popular destinations
           </Text>
           <ScrollView
-            horizontal
+            horizontal={!isWide}
+            scrollEnabled={!isWide}
             showsHorizontalScrollIndicator={false}
-            contentContainerStyle={{ gap: 10, paddingRight: 10 }}
+            contentContainerStyle={
+              isWide
+                ? { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }
+                : { gap: 10, paddingRight: 10 }
+            }
           >
             {POPULAR_COUNTRIES.map((c) => (
               <PressableScale
                 key={c.iso}
                 scaleTo={0.96}
+                onPress={() => router.push(`/esim-store/${c.iso}`)}
                 style={{
-                  width: 150,
+                  width: isWide ? 180 : 150,
                   height: 200,
                   borderRadius: 18,
                   overflow: 'hidden',

@@ -13,6 +13,7 @@ import { MY_STAYS, MY_FLIGHTS, MY_TRANSFERS, MY_CARS } from '@/data/myBookings';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { PressableScale } from '@/components/PressableScale';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
+import { useIsWideWeb } from '@/lib/responsive';
 
 type Tab = 'trips' | 'services';
 
@@ -59,11 +60,12 @@ function Segmented({ value, onChange }: { value: Tab; onChange: (t: Tab) => void
 function TripsView() {
   const t = useTheme();
   const router = useRouter();
+  const isWide = useIsWideWeb();
   return (
-    <View style={{ gap: 14 }}>
+    <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -7 : 0, gap: isWide ? 0 : 14 }}>
       {TRIPS.map((trip) => (
+        <View key={trip.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 7 : 0 }}>
         <PressableScale
-          key={trip.id}
           onPress={() => router.push(`/trip/${trip.id}`)}
           scaleTo={0.98}
           style={{ borderRadius: 20, overflow: 'hidden', ...t.shadow2 }}
@@ -110,6 +112,7 @@ function TripsView() {
             </View>
           </LinearGradient>
         </PressableScale>
+        </View>
       ))}
     </View>
   );
@@ -118,6 +121,7 @@ function TripsView() {
 function ServicesView() {
   const t = useTheme();
   const router = useRouter();
+  const isWide = useIsWideWeb();
   const esims = useEsimStore((s) => s.esims);
 
   const summary = useMemo(() => {
@@ -136,41 +140,44 @@ function ServicesView() {
       <Text style={{ fontSize: 12, color: t.fgMuted, marginBottom: 2 }}>
         Manage each service on its own — even bookings that aren't part of a trip.
       </Text>
-      {SERVICES.map((svc) => {
-        const Icon = svc.Icon;
-        const data = summary[svc.id] ?? { count: 0, sub: 'None yet' };
-        return (
-          <PressableScale
-            key={svc.id}
-            onPress={() => router.push(`/manage/${svc.id}`)}
-            scaleTo={0.98}
-            style={{
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 14,
-              backgroundColor: t.bgElev,
-              borderColor: t.border,
-              borderWidth: 1,
-              borderRadius: 16,
-              padding: 16,
-              ...t.shadow1,
-            }}
-          >
-            <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: svc.tint, alignItems: 'center', justifyContent: 'center' }}>
-              <Icon size={22} color={svc.color} strokeWidth={2} />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
+        {SERVICES.map((svc) => {
+          const Icon = svc.Icon;
+          const data = summary[svc.id] ?? { count: 0, sub: 'None yet' };
+          return (
+            <View key={svc.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
+            <PressableScale
+              onPress={() => router.push(`/manage/${svc.id}`)}
+              scaleTo={0.98}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 14,
+                backgroundColor: t.bgElev,
+                borderColor: t.border,
+                borderWidth: 1,
+                borderRadius: 16,
+                padding: 16,
+                ...t.shadow1,
+              }}
+            >
+              <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: svc.tint, alignItems: 'center', justifyContent: 'center' }}>
+                <Icon size={22} color={svc.color} strokeWidth={2} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
+                  {svc.id === 'esim' ? 'My eSIMs' : svc.id === 'hotels' ? 'My Stays' : `My ${svc.label}`}
+                </Text>
+                <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>
+                  {data.count} {data.count === 1 ? 'item' : 'items'} · {data.sub}
+                </Text>
+              </View>
+              <ChevronRight size={18} color={t.fgFaint} />
+            </PressableScale>
             </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
-                {svc.id === 'esim' ? 'My eSIMs' : svc.id === 'hotels' ? 'My Stays' : `My ${svc.label}`}
-              </Text>
-              <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>
-                {data.count} {data.count === 1 ? 'item' : 'items'} · {data.sub}
-              </Text>
-            </View>
-            <ChevronRight size={18} color={t.fgFaint} />
-          </PressableScale>
-        );
-      })}
+          );
+        })}
+      </View>
     </View>
   );
 }

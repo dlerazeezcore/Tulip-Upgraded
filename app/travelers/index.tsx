@@ -6,12 +6,14 @@ import { ChevronLeft, Plus, Pencil, Trash2, User, X } from 'lucide-react-native'
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useTravelersStore, type Traveler } from '@/state/travelersStore';
+import { useIsWideWeb } from '@/lib/responsive';
 
 const RELATIONS = ['Primary', 'Spouse', 'Child', 'Parent', 'Other'];
 
 export default function Travelers() {
   const t = useTheme();
   const router = useRouter();
+  const isWide = useIsWideWeb();
   const { travelers, add, update, remove } = useTravelersStore();
 
   const [editing, setEditing] = useState<Traveler | 'new' | null>(null);
@@ -71,9 +73,10 @@ export default function Travelers() {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 10, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
+      <ScrollView contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, maxWidth: isWide ? 900 : 720, width: '100%', alignSelf: 'center' }}>
+       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
         {travelers.length === 0 ? (
-          <View style={{ alignItems: 'center', paddingVertical: 70, gap: 12 }}>
+          <View style={{ alignItems: 'center', paddingVertical: 70, gap: 12, width: '100%' }}>
             <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
               <User size={30} color={t.fgMuted} />
             </View>
@@ -83,8 +86,8 @@ export default function Travelers() {
           </View>
         ) : (
           travelers.map((tr) => (
+            <View key={tr.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
             <View
-              key={tr.id}
               style={{
                 flexDirection: 'row',
                 alignItems: 'center',
@@ -115,8 +118,10 @@ export default function Travelers() {
                 <Trash2 size={15} color={t.danger} />
               </Pressable>
             </View>
+            </View>
           ))
         )}
+       </View>
       </ScrollView>
 
       {/* Add / edit modal */}

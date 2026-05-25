@@ -8,15 +8,18 @@ import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, serviceRoute } from '@/data/services';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
+import { useIsWideWeb } from '@/lib/responsive';
 
 export default function Services() {
   const t = useTheme();
   const router = useRouter();
+  const isWide = useIsWideWeb();
+  const colPct = isWide ? '33.333%' : '50%';
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <AnimatedScreen>
       <ScrollView
-        contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 20, maxWidth: 1200, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, gap: 20, maxWidth: 1200, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
       >
         <ScreenHeader
@@ -28,7 +31,7 @@ export default function Services() {
           {SERVICES.map((s) => {
             const Icon = s.Icon;
             return (
-              <View key={s.id} style={{ width: '50%', padding: 7 }}>
+              <View key={s.id} style={{ width: colPct, padding: 7 }}>
                 <Pressable
                   onPress={() => router.push(serviceRoute(s.id) as any)}
                   style={({ pressed }) => ({
@@ -96,7 +99,7 @@ export default function Services() {
           })}
 
           {/* Extensible slot */}
-          <View style={{ width: '50%', padding: 7 }}>
+          <View style={{ width: colPct, padding: 7 }}>
             <View
               style={{
                 padding: 22,

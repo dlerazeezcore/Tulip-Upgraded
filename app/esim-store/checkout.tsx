@@ -12,6 +12,7 @@ import { useAuthStore } from '@/state/authStore';
 import { useEsimStore } from '@/state/esimStore';
 import { useOrderStore } from '@/state/orderStore';
 import { useCurrencyStore } from '@/state/currencyStore';
+import { useIsWideWeb } from '@/lib/responsive';
 import { PAYMENT_METHODS } from '@/data/esim';
 
 // Representative flag for region eSIMs (mock).
@@ -46,6 +47,7 @@ export default function Checkout() {
   const purchase = useEsimStore((s) => s.purchase);
   const addOrder = useOrderStore((s) => s.add);
   const currencyCode = useCurrencyStore((s) => s.code);
+  const isWide = useIsWideWeb();
   const [method, setMethod] = useState<'fib' | 'loyalty'>('fib');
 
   const header = (
@@ -133,84 +135,72 @@ export default function Checkout() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       {header}
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
-        {/* Item */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
-          {flagIso ? <Flag iso={flagIso} size={40} /> : <Globe size={32} color={t.primary} />}
-          <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>{place.name}</Text>
-            <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{planLabel} · {bundle.days} days</Text>
+      <ScrollView contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, maxWidth: isWide ? 1000 : 720, width: '100%', alignSelf: 'center' }}>
+        <View style={{ flexDirection: isWide ? 'row' : 'column', gap: isWide ? 24 : 16, alignItems: 'flex-start' }}>
+          {/* Left: item + payment */}
+          <View style={{ flex: 1, gap: 16, width: '100%' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
+              {flagIso ? <Flag iso={flagIso} size={40} /> : <Globe size={32} color={t.primary} />}
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>{place.name}</Text>
+                <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{planLabel} · {bundle.days} days</Text>
+              </View>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(bundle.usd)}</Text>
+            </View>
+
+            <View>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8, paddingHorizontal: 4 }}>
+                Payment method
+              </Text>
+              <View style={{ gap: 10 }}>
+                {PAYMENT_METHODS.map((p) => {
+                  const on = p.id === method;
+                  const Icon = p.id === 'fib' ? Landmark : Gift;
+                  return (
+                    <Pressable
+                      key={p.id}
+                      onPress={() => setMethod(p.id)}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.bgElev, borderWidth: 1.5, borderColor: on ? t.primary : t.border }}
+                    >
+                      <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+                        <Icon size={20} color={on ? t.primary : t.fgMuted} strokeWidth={2} />
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>{p.name}</Text>
+                        <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{p.desc}</Text>
+                      </View>
+                      <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: on ? t.primary : t.borderStrong, backgroundColor: on ? t.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                        {on && <Check size={13} color="#fff" strokeWidth={3} />}
+                      </View>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
           </View>
-          <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(bundle.usd)}</Text>
-        </View>
 
-        {/* Order summary */}
-        <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1 }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>
-            Order summary
-          </Text>
-          <SummaryRow label="Subtotal" value={money(bundle.usd)} />
-          <SummaryRow label="Taxes & fees" value={money(0)} />
-          <View style={{ height: 1, backgroundColor: t.border, marginVertical: 4 }} />
-          <SummaryRow label="Total" value={money(bundle.usd)} strong />
-        </View>
+          {/* Right: summary + pay */}
+          <View style={{ width: isWide ? 360 : '100%', gap: 16 }}>
+            <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>
+                Order summary
+              </Text>
+              <SummaryRow label="Subtotal" value={money(bundle.usd)} />
+              <SummaryRow label="Taxes & fees" value={money(0)} />
+              <View style={{ height: 1, backgroundColor: t.border, marginVertical: 4 }} />
+              <SummaryRow label="Total" value={money(bundle.usd)} strong />
+            </View>
 
-        {/* Payment methods */}
-        <View>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8, paddingHorizontal: 4 }}>
-            Payment method
-          </Text>
-          <View style={{ gap: 10 }}>
-            {PAYMENT_METHODS.map((p) => {
-              const on = p.id === method;
-              const Icon = p.id === 'fib' ? Landmark : Gift;
-              return (
-                <Pressable
-                  key={p.id}
-                  onPress={() => setMethod(p.id)}
-                  style={{
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 12,
-                    padding: 14,
-                    borderRadius: 14,
-                    backgroundColor: t.bgElev,
-                    borderWidth: 1.5,
-                    borderColor: on ? t.primary : t.border,
-                  }}
-                >
-                  <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-                    <Icon size={20} color={on ? t.primary : t.fgMuted} strokeWidth={2} />
-                  </View>
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>{p.name}</Text>
-                    <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{p.desc}</Text>
-                  </View>
-                  <View
-                    style={{
-                      width: 22, height: 22, borderRadius: 11,
-                      borderWidth: 2, borderColor: on ? t.primary : t.borderStrong,
-                      backgroundColor: on ? t.primary : 'transparent',
-                      alignItems: 'center', justifyContent: 'center',
-                    }}
-                  >
-                    {on && <Check size={13} color="#fff" strokeWidth={3} />}
-                  </View>
-                </Pressable>
-              );
-            })}
+            <PrimaryButton
+              label={`Pay ${money(bundle.usd)}`}
+              icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}
+              onPress={onPay}
+            />
+            <Text style={{ fontSize: 11, color: t.fgFaint, textAlign: 'center' }}>
+              Mock checkout — no real charge is made.
+            </Text>
           </View>
         </View>
-
-        <PrimaryButton
-          label={`Pay ${money(bundle.usd)}`}
-          icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}
-          onPress={onPay}
-          style={{ marginTop: 4 }}
-        />
-        <Text style={{ fontSize: 11, color: t.fgFaint, textAlign: 'center' }}>
-          Mock checkout — no real charge is made.
-        </Text>
       </ScrollView>
     </SafeAreaView>
   );
