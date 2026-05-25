@@ -7,12 +7,14 @@ import { ArrowRight, Plus, Star } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES } from '@/data/services';
 import { ScreenHeader } from '@/components/ScreenHeader';
+import { AnimatedScreen } from '@/components/AnimatedScreen';
 
 export default function Services() {
   const t = useTheme();
   const router = useRouter();
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+      <AnimatedScreen>
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 20, maxWidth: 1200, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
@@ -167,6 +169,7 @@ export default function Services() {
           </View>
         </LinearGradient>
       </ScrollView>
+      </AnimatedScreen>
     </SafeAreaView>
   );
 }

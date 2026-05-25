@@ -4,6 +4,7 @@ import { Tabs, useRouter, useSegments } from 'expo-router';
 import { useTheme } from '@/theme/ThemeContext';
 import { NAV } from '@/data/services';
 import { TulipLogo } from '@/components/TulipLogo';
+import { TulipTabBar } from '@/components/TulipTabBar';
 
 function Sidebar() {
   const t = useTheme();
@@ -103,32 +104,8 @@ export default function TabsLayout() {
 
   return (
     <Tabs
-      screenOptions={({ route }) => {
-        const item = NAV.find((n) => {
-          if (n.key === 'home') return route.name === 'index';
-          return route.name === n.key;
-        });
-        const Icon = item?.Icon;
-        return {
-          headerShown: false,
-          tabBarActiveTintColor: t.primary,
-          tabBarInactiveTintColor: t.fgMuted,
-          tabBarStyle: {
-            backgroundColor: t.bgElev,
-            borderTopColor: t.border,
-            paddingTop: 6,
-            height: 64,
-          },
-          tabBarLabelStyle: {
-            fontSize: 11,
-            fontFamily: t.font.displayMedium,
-            fontWeight: '600',
-          },
-          tabBarIcon: ({ color }) =>
-            Icon ? <Icon size={20} color={color} strokeWidth={2} /> : null,
-          title: item?.label ?? route.name,
-        };
-      }}
+      screenOptions={{ headerShown: false }}
+      tabBar={(props) => <TulipTabBar {...props} />}
     >
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="services" options={{ title: 'Services' }} />

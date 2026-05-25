@@ -10,6 +10,7 @@ import { useThemeStore } from '@/state/themeStore';
 import { USER } from '@/data/user';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
+import { AnimatedScreen } from '@/components/AnimatedScreen';
 import { useCurrencyStore } from '@/state/currencyStore';
 import { CURRENCIES } from '@/data/currency';
 
@@ -68,6 +69,7 @@ export default function Profile() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+      <AnimatedScreen>
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 20, maxWidth: 900, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
@@ -296,6 +298,7 @@ export default function Profile() {
           <Text style={{ color: t.danger, fontWeight: '700', fontSize: 14 }}>Sign out</Text>
         </Pressable>
       </ScrollView>
+      </AnimatedScreen>
     </SafeAreaView>
   );
 }

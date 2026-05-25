@@ -12,6 +12,7 @@ import { MultiServiceTabs } from '@/components/MultiServiceTabs';
 import { TripCard } from '@/components/TripCard';
 import { ActiveEsimCard } from '@/components/ActiveEsimCard';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
+import { AnimatedScreen } from '@/components/AnimatedScreen';
 import { PressableScale } from '@/components/PressableScale';
 import { SERVICES, SERVICE_SLOT } from '@/data/services';
 import { USER } from '@/data/user';
@@ -30,6 +31,7 @@ export default function Home() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+      <AnimatedScreen>
       <ScrollView
         contentContainerStyle={{
           padding: 20,
@@ -261,6 +263,7 @@ export default function Home() {
           </ScrollView>
         </View>
       </ScrollView>
+      </AnimatedScreen>
     </SafeAreaView>
   );
 }

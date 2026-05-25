@@ -8,17 +8,16 @@
     "userInterfaceStyle": "automatic",
     "icon": "./assets/tulip-logo-full.png",
     "newArchEnabled": true,
-    "splash": {
-      "backgroundColor": "#1967D2",
-      "resizeMode": "contain"
-    },
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tulip.booking"
+      "bundleIdentifier": "com.tulip.booking",
+      "userInterfaceStyle": "automatic"
     },
     "android": {
       "package": "com.tulip.booking",
+      "userInterfaceStyle": "automatic",
       "adaptiveIcon": {
+        "foregroundImage": "./assets/tulip-logo-full.png",
         "backgroundColor": "#1967D2"
       }
     },
@@ -27,6 +26,22 @@
       "output": "single",
       "favicon": "./assets/tulip-logo-full.png"
     },
-    "plugins": ["expo-router", "expo-font"]
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/tulip-logo-full.png",
+          "imageWidth": 200,
+          "resizeMode": "contain",
+          "backgroundColor": "#1967D2",
+          "dark": {
+            "image": "./assets/tulip-logo-full.png",
+            "backgroundColor": "#0B1120"
+          }
+        }
+      ]
+    ]
   }
 }
