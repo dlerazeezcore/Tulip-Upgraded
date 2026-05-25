@@ -27,8 +27,27 @@ type OrderState = {
 
 const KEY = 'tulip.orders';
 
+// Demo order so the order-history → detail flow is populated out of the box.
+const DEMO_ORDER: Order = {
+  id: 'ord_demo',
+  date: '2026-05-20T10:30:00.000Z',
+  kind: 'esim',
+  title: 'Japan eSIM',
+  subtitle: '5 GB · 30 days',
+  iso: 'JP',
+  amountUsd: 17,
+  currencyCode: 'USD',
+  paymentMethod: 'FIB',
+  status: 'paid',
+  lines: [
+    { label: 'Destination', value: 'Japan' },
+    { label: 'Plan', value: '5 GB · 30 days' },
+    { label: 'Type', value: 'Fixed data' },
+  ],
+};
+
 export const useOrderStore = create<OrderState>((set, get) => ({
-  orders: [],
+  orders: [DEMO_ORDER],
   hydrated: false,
   add: (o) => {
     const order: Order = {
