@@ -14,7 +14,7 @@ import { ActiveEsimCard } from '@/components/ActiveEsimCard';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
 import { PressableScale } from '@/components/PressableScale';
-import { SERVICES, SERVICE_SLOT } from '@/data/services';
+import { SERVICES, SERVICE_SLOT, serviceRoute } from '@/data/services';
 import { USER } from '@/data/user';
 import { POPULAR_COUNTRIES } from '@/data/esim';
 import { useSearchStore } from '@/state/searchStore';
@@ -111,7 +111,7 @@ export default function Home() {
             <MultiServiceTabs onDark />
 
             <PressableScale
-              onPress={() => router.push(`/search/${svc.id}`)}
+              onPress={() => router.push(serviceRoute(svc.id) as any)}
               scaleTo={0.985}
               style={{
                 flexDirection: 'row',

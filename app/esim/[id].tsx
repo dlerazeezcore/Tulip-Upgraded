@@ -61,7 +61,7 @@ export default function EsimDetail() {
               {esim.country}
             </Text>
             <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 2 }}>
-              {esim.planGb} GB · {esim.planDays} days
+              {esim.unlimited ? 'Unlimited data' : `${esim.planGb} GB`} · {esim.planDays} days
             </Text>
           </View>
           <StatusPill kind={esim.status} />
@@ -83,17 +83,17 @@ export default function EsimDetail() {
           {esim.status === 'active' ? (
             <>
               <UsageRing
-                fraction={fraction}
+                fraction={esim.unlimited ? 1 : fraction}
                 color={ringColor}
-                centerTop={`${remainingGb.toFixed(1)} GB`}
-                centerSub="remaining"
+                centerTop={esim.unlimited ? '∞' : `${remainingGb.toFixed(1)} GB`}
+                centerSub={esim.unlimited ? 'unlimited' : 'remaining'}
               />
               <View style={{ flexDirection: 'row', width: '100%' }}>
-                <Stat label="Used" value={`${esim.usedGb.toFixed(1)} GB`} />
+                <Stat label="Used" value={esim.unlimited ? '—' : `${esim.usedGb.toFixed(1)} GB`} />
                 <View style={{ width: 1, backgroundColor: t.border }} />
                 <Stat label="Days left" value={`${esim.daysLeft}`} />
                 <View style={{ width: 1, backgroundColor: t.border }} />
-                <Stat label="Plan" value={`${esim.planGb} GB`} />
+                <Stat label="Plan" value={esim.unlimited ? 'Unlimited' : `${esim.planGb} GB`} />
               </View>
             </>
           ) : esim.status === 'inactive' ? (
@@ -192,7 +192,7 @@ export default function EsimDetail() {
         >
           {[
             ['ICCID', esim.iccid],
-            ['Plan', `${esim.planGb} GB · ${esim.planDays} days`],
+            ['Plan', `${esim.unlimited ? 'Unlimited' : `${esim.planGb} GB`} · ${esim.planDays} days`],
             ['Network', 'Auto-select best partner'],
             ['Hotspot', 'Allowed'],
           ].map(([k, v], i, arr) => (

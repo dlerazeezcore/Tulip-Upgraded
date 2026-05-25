@@ -39,8 +39,8 @@ export function ActiveEsimCard() {
 
       {active.map((e) => {
         const remaining = Math.max(0, e.planGb - e.usedGb);
-        const frac = e.planGb > 0 ? remaining / e.planGb : 0;
-        const low = frac <= 0.2 || e.daysLeft <= 2;
+        const frac = e.unlimited ? 1 : e.planGb > 0 ? remaining / e.planGb : 0;
+        const low = !e.unlimited && (frac <= 0.2 || e.daysLeft <= 2);
         const barColor = low ? t.warning : t.success;
         return (
           <PressableScale
@@ -68,9 +68,9 @@ export function ActiveEsimCard() {
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
-                  {remaining.toFixed(1)} GB
+                  {e.unlimited ? '∞' : `${remaining.toFixed(1)} GB`}
                 </Text>
-                <Text style={{ fontSize: 11, color: t.fgMuted }}>left</Text>
+                <Text style={{ fontSize: 11, color: t.fgMuted }}>{e.unlimited ? 'unlimited' : 'left'}</Text>
               </View>
               <ChevronRight size={18} color={t.fgFaint} />
             </View>

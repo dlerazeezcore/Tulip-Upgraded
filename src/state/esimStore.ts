@@ -12,14 +12,30 @@ export type Esim = {
   usedGb: number;
   daysLeft: number;
   iccid: string;
+  unlimited?: boolean;
+};
+
+export type PurchaseInput = {
+  country: string;
+  iso: string;
+  planGb: number; // ignored when unlimited
+  planDays: number;
+  unlimited?: boolean;
 };
 
 type EsimState = {
   esims: Esim[];
   activate: (id: string) => void;
   topUp: (id: string, gb: number) => void;
+  purchase: (input: PurchaseInput) => string;
   reset: () => void;
 };
+
+function randomIccid(): string {
+  let s = '8964';
+  for (let i = 0; i < 12; i++) s += Math.floor(Math.random() * 10);
+  return s.replace(/(.{4})/g, '$1 ').trim();
+}
 
 const seed: Esim[] = [
   {
@@ -73,5 +89,22 @@ export const useEsimStore = create<EsimState>((set) => ({
         e.id === id ? { ...e, planGb: e.planGb + gb, status: 'active' } : e,
       ),
     })),
+  purchase: (input) => {
+    const id = 'es_' + Date.now();
+    const esim: Esim = {
+      id,
+      country: input.country,
+      iso: input.iso,
+      planGb: input.unlimited ? 0 : input.planGb,
+      planDays: input.planDays,
+      status: 'inactive',
+      usedGb: 0,
+      daysLeft: input.planDays,
+      iccid: randomIccid(),
+      unlimited: input.unlimited,
+    };
+    set((s) => ({ esims: [esim, ...s.esims] }));
+    return id;
+  },
   reset: () => set({ esims: seed.map((e) => ({ ...e })) }),
 }));

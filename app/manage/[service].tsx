@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, Plane, Calendar, MapPin, Clock } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { SERVICES } from '@/data/services';
+import { SERVICES, serviceRoute } from '@/data/services';
 import { useEsimStore } from '@/state/esimStore';
 import { MY_STAYS, MY_FLIGHTS, MY_TRANSFERS, MY_CARS } from '@/data/myBookings';
 import { Flag } from '@/components/Flag';
@@ -53,7 +53,7 @@ function EsimList() {
                   {e.country}
                 </Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                  {e.planGb} GB · {e.planDays} days
+                  {e.unlimited ? 'Unlimited data' : `${e.planGb} GB`} · {e.planDays} days
                 </Text>
               </View>
               <StatusPill kind={e.status} />
@@ -62,11 +62,11 @@ function EsimList() {
             {e.status === 'active' && (
               <View style={{ marginTop: 12 }}>
                 <View style={{ height: 6, borderRadius: 3, backgroundColor: t.bgSunken, overflow: 'hidden' }}>
-                  <View style={{ width: `${frac * 100}%`, height: 6, borderRadius: 3, backgroundColor: barColor }} />
+                  <View style={{ width: e.unlimited ? '100%' : `${frac * 100}%`, height: 6, borderRadius: 3, backgroundColor: barColor }} />
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
                   <Text style={{ fontSize: 11, color: t.fg, fontWeight: '600' }}>
-                    {remaining.toFixed(1)} GB left
+                    {e.unlimited ? 'Unlimited' : `${remaining.toFixed(1)} GB left`}
                   </Text>
                   <Text style={{ fontSize: 11, color: t.fgMuted }}>{e.daysLeft} days left</Text>
                 </View>
@@ -236,7 +236,7 @@ export default function ManageService() {
         </View>
         {svc && (
           <Pressable
-            onPress={() => router.push(`/search/${svc.id}`)}
+            onPress={() => router.push(serviceRoute(svc.id) as any)}
             style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: svc.color }}
           >
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>

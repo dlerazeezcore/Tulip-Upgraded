@@ -55,3 +55,10 @@ export const NAV: NavItem[] = [
   { key: 'inbox',    label: 'Inbox',    Icon: Bell,     route: '/(tabs)/inbox' },
   { key: 'profile',  label: 'Profile',  Icon: User,     route: '/(tabs)/profile' },
 ];
+
+// Where a service entry point should navigate. eSIM has its own store
+// (countries/regions/bundles); the rest use the search flow.
+export function serviceRoute(id: Service['id'] | string): string {
+  if (id === 'esim') return '/esim-store';
+  return `/search/${id}`;
+}

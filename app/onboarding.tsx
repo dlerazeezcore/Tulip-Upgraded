@@ -1,0 +1,157 @@
+import React from 'react';
+import { ScrollView, View, Text, Pressable } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { Check, ArrowRight } from 'lucide-react-native';
+import { useTheme } from '@/theme/ThemeContext';
+import { TulipLogo } from '@/components/TulipLogo';
+import { Flag } from '@/components/Flag';
+import { PrimaryButton } from '@/components/PrimaryButton';
+import { useLocaleStore } from '@/state/localeStore';
+import { useCurrencyStore } from '@/state/currencyStore';
+import type { Lang } from '@/i18n';
+import { CURRENCY_LIST, type CurrencyCode } from '@/data/currency';
+
+const LANGS: { id: Lang; native: string; sub: string }[] = [
+  { id: 'en', native: 'English', sub: 'English' },
+  { id: 'ar', native: 'العربية', sub: 'Arabic' },
+  { id: 'ku', native: 'کوردی', sub: 'Kurdish (Sorani)' },
+];
+
+export default function Onboarding() {
+  const t = useTheme();
+  const router = useRouter();
+  const { t: tr } = useTranslation();
+  const language = useLocaleStore((s) => s.language);
+  const setLanguage = useLocaleStore((s) => s.setLanguage);
+  const completeOnboarding = useLocaleStore((s) => s.completeOnboarding);
+  const code = useCurrencyStore((s) => s.code);
+  const setCode = useCurrencyStore((s) => s.setCode);
+
+  const onStart = () => {
+    completeOnboarding();
+    router.replace('/(tabs)');
+  };
+
+  return (
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      <LinearGradient colors={t.gradHero as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingBottom: 28 }}>
+        <SafeAreaView edges={['top']}>
+          <View style={{ paddingHorizontal: 24, paddingTop: 16, alignItems: 'center', gap: 12 }}>
+            <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' }}>
+              <TulipLogo size={34} color={t.primary} />
+            </View>
+            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 26, color: '#fff', letterSpacing: -0.6, textAlign: 'center' }}>
+              {tr('onboarding.welcome')}
+            </Text>
+            <Text style={{ fontSize: 14, color: '#fff', opacity: 0.9, textAlign: 'center' }}>
+              {tr('onboarding.subtitle')}
+            </Text>
+          </View>
+        </SafeAreaView>
+      </LinearGradient>
+
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 22, maxWidth: 560, width: '100%', alignSelf: 'center' }}
+        showsVerticalScrollIndicator={false}
+      >
+        {/* Language */}
+        <View style={{ gap: 10 }}>
+          <Text style={{ fontFamily: t.font.display, fontSize: 16, fontWeight: '700', color: t.fg }}>
+            {tr('onboarding.language')}
+          </Text>
+          {LANGS.map((l) => {
+            const on = l.id === language;
+            return (
+              <Pressable
+                key={l.id}
+                onPress={() => setLanguage(l.id)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: 16,
+                  borderRadius: 16,
+                  backgroundColor: t.bgElev,
+                  borderWidth: 1.5,
+                  borderColor: on ? t.primary : t.border,
+                  ...t.shadow1,
+                }}
+              >
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>{l.native}</Text>
+                  <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{l.sub}</Text>
+                </View>
+                <Selected on={on} />
+              </Pressable>
+            );
+          })}
+        </View>
+
+        {/* Currency */}
+        <View style={{ gap: 10 }}>
+          <Text style={{ fontFamily: t.font.display, fontSize: 16, fontWeight: '700', color: t.fg }}>
+            {tr('onboarding.currency')}
+          </Text>
+          {CURRENCY_LIST.map((c) => {
+            const on = c.code === code;
+            return (
+              <Pressable
+                key={c.code}
+                onPress={() => setCode(c.code as CurrencyCode)}
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 12,
+                  padding: 16,
+                  borderRadius: 16,
+                  backgroundColor: t.bgElev,
+                  borderWidth: 1.5,
+                  borderColor: on ? t.primary : t.border,
+                  ...t.shadow1,
+                }}
+              >
+                <Flag iso={c.flag} size={30} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
+                    {c.code} · {c.symbol}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{c.name}</Text>
+                </View>
+                <Selected on={on} />
+              </Pressable>
+            );
+          })}
+        </View>
+
+        <PrimaryButton
+          label={tr('onboarding.getStarted')}
+          icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />}
+          onPress={onStart}
+        />
+      </ScrollView>
+    </View>
+  );
+}
+
+function Selected({ on }: { on: boolean }) {
+  const t = useTheme();
+  return (
+    <View
+      style={{
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: on ? t.primary : t.borderStrong,
+        backgroundColor: on ? t.primary : 'transparent',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
+    >
+      {on && <Check size={14} color="#fff" strokeWidth={3} />}
+    </View>
+  );
+}

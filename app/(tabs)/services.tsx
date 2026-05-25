@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ArrowRight, Plus, Star } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { SERVICES } from '@/data/services';
+import { SERVICES, serviceRoute } from '@/data/services';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
 
@@ -30,7 +30,7 @@ export default function Services() {
             return (
               <View key={s.id} style={{ width: '50%', padding: 7 }}>
                 <Pressable
-                  onPress={() => router.push(`/search/${s.id}`)}
+                  onPress={() => router.push(serviceRoute(s.id) as any)}
                   style={({ pressed }) => ({
                     padding: 22,
                     borderRadius: 18,

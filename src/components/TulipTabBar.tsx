@@ -4,6 +4,7 @@ import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
 import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { NAV } from '@/data/services';
 
@@ -15,6 +16,7 @@ function navFor(routeName: string) {
 
 export function TulipTabBar({ state, navigation }: BottomTabBarProps) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const insets = useSafeAreaInsets();
   const bottomPad = Math.max(insets.bottom, 10);
 
@@ -83,7 +85,7 @@ export function TulipTabBar({ state, navigation }: BottomTabBarProps) {
                   color: focused ? t.primary : t.fgMuted,
                 }}
               >
-                {item.label}
+                {tr(`nav.${item.key}`)}
               </Text>
             </Pressable>
           );

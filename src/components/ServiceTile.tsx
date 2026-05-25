@@ -2,7 +2,7 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTheme } from '@/theme/ThemeContext';
-import { SERVICES, SERVICE_SLOT, Service } from '@/data/services';
+import { SERVICES, SERVICE_SLOT, Service, serviceRoute } from '@/data/services';
 import { useSearchStore } from '@/state/searchStore';
 import { PressableScale } from './PressableScale';
 
@@ -23,7 +23,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
   const onPress = () => {
     if (placeholder) return;
     setActive(svc.id as Service['id']);
-    router.push(`/search/${svc.id}`);
+    router.push(serviceRoute(svc.id) as any);
   };
 
   const content = (

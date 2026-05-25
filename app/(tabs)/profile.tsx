@@ -1,33 +1,43 @@
-import React from 'react';
-import { ScrollView, View, Text, Pressable, Switch } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, Text, Pressable, Switch, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
-import { Star, ChevronRight, CreditCard, User, Moon, Globe, Bell, Coins } from 'lucide-react-native';
+import { Star, ChevronRight, ChevronDown, CreditCard, User, Moon, Globe, Bell, Coins, MessageCircle, Receipt, ShieldCheck, LogIn } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStore } from '@/state/themeStore';
 import { USER } from '@/data/user';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useCurrencyStore } from '@/state/currencyStore';
 import { CURRENCIES } from '@/data/currency';
+import { useAuthStore } from '@/state/authStore';
+import { useAdminStore } from '@/state/adminStore';
 
 function Row({
   icon,
   title,
   sub,
   right,
+  onPress,
+  last,
 }: {
   icon: React.ReactNode;
   title: string;
   sub?: string;
   right?: React.ReactNode;
+  onPress?: () => void;
+  last?: boolean;
 }) {
   const t = useTheme();
+  const Container: any = onPress ? Pressable : View;
   return (
-    <View
+    <Container
+      onPress={onPress}
       style={{
         flexDirection: 'row',
         alignItems: 'center',
@@ -35,7 +45,7 @@ function Row({
         paddingVertical: 12,
         paddingHorizontal: 14,
         borderBottomColor: t.border,
-        borderBottomWidth: 1,
+        borderBottomWidth: last ? 0 : 1,
       }}
     >
       <View
@@ -57,15 +67,21 @@ function Row({
         {sub && <Text style={{ fontSize: 11, color: t.fgMuted, marginTop: 2 }}>{sub}</Text>}
       </View>
       {right}
-    </View>
+    </Container>
   );
 }
 
 export default function Profile() {
   const t = useTheme();
+  const router = useRouter();
   const mode = useThemeStore((s) => s.mode);
   const toggle = useThemeStore((s) => s.toggle);
   const currencyName = CURRENCIES[useCurrencyStore((s) => s.code)].name;
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
+  const isAdmin = useAdminStore((s) => s.isAdmin);
+  const setAdmin = useAdminStore((s) => s.setAdmin);
+  const [travelersOpen, setTravelersOpen] = useState(false);
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -92,70 +108,75 @@ export default function Profile() {
             pointerEvents="none"
           />
           <BlurView intensity={20} tint="dark" style={{ padding: 20 }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-              <View
-                style={{
-                  width: 64,
-                  height: 64,
-                  borderRadius: 32,
-                  backgroundColor: 'rgba(255,255,255,0.28)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  borderWidth: 1.5,
-                  borderColor: 'rgba(255,255,255,0.35)',
-                }}
-              >
-                <Text
-                  style={{
-                    fontFamily: t.font.display,
-                    fontWeight: '700',
-                    fontSize: 22,
-                    color: '#fff',
-                    letterSpacing: -0.4,
-                  }}
-                >
-                  {USER.initials}
-                </Text>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text
-                  style={{
-                    fontFamily: t.font.display,
-                    fontWeight: '700',
-                    fontSize: 20,
-                    color: '#fff',
-                    letterSpacing: -0.4,
-                  }}
-                >
-                  {USER.firstName} {USER.lastName}
-                </Text>
-                <Text style={{ fontSize: 12, color: '#fff', opacity: 0.88 }}>{USER.email}</Text>
+            {user ? (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
                 <View
                   style={{
-                    flexDirection: 'row',
+                    width: 64,
+                    height: 64,
+                    borderRadius: 32,
+                    backgroundColor: 'rgba(255,255,255,0.28)',
                     alignItems: 'center',
-                    gap: 4,
-                    marginTop: 8,
-                    alignSelf: 'flex-start',
-                    paddingVertical: 4,
-                    paddingHorizontal: 10,
-                    backgroundColor: 'rgba(255,255,255,0.22)',
-                    borderRadius: 999,
+                    justifyContent: 'center',
+                    borderWidth: 1.5,
+                    borderColor: 'rgba(255,255,255,0.35)',
                   }}
                 >
-                  <Star size={11} color="#fff" fill="#fff" />
-                  <Text
-                    style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}
-                  >
-                    {USER.tier} · Member since {USER.memberSince}
+                  <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: '#fff', letterSpacing: -0.4 }}>
+                    {user.initials}
                   </Text>
                 </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: '#fff', letterSpacing: -0.4 }}>
+                    {user.name}
+                  </Text>
+                  <Text style={{ fontSize: 12, color: '#fff', opacity: 0.88 }}>{user.email ?? user.phone}</Text>
+                  <View
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 4,
+                      marginTop: 8,
+                      alignSelf: 'flex-start',
+                      paddingVertical: 4,
+                      paddingHorizontal: 10,
+                      backgroundColor: 'rgba(255,255,255,0.22)',
+                      borderRadius: 999,
+                    }}
+                  >
+                    <Star size={11} color="#fff" fill="#fff" />
+                    <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+                      {USER.tier} · Member since {USER.memberSince}
+                    </Text>
+                  </View>
+                </View>
               </View>
-            </View>
+            ) : (
+              <View style={{ gap: 14 }}>
+                <View>
+                  <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: '#fff', letterSpacing: -0.4 }}>
+                    Welcome to Tulip
+                  </Text>
+                  <Text style={{ fontSize: 13, color: '#fff', opacity: 0.88, marginTop: 2 }}>
+                    Sign in to manage bookings, eSIMs and more.
+                  </Text>
+                </View>
+                <View style={{ flexDirection: 'row', gap: 10 }}>
+                  <PrimaryButton label="Sign in" onPress={() => router.push('/auth/sign-in')} style={{ flex: 1 }} />
+                  <PrimaryButton
+                    label="Sign up"
+                    onPress={() => router.push('/auth/sign-up')}
+                    style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.22)' }}
+                  />
+                </View>
+              </View>
+            )}
           </BlurView>
         </View>
 
-        {/* Travelers */}
+        {user && (
+        <>
+        {/* Travelers — collapsed, tap to expand */}
         <View>
           <Text
             style={{
@@ -179,15 +200,31 @@ export default function Profile() {
               overflow: 'hidden',
             }}
           >
-            {USER.travelers.map((tr, i) => (
-              <Row
-                key={tr.id}
-                icon={<User size={16} color={t.fgMuted} />}
-                title={tr.name}
-                sub={`${tr.relation} · ${tr.dob}`}
-                right={<ChevronRight size={16} color={t.fgFaint} />}
-              />
-            ))}
+            <Row
+              icon={<User size={16} color={t.fgMuted} />}
+              title="Saved travelers"
+              sub={`${USER.travelers.length} people`}
+              onPress={() => setTravelersOpen((v) => !v)}
+              last={!travelersOpen}
+              right={
+                travelersOpen ? (
+                  <ChevronDown size={16} color={t.fgFaint} />
+                ) : (
+                  <ChevronRight size={16} color={t.fgFaint} />
+                )
+              }
+            />
+            {travelersOpen &&
+              USER.travelers.map((tr, i) => (
+                <Row
+                  key={tr.id}
+                  icon={<User size={16} color={t.fgMuted} />}
+                  title={tr.name}
+                  sub={`${tr.relation} · ${tr.dob}`}
+                  right={<ChevronRight size={16} color={t.fgFaint} />}
+                  last={i === USER.travelers.length - 1}
+                />
+              ))}
           </View>
         </View>
 
@@ -215,17 +252,20 @@ export default function Profile() {
               overflow: 'hidden',
             }}
           >
-            {USER.payment.map((p) => (
+            {USER.payment.map((p, i) => (
               <Row
                 key={p.id}
                 icon={<CreditCard size={16} color={t.fgMuted} />}
                 title={`${p.brand} •• ${p.last4}`}
                 sub={`Exp ${p.exp}${p.primary ? ' · Primary' : ''}`}
                 right={<ChevronRight size={16} color={t.fgFaint} />}
+                last={i === USER.payment.length - 1}
               />
             ))}
           </View>
         </View>
+        </>
+        )}
 
         {/* Preferences */}
         <View>
@@ -282,21 +322,97 @@ export default function Profile() {
               sub="Trip alerts, deals"
               right={<ChevronRight size={16} color={t.fgFaint} />}
             />
+            <Row
+              icon={<ShieldCheck size={16} color={t.fgMuted} />}
+              title="Demo: Admin mode"
+              sub="Reveal the admin panel"
+              last
+              right={
+                <Switch
+                  value={isAdmin}
+                  onValueChange={setAdmin}
+                  trackColor={{ false: t.bgSunken, true: t.primary }}
+                  thumbColor="#fff"
+                />
+              }
+            />
           </View>
         </View>
 
-        <Pressable
-          style={({ pressed }) => ({
-            padding: 14,
-            borderRadius: 14,
-            borderColor: t.danger,
-            borderWidth: 1.5,
-            alignItems: 'center',
-            opacity: pressed ? 0.7 : 1,
-          })}
-        >
-          <Text style={{ color: t.danger, fontWeight: '700', fontSize: 14 }}>Sign out</Text>
-        </Pressable>
+        {/* Account & support */}
+        <View>
+          <Text
+            style={{
+              fontSize: 11,
+              fontWeight: '700',
+              color: t.fgMuted,
+              textTransform: 'uppercase',
+              letterSpacing: 0.4,
+              marginBottom: 8,
+              paddingHorizontal: 4,
+            }}
+          >
+            Account & support
+          </Text>
+          <View
+            style={{
+              backgroundColor: t.bgElev,
+              borderRadius: 14,
+              borderColor: t.border,
+              borderWidth: 1,
+              overflow: 'hidden',
+            }}
+          >
+            {isAdmin && (
+              <Row
+                icon={<ShieldCheck size={16} color={t.primary} />}
+                title="Admin panel"
+                sub="Users · notifications · currency"
+                onPress={() => router.push('/admin')}
+                right={<ChevronRight size={16} color={t.fgFaint} />}
+              />
+            )}
+            <Row
+              icon={<Receipt size={16} color={t.fgMuted} />}
+              title="Order history"
+              sub="eSIMs, stays, flights"
+              onPress={() => router.push('/orders')}
+              right={<ChevronRight size={16} color={t.fgFaint} />}
+            />
+            <Row
+              icon={<MessageCircle size={16} color={t.fgMuted} />}
+              title="Support"
+              sub="Chat with us on WhatsApp"
+              onPress={() => Linking.openURL('https://wa.me/9647507201111')}
+              right={<ChevronRight size={16} color={t.fgFaint} />}
+              last
+            />
+          </View>
+        </View>
+
+        {user && (
+          <Pressable
+            onPress={signOut}
+            style={({ pressed }) => ({
+              padding: 14,
+              borderRadius: 14,
+              borderColor: t.danger,
+              borderWidth: 1.5,
+              alignItems: 'center',
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <Text style={{ color: t.danger, fontWeight: '700', fontSize: 14 }}>Sign out</Text>
+          </Pressable>
+        )}
+
+        {/* Footer */}
+        <View style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 4, gap: 2 }}>
+          <Text style={{ fontSize: 11, color: t.fgFaint }}>Brought to you by</Text>
+          <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 14, color: t.fgMuted, letterSpacing: -0.2 }}>
+            Corevia Network
+          </Text>
+        </View>
       </ScrollView>
       </AnimatedScreen>
     </SafeAreaView>

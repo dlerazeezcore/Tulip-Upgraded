@@ -1,6 +1,7 @@
 import React from 'react';
 import { useWindowDimensions, View, Platform, Text, Pressable } from 'react-native';
 import { Tabs, useRouter, useSegments } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { NAV } from '@/data/services';
 import { TulipLogo } from '@/components/TulipLogo';
@@ -8,6 +9,7 @@ import { TulipTabBar } from '@/components/TulipTabBar';
 
 function Sidebar() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const segments = useSegments();
   // first segment after (tabs) — e.g. "services", "trips"; empty string = home
@@ -64,7 +66,7 @@ function Sidebar() {
                 fontSize: 14,
               }}
             >
-              {n.label}
+              {tr(`nav.${n.key}`)}
             </Text>
           </Pressable>
         );

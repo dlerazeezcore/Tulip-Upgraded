@@ -20,8 +20,66 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 const TRIP_TYPES = [
   { id: 'roundtrip', label: 'Round trip' },
   { id: 'oneway',    label: 'One way' },
-  { id: 'multi',     label: 'Multi-city' },
 ] as const;
+
+function Stepper({
+  label,
+  value,
+  unit,
+  onDec,
+  onInc,
+}: {
+  label: string;
+  value: number;
+  unit: string;
+  onDec: () => void;
+  onInc: () => void;
+}) {
+  const t = useTheme();
+  return (
+    <View
+      style={{
+        padding: 14,
+        backgroundColor: t.bgElev,
+        borderColor: t.border,
+        borderWidth: 1,
+        borderRadius: 16,
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+      }}
+    >
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <User size={18} color={t.fgMuted} />
+        <View>
+          <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            {label}
+          </Text>
+          <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 15, color: t.fg }}>
+            {value} {unit}
+          </Text>
+        </View>
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Pressable
+          onPress={onDec}
+          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Minus size={14} color={t.fg} />
+        </Pressable>
+        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, minWidth: 18, textAlign: 'center', color: t.fg }}>
+          {value}
+        </Text>
+        <Pressable
+          onPress={onInc}
+          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.primary, alignItems: 'center', justifyContent: 'center' }}
+        >
+          <Plus size={14} color="#fff" />
+        </Pressable>
+      </View>
+    </View>
+  );
+}
 
 export default function SearchScreen() {
   const { service } = useLocalSearchParams<{ service: string }>();
@@ -39,6 +97,8 @@ export default function SearchScreen() {
     returnDate,
     travelers,
     setTravelers,
+    rooms,
+    setRooms,
     tripType,
     setTripType,
   } = useSearchStore();
@@ -51,9 +111,10 @@ export default function SearchScreen() {
 
   const svc = SERVICES.find((s) => s.id === activeService) ?? SERVICES[0];
   const onSearch = () => {
-    if (svc.id === 'hotels') router.push('/results/hotels');
+    if (svc.id === 'esim') router.replace('/esim-store');
+    else if (svc.id === 'hotels') router.push('/results/hotels');
     else if (svc.id === 'flights') router.push('/results/flights');
-    else router.push('/results/flights'); // hero-slice: other services land on flights for demo
+    else router.push('/results/flights'); // transfers/cars demo → flights
   };
 
   return (
@@ -230,62 +291,29 @@ export default function SearchScreen() {
           )}
         </View>
 
-        {/* Travelers */}
-        <View
-          style={{
-            padding: 14,
-            backgroundColor: t.bgElev,
-            borderColor: t.border,
-            borderWidth: 1,
-            borderRadius: 16,
-            flexDirection: 'row',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-          }}
-        >
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <User size={18} color={t.fgMuted} />
-            <View>
-              <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-                Travelers
-              </Text>
-              <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 15, color: t.fg }}>
-                {travelers} {travelers === 1 ? 'adult' : 'adults'}
-              </Text>
-            </View>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-            <Pressable
-              onPress={() => setTravelers(travelers - 1)}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: t.bgSunken,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Minus size={14} color={t.fg} />
-            </Pressable>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, minWidth: 18, textAlign: 'center', color: t.fg }}>
-              {travelers}
-            </Text>
-            <Pressable
-              onPress={() => setTravelers(travelers + 1)}
-              style={{
-                width: 32,
-                height: 32,
-                borderRadius: 16,
-                backgroundColor: t.primary,
-                alignItems: 'center',
-                justifyContent: 'center',
-              }}
-            >
-              <Plus size={14} color="#fff" />
-            </Pressable>
-          </View>
-        </View>
+        {/* Rooms (hotels only) */}
+        {svc.id === 'hotels' && (
+          <Stepper
+            label="Rooms"
+            value={rooms}
+            unit={rooms === 1 ? 'room' : 'rooms'}
+            onDec={() => setRooms(rooms - 1)}
+            onInc={() => setRooms(rooms + 1)}
+          />
+        )}
+
+        {/* Guests / Travelers */}
+        <Stepper
+          label={svc.id === 'hotels' ? 'Guests' : 'Travelers'}
+          value={travelers}
+          unit={
+            svc.id === 'hotels'
+              ? travelers === 1 ? 'guest' : 'guests'
+              : travelers === 1 ? 'adult' : 'adults'
+          }
+          onDec={() => setTravelers(travelers - 1)}
+          onInc={() => setTravelers(travelers + 1)}
+        />
 
         <PrimaryButton
           label="Search"
