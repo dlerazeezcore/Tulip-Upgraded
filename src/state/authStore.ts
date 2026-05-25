@@ -7,7 +7,14 @@ export type AuthUser = {
   phone: string; // full, e.g. +9647501234567
   email?: string;
   initials: string;
+  isAdmin?: boolean;
 };
+
+// Mock admin accounts — in production this comes from the backend/role claim.
+const ADMIN_IDENTIFIERS = ['admin@tulip.app', '+9647500000000', '7500000000'];
+function isAdminIdentifier(...values: (string | null | undefined)[]): boolean {
+  return values.some((v) => v && ADMIN_IDENTIFIERS.includes(v.trim().toLowerCase()));
+}
 
 type AuthState = {
   user: AuthUser | null;
@@ -53,23 +60,27 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   signInPassword: (identifier) => {
     // Mock: derive a friendly name; treat phone-like identifiers as phone.
     const looksPhone = /^[+\d][\d\s]+$/.test(identifier);
+    const admin = isAdminIdentifier(identifier);
     const user: AuthUser = {
       id: 'u_' + Date.now(),
-      name: 'Jane Olsen',
+      name: admin ? 'Tulip Admin' : 'Jane Olsen',
       phone: looksPhone ? identifier : '+9647501234567',
       email: looksPhone ? undefined : identifier,
-      initials: 'JO',
+      initials: admin ? 'TA' : 'JO',
+      isAdmin: admin,
     };
     set({ user });
     persist(user);
   },
   signUp: (name, phone, email) => {
+    const admin = isAdminIdentifier(phone, email);
     const user: AuthUser = {
       id: 'u_' + Date.now(),
       name: name || 'New Traveler',
       phone,
       email,
       initials: initials(name || 'New Traveler'),
+      isAdmin: admin,
     };
     set({ user });
     persist(user);
@@ -78,12 +89,14 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   verifyOtp: (code, fallbackName) => {
     if (!code || code.replace(/\D/g, '').length < 4) return false;
     const phone = get().pendingPhone ?? '+9647501234567';
-    const name = fallbackName || 'Jane Olsen';
+    const admin = isAdminIdentifier(phone);
+    const name = fallbackName || (admin ? 'Tulip Admin' : 'Jane Olsen');
     const user: AuthUser = {
       id: 'u_' + Date.now(),
       name,
       phone,
       initials: initials(name),
+      isAdmin: admin,
     };
     set({ user, pendingPhone: null });
     persist(user);

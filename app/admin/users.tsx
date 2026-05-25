@@ -4,13 +4,13 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
 import { ChevronLeft, Search, Star } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { useAdminStore } from '@/state/adminStore';
+import { useAuthStore } from '@/state/authStore';
 import { ADMIN_USERS } from '@/data/admin';
 
 export default function AdminUsers() {
   const t = useTheme();
   const router = useRouter();
-  const isAdmin = useAdminStore((s) => s.isAdmin);
+  const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
   const [q, setQ] = useState('');
 
   const users = useMemo(

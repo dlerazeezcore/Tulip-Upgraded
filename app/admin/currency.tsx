@@ -6,7 +6,7 @@ import { ChevronLeft, Check } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Flag } from '@/components/Flag';
-import { useAdminStore } from '@/state/adminStore';
+import { useAuthStore } from '@/state/authStore';
 import { CURRENCY_LIST } from '@/data/currency';
 
 type Rules = Record<string, { markup: string; discount: string }>;
@@ -14,7 +14,7 @@ type Rules = Record<string, { markup: string; discount: string }>;
 export default function AdminCurrency() {
   const t = useTheme();
   const router = useRouter();
-  const isAdmin = useAdminStore((s) => s.isAdmin);
+  const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
   const [rules, setRules] = useState<Rules>(
     Object.fromEntries(CURRENCY_LIST.map((c) => [c.code, { markup: '0', discount: '0' }])),
   );

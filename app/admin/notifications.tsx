@@ -5,13 +5,13 @@ import { useRouter, Redirect } from 'expo-router';
 import { ChevronLeft, Send, Check, Bell } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useAdminStore } from '@/state/adminStore';
+import { useAuthStore } from '@/state/authStore';
 import { PUSH_AUDIENCES } from '@/data/admin';
 
 export default function AdminNotifications() {
   const t = useTheme();
   const router = useRouter();
-  const isAdmin = useAdminStore((s) => s.isAdmin);
+  const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
   const [title, setTitle] = useState('');
   const [body, setBody] = useState('');
   const [audience, setAudience] = useState(PUSH_AUDIENCES[0]);

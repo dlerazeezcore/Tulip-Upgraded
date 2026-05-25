@@ -5,13 +5,13 @@ import { useRouter, Redirect } from 'expo-router';
 import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
-import { useAdminStore } from '@/state/adminStore';
+import { useAuthStore } from '@/state/authStore';
 import { ADMIN_USERS } from '@/data/admin';
 
 export default function AdminHome() {
   const t = useTheme();
   const router = useRouter();
-  const isAdmin = useAdminStore((s) => s.isAdmin);
+  const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
 
   if (!isAdmin) return <Redirect href="/(tabs)/profile" />;
 

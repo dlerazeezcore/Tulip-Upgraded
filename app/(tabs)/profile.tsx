@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { ScrollView, View, Text, Pressable, Linking, useWindowDimensions, Platform } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
@@ -6,7 +6,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import {
-  Star, ChevronRight, ChevronDown, CreditCard, User, Moon, Globe, Bell,
+  Star, ChevronRight, CreditCard, User, Moon, Globe, Bell,
   Coins, MessageCircle, Receipt, ShieldCheck,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
@@ -21,8 +21,8 @@ import { Toggle } from '@/components/Toggle';
 import { useCurrencyStore } from '@/state/currencyStore';
 import { CURRENCIES } from '@/data/currency';
 import { useAuthStore } from '@/state/authStore';
-import { useAdminStore } from '@/state/adminStore';
 import { useLocaleStore } from '@/state/localeStore';
+import { useTravelersStore } from '@/state/travelersStore';
 
 const LANG_LABEL: Record<string, string> = { en: 'English', ar: 'العربية', ku: 'کوردی' };
 
@@ -88,9 +88,8 @@ export default function Profile() {
   const language = useLocaleStore((s) => s.language);
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
-  const isAdmin = useAdminStore((s) => s.isAdmin);
-  const setAdmin = useAdminStore((s) => s.setAdmin);
-  const [travelersOpen, setTravelersOpen] = useState(false);
+  const isAdmin = !!user?.isAdmin;
+  const travelerCount = useTravelersStore((s) => s.travelers.length);
 
   // ─── Hero ───
   const hero = (
@@ -145,22 +144,11 @@ export default function Profile() {
       <Row
         icon={<User size={16} color={t.fgMuted} />}
         title="Saved travelers"
-        sub={`${USER.travelers.length} people`}
-        onPress={() => setTravelersOpen((v) => !v)}
-        last={!travelersOpen}
-        right={travelersOpen ? <ChevronDown size={16} color={t.fgFaint} /> : <ChevronRight size={16} color={t.fgFaint} />}
+        sub={`${travelerCount} ${travelerCount === 1 ? 'person' : 'people'} · add, edit or remove`}
+        onPress={() => router.push('/travelers')}
+        last
+        right={<ChevronRight size={16} color={t.fgFaint} />}
       />
-      {travelersOpen &&
-        USER.travelers.map((tr, i) => (
-          <Row
-            key={tr.id}
-            icon={<User size={16} color={t.fgMuted} />}
-            title={tr.name}
-            sub={`${tr.relation} · ${tr.dob}`}
-            right={<ChevronRight size={16} color={t.fgFaint} />}
-            last={i === USER.travelers.length - 1}
-          />
-        ))}
     </Section>
   );
 
@@ -184,8 +172,7 @@ export default function Profile() {
       <Row icon={<Moon size={16} color={t.fgMuted} />} title="Dark mode" sub={mode === 'dark' ? 'On' : 'Off'} right={<Toggle value={mode === 'dark'} onChange={toggle} />} />
       <Row icon={<Coins size={16} color={t.fgMuted} />} title="Currency" sub={currencyName} right={<CurrencyPicker />} />
       <Row icon={<Globe size={16} color={t.fgMuted} />} title="Language" sub={LANG_LABEL[language]} right={<LanguagePicker />} />
-      <Row icon={<Bell size={16} color={t.fgMuted} />} title="Notifications" sub="Trip alerts, deals" right={<ChevronRight size={16} color={t.fgFaint} />} />
-      <Row icon={<ShieldCheck size={16} color={t.fgMuted} />} title="Demo: Admin mode" sub="Reveal the admin panel" last right={<Toggle value={isAdmin} onChange={setAdmin} />} />
+      <Row icon={<Bell size={16} color={t.fgMuted} />} title="Notifications" sub="Trip alerts, deals" last right={<ChevronRight size={16} color={t.fgFaint} />} />
     </Section>
   );
 

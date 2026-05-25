@@ -20,8 +20,8 @@ import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 import { useThemeStore } from '@/state/themeStore';
 import { useCurrencyStore } from '@/state/currencyStore';
 import { useAuthStore } from '@/state/authStore';
-import { useAdminStore } from '@/state/adminStore';
 import { useOrderStore } from '@/state/orderStore';
+import { useTravelersStore } from '@/state/travelersStore';
 import { useLocaleStore } from '@/state/localeStore';
 import '@/i18n';
 
@@ -54,6 +54,7 @@ function ThemedStack() {
         <Stack.Screen name="auth/forgot" options={{ presentation: 'modal' }} />
         <Stack.Screen name="orders/index" />
         <Stack.Screen name="orders/[id]" />
+        <Stack.Screen name="travelers/index" />
         <Stack.Screen name="admin/index" />
         <Stack.Screen name="admin/users" />
         <Stack.Screen name="admin/notifications" />
@@ -69,8 +70,8 @@ export default function RootLayout() {
   const hydrated = useThemeStore((s) => s.hydrated);
   const hydrateCurrency = useCurrencyStore((s) => s.hydrate);
   const hydrateAuth = useAuthStore((s) => s.hydrate);
-  const hydrateAdmin = useAdminStore((s) => s.hydrate);
   const hydrateOrders = useOrderStore((s) => s.hydrate);
+  const hydrateTravelers = useTravelersStore((s) => s.hydrate);
   const hydrateLocale = useLocaleStore((s) => s.hydrate);
   const localeHydrated = useLocaleStore((s) => s.hydrated);
 
@@ -85,10 +86,10 @@ export default function RootLayout() {
     hydrate();
     hydrateCurrency();
     hydrateAuth();
-    hydrateAdmin();
     hydrateOrders();
+    hydrateTravelers();
     hydrateLocale();
-  }, [hydrate, hydrateCurrency, hydrateAuth, hydrateAdmin, hydrateOrders, hydrateLocale]);
+  }, [hydrate, hydrateCurrency, hydrateAuth, hydrateOrders, hydrateTravelers, hydrateLocale]);
 
   // On web, font loading can occasionally fail or timeout; don't block initial render forever.
   const ready =
