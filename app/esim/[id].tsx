@@ -49,6 +49,11 @@ export default function EsimDetail() {
   const [support, setSupport] = useState<EsimSupportResult | null>(null);
   const [busy, setBusy] = useState(false);
 
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/manage/esim');
+  };
+
   useEffect(() => {
     refresh();
     checkEsimSupport().then(setSupport).catch(() => {});
@@ -61,7 +66,7 @@ export default function EsimDetail() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
         {refreshing ? <ActivityIndicator color={t.primary} /> : <Text style={{ color: t.fgMuted }}>eSIM not found.</Text>}
-        <PrimaryButton label="Back" onPress={() => router.back()} />
+        <PrimaryButton label="Back" onPress={goBack} />
       </SafeAreaView>
     );
   }
@@ -92,7 +97,7 @@ export default function EsimDetail() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => router.back()}
+          onPress={goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />

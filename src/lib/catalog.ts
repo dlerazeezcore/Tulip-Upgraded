@@ -26,7 +26,12 @@ export function packageToBundle(p: ProviderPackage, placeId: string): Bundle {
 }
 
 export function packagesToBundles(packages: ProviderPackage[], placeId: string): Bundle[] {
-  return packages
-    .map((p) => packageToBundle(p, placeId))
-    .sort((a, b) => a.usd - b.usd);
+  const seen = new Set<string>();
+  const out: Bundle[] = [];
+  for (const p of packages) {
+    if (!p?.packageCode || seen.has(p.packageCode)) continue;
+    seen.add(p.packageCode);
+    out.push(packageToBundle(p, placeId));
+  }
+  return out.sort((a, b) => a.usd - b.usd);
 }

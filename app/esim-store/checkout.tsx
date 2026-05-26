@@ -54,10 +54,15 @@ export default function Checkout() {
   const [method, setMethod] = useState<'fib' | 'loyalty'>('loyalty');
   const [busy, setBusy] = useState(false);
 
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/esim-store');
+  };
+
   const header = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
       <Pressable
-        onPress={() => router.back()}
+        onPress={goBack}
         style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
       >
         <ChevronLeft size={18} color={t.fg} />

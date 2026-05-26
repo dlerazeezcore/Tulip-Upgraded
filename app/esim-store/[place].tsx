@@ -15,7 +15,7 @@ import { ESIM_COUNTRIES, ESIM_REGIONS, type Bundle } from '@/data/esim';
 import { useEsimCart } from '@/state/esimCart';
 
 export default function PlaceDetail() {
-  const { place, region } = useLocalSearchParams<{ place: string; region?: string }>();
+  const { place, region, name: nameParam } = useLocalSearchParams<{ place: string; region?: string; name?: string }>();
   const t = useTheme();
   const router = useRouter();
   const money = useIqdMoney();
@@ -27,21 +27,24 @@ export default function PlaceDetail() {
   const [selected, setSelected] = useState<Bundle | null>(null);
   const [bundles, setBundles] = useState<Bundle[]>([]);
   const [loading, setLoading] = useState(true);
-  const [day, setDay] = useState<number | null>(null); // null = all durations
 
   const regionData = isRegion ? ESIM_REGIONS.find((r) => r.id === place) : undefined;
   const countryData = !isRegion ? ESIM_COUNTRIES.find((c) => c.iso === place) : undefined;
-  const name = regionData?.name ?? countryData?.name ?? 'eSIM';
-  const iso = countryData?.iso;
+  const name = nameParam || regionData?.name || countryData?.name || (place as string) || 'eSIM';
+  const iso = isRegion ? undefined : String(place || '').toUpperCase();
+
+  const goBack = () => {
+    if (router.canGoBack()) router.back();
+    else router.replace('/esim-store');
+  };
 
   useEffect(() => {
     let cancelled = false;
-    const locationCode = (iso ?? (place as string) ?? '').toUpperCase();
+    const locationCode = (iso ?? String(place || '')).toUpperCase();
     setLoading(true);
     queryPackages({ locationCode })
       .then((pkgs) => {
-        if (cancelled) return;
-        setBundles(packagesToBundles(pkgs, place as string));
+        if (!cancelled) setBundles(packagesToBundles(pkgs, place as string));
       })
       .catch(() => {
         if (!cancelled) setBundles([]);
@@ -54,15 +57,18 @@ export default function PlaceDetail() {
     };
   }, [iso, place]);
 
-  // Distinct durations for the day filter chips.
-  const days = useMemo(
-    () => Array.from(new Set(bundles.map((b) => b.days).filter((d) => d > 0))).sort((a, b) => a - b),
-    [bundles],
-  );
-  const shown = useMemo(
-    () => (day == null ? bundles : bundles.filter((b) => b.days === day)),
-    [bundles, day],
-  );
+  // Group plans by duration, ascending (1-day plans, then 7-day, etc.).
+  const groups = useMemo(() => {
+    const m = new Map<number, Bundle[]>();
+    for (const b of bundles) {
+      const arr = m.get(b.days) ?? [];
+      arr.push(b);
+      m.set(b.days, arr);
+    }
+    return [...m.entries()]
+      .sort((a, b) => a[0] - b[0])
+      .map(([days, items]) => ({ days, items: items.sort((x, y) => x.usd - y.usd) }));
+  }, [bundles]);
 
   const onContinue = () => {
     if (!selected) return;
@@ -74,7 +80,7 @@ export default function PlaceDetail() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => router.back()}
+          onPress={goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -86,7 +92,7 @@ export default function PlaceDetail() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 120, gap: 14, maxWidth: isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 120, gap: 16, maxWidth: isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
       >
         {isRegion && regionData && (
@@ -106,70 +112,57 @@ export default function PlaceDetail() {
           </PressableScale>
         )}
 
-        {/* Day filter */}
-        {days.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingVertical: 2 }}>
-            {[null, ...days].map((d) => {
-              const on = d === day;
-              return (
-                <Pressable
-                  key={d == null ? 'all' : d}
-                  onPress={() => { setDay(d); setSelected(null); }}
-                  style={{ paddingVertical: 8, paddingHorizontal: 16, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}
-                >
-                  <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 13, color: on ? '#fff' : t.fgMuted }}>
-                    {d == null ? 'All' : `${d} days`}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </ScrollView>
-        )}
-
         {loading ? (
-          <View style={{ paddingVertical: 30, alignItems: 'center' }}>
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
             <ActivityIndicator color={t.primary} />
           </View>
-        ) : shown.length === 0 ? (
-          <View style={{ paddingVertical: 40, alignItems: 'center', gap: 6 }}>
+        ) : groups.length === 0 ? (
+          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
             <Text style={{ color: t.fgMuted }}>No plans available for {name}.</Text>
           </View>
         ) : (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
-            {shown.map((b) => {
-              const isSelected = selected?.id === b.id;
-              return (
-                <View key={b.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
-                  <PressableScale
-                    onPress={() => setSelected(b)}
-                    scaleTo={0.98}
-                    style={{
-                      flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16,
-                      backgroundColor: t.bgElev, borderWidth: isSelected ? 2 : 1, borderColor: isSelected ? t.primary : t.border, ...t.shadow1,
-                    }}
-                  >
-                    <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(16,185,129,0.12)', alignItems: 'center', justifyContent: 'center' }}>
-                      {b.type === 'unlimited' ? (
-                        <InfinityIcon size={22} color="#10B981" strokeWidth={2.2} />
-                      ) : (
-                        <Text style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: '#10B981' }}>{b.gb}</Text>
-                      )}
+          groups.map((g) => (
+            <View key={g.days} style={{ gap: 10 }}>
+              <Text style={{ fontFamily: t.font.display, fontSize: 15, fontWeight: '700', color: t.fg, letterSpacing: -0.2 }}>
+                {g.days === 1 ? '1-day plans' : `${g.days}-day plans`}
+              </Text>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
+                {g.items.map((b) => {
+                  const isSelected = selected?.id === b.id;
+                  return (
+                    <View key={b.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
+                      <PressableScale
+                        onPress={() => setSelected(b)}
+                        scaleTo={0.98}
+                        style={{
+                          flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16,
+                          backgroundColor: t.bgElev, borderWidth: isSelected ? 2 : 1, borderColor: isSelected ? t.primary : t.border, ...t.shadow1,
+                        }}
+                      >
+                        <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(16,185,129,0.12)', alignItems: 'center', justifyContent: 'center' }}>
+                          {b.type === 'unlimited' ? (
+                            <InfinityIcon size={22} color="#10B981" strokeWidth={2.2} />
+                          ) : (
+                            <Text style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: '#10B981' }}>{b.gb}</Text>
+                          )}
+                        </View>
+                        <View style={{ flex: 1 }}>
+                          <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
+                            {b.type === 'unlimited' ? 'Unlimited' : `${b.gb} GB`}
+                          </Text>
+                          <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>Valid for {b.days} days</Text>
+                        </View>
+                        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{money(b.usd)}</Text>
+                        <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: isSelected ? t.primary : t.borderStrong, backgroundColor: isSelected ? t.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
+                          {isSelected && <Check size={13} color="#fff" strokeWidth={3} />}
+                        </View>
+                      </PressableScale>
                     </View>
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
-                        {b.type === 'unlimited' ? 'Unlimited' : `${b.gb} GB`}
-                      </Text>
-                      <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>Valid for {b.days} days</Text>
-                    </View>
-                    <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{money(b.usd)}</Text>
-                    <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: isSelected ? t.primary : t.borderStrong, backgroundColor: isSelected ? t.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                      {isSelected && <Check size={13} color="#fff" strokeWidth={3} />}
-                    </View>
-                  </PressableScale>
-                </View>
-              );
-            })}
-          </View>
+                  );
+                })}
+              </View>
+            </View>
+          ))
         )}
       </ScrollView>
 

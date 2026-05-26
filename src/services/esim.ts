@@ -26,6 +26,24 @@ export async function queryPackages(params: {
   return (res?.obj?.packageList ?? []) as ProviderPackage[];
 }
 
+export type LocationCountry = { code: string; name: string };
+
+/** All provider countries (ISO-2, type=country), for the searchable catalog list. */
+export async function getCountries(): Promise<LocationCountry[]> {
+  const res: any = await apiFetch(`${BASE}/locations/query`, { method: 'POST', auth: false, body: {} });
+  const list = (res?.obj?.locationList ?? []) as any[];
+  const seen = new Set<string>();
+  const out: LocationCountry[] = [];
+  for (const l of list) {
+    const code = String(l?.code ?? '').toUpperCase();
+    if (l?.type !== 1 || !/^[A-Z]{2}$/.test(code) || seen.has(code)) continue;
+    seen.add(code);
+    out.push({ code, name: String(l?.name ?? code) });
+  }
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
 export async function getExchangeSettings(): Promise<ExchangeSettings> {
   const res = await apiFetch(`${BASE}/exchange-rates/current`, { method: 'GET', auth: false });
   return unwrap<ExchangeSettings>(res);
