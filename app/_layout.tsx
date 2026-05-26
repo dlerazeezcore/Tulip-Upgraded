@@ -20,6 +20,7 @@ import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
 import { useThemeStore } from '@/state/themeStore';
 import { useCurrencyStore } from '@/state/currencyStore';
 import { useAuthStore } from '@/state/authStore';
+import { useEsimStore } from '@/state/esimStore';
 import { useOrderStore } from '@/state/orderStore';
 import { useTravelersStore } from '@/state/travelersStore';
 import { useLocaleStore } from '@/state/localeStore';
@@ -74,6 +75,8 @@ export default function RootLayout() {
   const hydrateTravelers = useTravelersStore((s) => s.hydrate);
   const hydrateLocale = useLocaleStore((s) => s.hydrate);
   const localeHydrated = useLocaleStore((s) => s.hydrated);
+  const authUser = useAuthStore((s) => s.user);
+  const refreshEsims = useEsimStore((s) => s.refresh);
 
   const [outfitLoaded, outfitError] = useOutfit({ Outfit_400Regular, Outfit_600SemiBold, Outfit_700Bold });
   const [jakartaLoaded, jakartaError] = useJakarta({
@@ -90,6 +93,11 @@ export default function RootLayout() {
     hydrateTravelers();
     hydrateLocale();
   }, [hydrate, hydrateCurrency, hydrateAuth, hydrateOrders, hydrateTravelers, hydrateLocale]);
+
+  // Load the signed-in user's eSIMs whenever auth state changes.
+  useEffect(() => {
+    refreshEsims();
+  }, [authUser, refreshEsims]);
 
   // On web, font loading can occasionally fail or timeout; don't block initial render forever.
   const ready =

@@ -93,6 +93,10 @@ export type Bundle = {
   days: number;
   usd: number;
   popular?: boolean;
+  // Present when the bundle came from the live provider catalog (enables ordering).
+  packageCode?: string;
+  providerPriceMinor?: number;
+  periodNum?: number;
 };
 
 const round = (n: number) => Math.round(n * 2) / 2;

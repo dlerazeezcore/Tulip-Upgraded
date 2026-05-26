@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, Pressable } from 'react-native';
+import { ScrollView, View, Text, Pressable, Alert, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Check, Lock, Landmark, Gift, Globe } from 'lucide-react-native';
@@ -14,6 +14,9 @@ import { useOrderStore } from '@/state/orderStore';
 import { useCurrencyStore } from '@/state/currencyStore';
 import { useIsWideWeb } from '@/lib/responsive';
 import { PAYMENT_METHODS } from '@/data/esim';
+import { createManagedOrder } from '@/services/esim';
+import { createFibPayment, pollFibPayment, isPaid } from '@/services/payments';
+import { checkEsimSupport, isDefinitelyUnsupported } from '@/services/device';
 
 // Representative flag for region eSIMs (mock).
 const REGION_FLAG: Record<string, string> = {
@@ -44,11 +47,13 @@ export default function Checkout() {
   const money = useMoney();
   const { place, bundle, clear } = useEsimCart();
   const user = useAuthStore((s) => s.user);
-  const purchase = useEsimStore((s) => s.purchase);
+  const refreshEsims = useEsimStore((s) => s.refresh);
   const addOrder = useOrderStore((s) => s.add);
   const currencyCode = useCurrencyStore((s) => s.code);
+  const iqdPerUsd = useCurrencyStore((s) => s.iqdPerUsd);
   const isWide = useIsWideWeb();
   const [method, setMethod] = useState<'fib' | 'loyalty'>('fib');
+  const [busy, setBusy] = useState(false);
 
   const header = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
@@ -106,14 +111,7 @@ export default function Checkout() {
     );
   }
 
-  const onPay = () => {
-    purchase({
-      country: place.name,
-      iso: flagIso ?? 'UN',
-      planGb: bundle.gb ?? 0,
-      planDays: bundle.days,
-      unlimited: bundle.type === 'unlimited',
-    });
+  const recordLocalOrder = () => {
     addOrder({
       kind: 'esim',
       title: `${place.name} eSIM`,
@@ -128,8 +126,86 @@ export default function Checkout() {
         { label: 'Type', value: bundle.type === 'unlimited' ? 'Unlimited' : 'Fixed data' },
       ],
     });
+  };
+
+  const placeOrder = async (payment: { method: 'loyalty' | 'fib'; status?: string; transactionId?: string }) => {
+    const providerPriceMinor = bundle.providerPriceMinor ?? Math.round(bundle.usd * 10000);
+    await createManagedOrder({
+      transactionId: `APP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      packageCode: bundle.packageCode!,
+      periodNum: bundle.periodNum ?? bundle.days,
+      providerPriceMinor,
+      user: { phone: user!.phone, name: user!.name, email: user!.email ?? null },
+      countryCode: place.iso,
+      countryName: place.name,
+      packageName: `${place.name} ${planLabel} · ${bundle.days}d`,
+      currencyCode: 'IQD',
+      providerCurrencyCode: 'USD',
+      paymentMethod: payment.method,
+      paymentStatus: payment.status,
+      paymentTransactionId: payment.transactionId,
+      salePriceMinor: Math.round(bundle.usd * iqdPerUsd),
+    });
+    recordLocalOrder();
     clear();
+    await refreshEsims();
     router.replace('/manage/esim');
+  };
+
+  const onPay = async () => {
+    if (busy) return;
+    if (!bundle.packageCode) {
+      Alert.alert('Plan unavailable', 'This plan can\'t be purchased yet. Please pick a country plan.');
+      return;
+    }
+    setBusy(true);
+    try {
+      // Notify if the device can't use eSIM (still allow — they may install elsewhere).
+      const support = await checkEsimSupport();
+      if (isDefinitelyUnsupported(support)) {
+        const proceed = await new Promise<boolean>((resolve) => {
+          Alert.alert(
+            'Device may not support eSIM',
+            'This device does not appear to support eSIM. You can still buy and install it on a compatible device. Continue?',
+            [
+              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
+              { text: 'Continue', onPress: () => resolve(true) },
+            ],
+          );
+        });
+        if (!proceed) {
+          setBusy(false);
+          return;
+        }
+      }
+
+      if (method === 'loyalty') {
+        await placeOrder({ method: 'loyalty', status: 'paid' });
+        return;
+      }
+
+      // FIB: create payment, open the FIB app, poll for confirmation, then book.
+      const amountIqd = Math.round(bundle.usd * iqdPerUsd);
+      const payment = await createFibPayment({
+        amount: amountIqd,
+        currency: 'IQD',
+        description: `${place.name} eSIM`,
+        metadata: { packageCode: bundle.packageCode, place: place.name },
+      });
+      if (payment.redirectUrl) {
+        Linking.openURL(payment.redirectUrl).catch(() => {});
+      }
+      const final = await pollFibPayment(payment.paymentId, { timeoutMs: 180000 });
+      if (isPaid(final)) {
+        await placeOrder({ method: 'fib', status: 'paid', transactionId: payment.paymentId });
+      } else {
+        Alert.alert('Payment not completed', 'We could not confirm your FIB payment. Please try again.');
+      }
+    } catch (e: any) {
+      Alert.alert('Checkout failed', e?.message || 'Please try again.');
+    } finally {
+      setBusy(false);
+    }
   };
 
   return (
@@ -192,12 +268,14 @@ export default function Checkout() {
             </View>
 
             <PrimaryButton
-              label={`Pay ${money(bundle.usd)}`}
+              label={busy ? 'Processing…' : `Pay ${money(bundle.usd)}`}
               icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}
               onPress={onPay}
             />
             <Text style={{ fontSize: 11, color: t.fgFaint, textAlign: 'center' }}>
-              Mock checkout — no real charge is made.
+              {method === 'fib'
+                ? 'You\'ll confirm payment in the FIB app, then your eSIM is issued.'
+                : 'Your eSIM is issued instantly after checkout.'}
             </Text>
           </View>
         </View>

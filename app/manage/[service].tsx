@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, Text, Pressable } from 'react-native';
+import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -37,6 +37,30 @@ function EsimList() {
   const router = useRouter();
   const esims = useEsimStore((s) => s.esims);
   const activate = useEsimStore((s) => s.activate);
+  const refresh = useEsimStore((s) => s.refresh);
+  const refreshing = useEsimStore((s) => s.refreshing);
+  const loaded = useEsimStore((s) => s.loaded);
+
+  React.useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  if (!loaded && refreshing) {
+    return (
+      <View style={{ paddingVertical: 30, alignItems: 'center' }}>
+        <ActivityIndicator color={t.primary} />
+      </View>
+    );
+  }
+
+  if (loaded && esims.length === 0) {
+    return (
+      <View style={{ paddingVertical: 30, alignItems: 'center', gap: 6 }}>
+        <Text style={{ color: t.fgMuted }}>No eSIMs yet.</Text>
+        <Text style={{ color: t.fgFaint, fontSize: 12 }}>Buy one from the eSIM store to get started.</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={{ gap: 10 }}>

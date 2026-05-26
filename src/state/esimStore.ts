@@ -1,4 +1,13 @@
 import { create } from 'zustand';
+import {
+  listMyProfiles,
+  refreshMyUsage,
+  activateMyProfile,
+  findTopUpPackages,
+  applyTopUp,
+} from '@/services/esim';
+import type { EsimProfile } from '@/services/types';
+import { useAuthStore } from '@/state/authStore';
 
 export type EsimStatus = 'inactive' | 'active' | 'expired';
 
@@ -15,96 +24,110 @@ export type Esim = {
   unlimited?: boolean;
 };
 
-export type PurchaseInput = {
-  country: string;
-  iso: string;
-  planGb: number; // ignored when unlimited
-  planDays: number;
-  unlimited?: boolean;
-};
+function round1(n: number): number {
+  return Math.round(n * 10) / 10;
+}
+
+function toDisplay(p: EsimProfile): Esim {
+  const unlimited = !p.totalDataMb;
+  return {
+    id: String(p.id),
+    country: p.countryName || p.countryCode || 'eSIM',
+    iso: p.countryCode || 'UN',
+    planGb: unlimited ? 0 : round1(p.totalDataGb ?? 0),
+    planDays: p.daysLeft ?? 0,
+    status: p.status,
+    usedGb: round1(p.usedDataGb ?? 0),
+    daysLeft: p.daysLeft ?? 0,
+    iccid: p.iccid || p.esimTranNo || '',
+    unlimited,
+  };
+}
+
+function identifierFor(p: EsimProfile): { iccid?: string; esimTranNo?: string; providerOrderNo?: string; id?: number } {
+  if (p.iccid) return { iccid: p.iccid };
+  if (p.esimTranNo) return { esimTranNo: p.esimTranNo };
+  if (p.providerOrderNo) return { providerOrderNo: p.providerOrderNo };
+  return { id: typeof p.id === 'number' ? p.id : Number(p.id) };
+}
 
 type EsimState = {
   esims: Esim[];
-  activate: (id: string) => void;
-  topUp: (id: string, gb: number) => void;
-  purchase: (input: PurchaseInput) => string;
-  reset: () => void;
+  raw: Record<string, EsimProfile>;
+  refreshing: boolean;
+  loaded: boolean;
+  error: string | null;
+  byId: (id: string) => EsimProfile | undefined;
+  refresh: () => Promise<void>;
+  refreshUsage: () => Promise<void>;
+  activate: (id: string) => Promise<void>;
+  topUp: (id: string) => Promise<{ ok: boolean; message?: string }>;
 };
 
-function randomIccid(): string {
-  let s = '8964';
-  for (let i = 0; i < 12; i++) s += Math.floor(Math.random() * 10);
-  return s.replace(/(.{4})/g, '$1 ').trim();
+function ingest(profiles: EsimProfile[]) {
+  const raw: Record<string, EsimProfile> = {};
+  for (const p of profiles) raw[String(p.id)] = p;
+  return { esims: profiles.map(toDisplay), raw };
 }
 
-const seed: Esim[] = [
-  {
-    id: 'jp-1',
-    country: 'Japan',
-    iso: 'JP',
-    planGb: 5,
-    planDays: 30,
-    status: 'active',
-    usedGb: 2.3,
-    daysLeft: 8,
-    iccid: '8981 1900 0000 1234',
-  },
-  {
-    id: 'uk-1',
-    country: 'United Kingdom',
-    iso: 'GB',
-    planGb: 5,
-    planDays: 14,
-    status: 'inactive',
-    usedGb: 0,
-    daysLeft: 14,
-    iccid: '8944 1100 0000 5678',
-  },
-  {
-    id: 'fr-1',
-    country: 'France',
-    iso: 'FR',
-    planGb: 3,
-    planDays: 15,
-    status: 'expired',
-    usedGb: 3,
-    daysLeft: 0,
-    iccid: '8933 1100 0000 9012',
-  },
-];
+export const useEsimStore = create<EsimState>((set, get) => ({
+  esims: [],
+  raw: {},
+  refreshing: false,
+  loaded: false,
+  error: null,
 
-export const useEsimStore = create<EsimState>((set) => ({
-  esims: seed.map((e) => ({ ...e })),
-  activate: (id) =>
-    set((s) => ({
-      esims: s.esims.map((e) =>
-        e.id === id && e.status === 'inactive'
-          ? { ...e, status: 'active', daysLeft: e.planDays, usedGb: 0 }
-          : e,
-      ),
-    })),
-  topUp: (id, gb) =>
-    set((s) => ({
-      esims: s.esims.map((e) =>
-        e.id === id ? { ...e, planGb: e.planGb + gb, status: 'active' } : e,
-      ),
-    })),
-  purchase: (input) => {
-    const id = 'es_' + Date.now();
-    const esim: Esim = {
-      id,
-      country: input.country,
-      iso: input.iso,
-      planGb: input.unlimited ? 0 : input.planGb,
-      planDays: input.planDays,
-      status: 'inactive',
-      usedGb: 0,
-      daysLeft: input.planDays,
-      iccid: randomIccid(),
-      unlimited: input.unlimited,
-    };
-    set((s) => ({ esims: [esim, ...s.esims] }));
-    return id;
+  byId: (id) => get().raw[id],
+
+  refresh: async () => {
+    if (!useAuthStore.getState().isAuthed()) {
+      set({ esims: [], raw: {}, loaded: true, error: null });
+      return;
+    }
+    set({ refreshing: true, error: null });
+    try {
+      const res = await listMyProfiles({ limit: 200 });
+      set({ ...ingest(res.profiles), loaded: true });
+    } catch (e: any) {
+      set({ error: e?.message || 'Failed to load eSIMs' });
+    } finally {
+      set({ refreshing: false });
+    }
   },
-  reset: () => set({ esims: seed.map((e) => ({ ...e })) }),
+
+  refreshUsage: async () => {
+    if (!useAuthStore.getState().isAuthed()) return;
+    set({ refreshing: true, error: null });
+    try {
+      const res = await refreshMyUsage({ limit: 200 });
+      set({ ...ingest(res.profiles), loaded: true });
+    } catch (e: any) {
+      set({ error: e?.message || 'Failed to refresh usage' });
+    } finally {
+      set({ refreshing: false });
+    }
+  },
+
+  activate: async (id) => {
+    const profile = get().raw[id];
+    if (!profile) return;
+    await activateMyProfile(identifierFor(profile));
+    await get().refresh();
+  },
+
+  topUp: async (id) => {
+    const profile = get().raw[id];
+    if (!profile?.iccid) return { ok: false, message: 'This eSIM has no ICCID yet.' };
+    const packages = await findTopUpPackages(profile.iccid);
+    if (!packages.length) return { ok: false, message: 'No top-up plans available for this eSIM.' };
+    const cheapest = [...packages].sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0];
+    await applyTopUp({
+      iccid: profile.iccid,
+      esimTranNo: profile.esimTranNo ?? undefined,
+      packageCode: cheapest.packageCode,
+      transactionId: `TOPUP-${Date.now()}`,
+    });
+    await get().refresh();
+    return { ok: true };
+  },
 }));

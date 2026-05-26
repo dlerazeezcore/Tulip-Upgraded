@@ -1,13 +1,16 @@
-import React, { useMemo, useState } from 'react';
-import { ScrollView, View, Text, Pressable, Modal } from 'react-native';
+import React, { useEffect, useMemo, useState } from 'react';
+import { ScrollView, View, Text, Pressable, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Globe, Check, Infinity as InfinityIcon, X } from 'lucide-react-native';
+import { ChevronLeft, Globe, Check, Infinity as InfinityIcon, X, ArrowRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { useMoney } from '@/lib/money';
 import { useIsWideWeb } from '@/lib/responsive';
+import { packagesToBundles } from '@/lib/catalog';
+import { queryPackages } from '@/services/esim';
 import {
   ESIM_COUNTRIES,
   ESIM_REGIONS,
@@ -29,6 +32,9 @@ export default function PlaceDetail() {
   const isWide = useIsWideWeb();
   const [type, setType] = useState<PlanType>('fixed');
   const [coverageOpen, setCoverageOpen] = useState(false);
+  const [selected, setSelected] = useState<Bundle | null>(null);
+  const [liveBundles, setLiveBundles] = useState<Bundle[] | null>(null);
+  const [loading, setLoading] = useState(false);
 
   const regionData = isRegion ? ESIM_REGIONS.find((r) => r.id === place) : undefined;
   const countryData = !isRegion ? ESIM_COUNTRIES.find((c) => c.iso === place) : undefined;
@@ -37,10 +43,42 @@ export default function PlaceDetail() {
   const base = regionData?.fromUsd ?? countryData?.fromUsd ?? 5;
   const iso = countryData?.iso;
 
-  const bundles = useMemo(() => bundlesFor(place as string, base, type), [place, base, type]);
+  // Live provider catalog for countries; regions fall back to representative plans.
+  useEffect(() => {
+    let cancelled = false;
+    if (isRegion || !iso) {
+      setLiveBundles(null);
+      return;
+    }
+    setLoading(true);
+    queryPackages({ locationCode: iso })
+      .then((pkgs) => {
+        if (cancelled) return;
+        const mapped = packagesToBundles(pkgs, place as string);
+        setLiveBundles(mapped.length ? mapped : null);
+      })
+      .catch(() => {
+        if (!cancelled) setLiveBundles(null);
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [iso, isRegion, place]);
 
-  const onSelect = (b: Bundle) => {
-    select({ id: place as string, name, iso, isRegion }, b);
+  const bundles = useMemo(() => {
+    if (liveBundles) {
+      const filtered = liveBundles.filter((b) => b.type === type);
+      if (filtered.length) return filtered;
+    }
+    return bundlesFor(place as string, base, type);
+  }, [liveBundles, place, base, type]);
+
+  const onContinue = () => {
+    if (!selected) return;
+    select({ id: place as string, name, iso, isRegion }, selected);
     router.push('/esim-store/checkout');
   };
 
@@ -62,10 +100,9 @@ export default function PlaceDetail() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, gap: 14, maxWidth: isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 120, gap: 14, maxWidth: isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
       >
-        {/* Region coverage */}
         {isRegion && regionData && (
           <PressableScale
             onPress={() => setCoverageOpen(true)}
@@ -101,7 +138,10 @@ export default function PlaceDetail() {
             return (
               <Pressable
                 key={id}
-                onPress={() => setType(id)}
+                onPress={() => {
+                  setType(id);
+                  setSelected(null);
+                }}
                 style={{ flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: on ? t.bgElev : 'transparent', ...(on ? t.shadow1 : {}) }}
               >
                 <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 13, color: on ? t.fg : t.fgMuted }}>
@@ -112,66 +152,115 @@ export default function PlaceDetail() {
           })}
         </View>
 
-        {/* Bundles */}
+        {loading && (
+          <View style={{ paddingVertical: 24, alignItems: 'center' }}>
+            <ActivityIndicator color={t.primary} />
+          </View>
+        )}
+
+        {/* Bundles — tap to select (no "popular" emphasis) */}
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
-          {bundles.map((b) => (
-            <View key={b.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
-            <PressableScale
-              onPress={() => onSelect(b)}
-              scaleTo={0.98}
-              style={{
-                flexDirection: 'row',
-                alignItems: 'center',
-                gap: 14,
-                padding: 16,
-                borderRadius: 16,
-                backgroundColor: t.bgElev,
-                borderWidth: b.popular ? 1.5 : 1,
-                borderColor: b.popular ? t.primary : t.border,
-                ...t.shadow1,
-              }}
-            >
-              <View
-                style={{
-                  width: 48,
-                  height: 48,
-                  borderRadius: 12,
-                  backgroundColor: 'rgba(16,185,129,0.12)',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                {b.type === 'unlimited' ? (
-                  <InfinityIcon size={22} color="#10B981" strokeWidth={2.2} />
-                ) : (
-                  <Text style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: '#10B981' }}>
-                    {b.gb}
+          {bundles.map((b) => {
+            const isSelected = selected?.id === b.id;
+            return (
+              <View key={b.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
+                <PressableScale
+                  onPress={() => setSelected(b)}
+                  scaleTo={0.98}
+                  style={{
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 14,
+                    padding: 16,
+                    borderRadius: 16,
+                    backgroundColor: t.bgElev,
+                    borderWidth: isSelected ? 2 : 1,
+                    borderColor: isSelected ? t.primary : t.border,
+                    ...t.shadow1,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 48,
+                      height: 48,
+                      borderRadius: 12,
+                      backgroundColor: 'rgba(16,185,129,0.12)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {b.type === 'unlimited' ? (
+                      <InfinityIcon size={22} color="#10B981" strokeWidth={2.2} />
+                    ) : (
+                      <Text style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: '#10B981' }}>
+                        {b.gb}
+                      </Text>
+                    )}
+                  </View>
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
+                      {b.type === 'unlimited' ? 'Unlimited' : `${b.gb} GB`}
+                    </Text>
+                    <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>Valid for {b.days} days</Text>
+                  </View>
+                  <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
+                    {money(b.usd)}
                   </Text>
-                )}
+                  <View
+                    style={{
+                      width: 22,
+                      height: 22,
+                      borderRadius: 11,
+                      borderWidth: 2,
+                      borderColor: isSelected ? t.primary : t.borderStrong,
+                      backgroundColor: isSelected ? t.primary : 'transparent',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    {isSelected && <Check size={13} color="#fff" strokeWidth={3} />}
+                  </View>
+                </PressableScale>
               </View>
-              <View style={{ flex: 1 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                  <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
-                    {b.type === 'unlimited' ? 'Unlimited' : `${b.gb} GB`}
-                  </Text>
-                  {b.popular && (
-                    <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, backgroundColor: 'rgba(25,103,210,0.12)' }}>
-                      <Text style={{ fontSize: 9, fontWeight: '800', color: t.primary, letterSpacing: 0.4 }}>POPULAR</Text>
-                    </View>
-                  )}
-                </View>
-                <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>Valid for {b.days} days</Text>
-              </View>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
-                {money(b.usd)}
-              </Text>
-            </PressableScale>
-            </View>
-          ))}
+            );
+          })}
         </View>
       </ScrollView>
 
-      {/* Coverage modal */}
+      {/* Sticky Continue — appears once a bundle is selected */}
+      {selected && (
+        <View
+          style={{
+            position: 'absolute',
+            left: 0,
+            right: 0,
+            bottom: 0,
+            padding: 16,
+            paddingBottom: 28,
+            backgroundColor: t.bgElev,
+            borderTopWidth: 1,
+            borderTopColor: t.border,
+          }}
+        >
+          <View style={{ maxWidth: 780, width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 12, color: t.fgMuted }}>
+                {selected.type === 'unlimited' ? 'Unlimited' : `${selected.gb} GB`} · {selected.days} days
+              </Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
+                {money(selected.usd)}
+              </Text>
+            </View>
+            <PrimaryButton
+              label="Continue"
+              icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />}
+              onPress={onContinue}
+              style={{ flex: 1 }}
+            />
+          </View>
+        </View>
+      )}
+
       <Modal visible={coverageOpen} transparent animationType="slide" onRequestClose={() => setCoverageOpen(false)}>
         <Pressable
           onPress={() => setCoverageOpen(false)}
