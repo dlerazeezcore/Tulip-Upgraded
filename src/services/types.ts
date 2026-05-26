@@ -14,6 +14,8 @@ export type AuthSession = {
   email?: string | null;
   subjectType: SubjectType;
   isAdmin: boolean;
+  isLoyalty?: boolean;
+  createdAt?: string | null;
 };
 
 export type AuthMe = {
@@ -24,6 +26,7 @@ export type AuthMe = {
   email?: string | null;
   status: string;
   isLoyalty?: boolean;
+  createdAt?: string | null;
   preferredLanguage?: string | null;
   preferredCurrency?: string | null;
   notificationsEnabled?: boolean;
@@ -137,4 +140,60 @@ export type FibPayment = {
   qrCode?: string | null;
   readableCode?: string | null;
   raw?: any;
+};
+
+export type Traveler = {
+  id: number;
+  name: string;
+  relation?: string | null;
+  dob?: string | null;
+  createdAt?: string | null;
+};
+
+export type AdminUserRow = {
+  id: string;
+  name: string;
+  phone: string;
+  email?: string | null;
+  status: string;
+  isLoyalty?: boolean;
+  isBlocked?: boolean;
+  createdAt?: string | null;
+};
+
+export type FeaturedLocationAdmin = {
+  id: number;
+  code: string;
+  name: string;
+  service_type?: string;
+  location_type?: string;
+  sort_order?: number;
+  is_popular?: boolean;
+  enabled?: boolean;
+};
+
+export type OrderItemSummary = {
+  id: number;
+  serviceType: string;
+  status: string;
+  providerOrderNo?: string | null;
+  countryCode?: string | null;
+  countryName?: string | null;
+  packageCode?: string | null;
+  packageName?: string | null;
+  quantity?: number;
+  salePriceMinor?: number | null;
+};
+
+export type OrderSummary = {
+  id: number;
+  orderNumber: string;
+  status: string;
+  currencyCode?: string | null;
+  totalMinor?: number | null;
+  paymentMethod?: string | null;
+  paymentProvider?: string | null;
+  bookedAt?: string | null;
+  createdAt?: string | null;
+  items: OrderItemSummary[];
 };

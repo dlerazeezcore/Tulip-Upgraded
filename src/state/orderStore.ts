@@ -1,71 +1,36 @@
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import type { CurrencyCode } from '@/data/currency';
-
-export type OrderLine = { label: string; value: string };
-
-export type Order = {
-  id: string;
-  date: string; // ISO
-  kind: 'esim' | 'flight' | 'hotel' | 'transfer' | 'car';
-  title: string;
-  subtitle: string;
-  iso?: string; // for a flag
-  amountUsd: number;
-  currencyCode: CurrencyCode;
-  paymentMethod: string;
-  status: 'paid' | 'pending' | 'refunded';
-  lines: OrderLine[];
-};
+import { getMyOrders } from '@/services/esim';
+import type { OrderSummary } from '@/services/types';
+import { useAuthStore } from '@/state/authStore';
 
 type OrderState = {
-  orders: Order[];
-  hydrated: boolean;
-  add: (o: Omit<Order, 'id' | 'date' | 'status'> & { status?: Order['status'] }) => Order;
-  hydrate: () => Promise<void>;
-};
-
-const KEY = 'tulip.orders';
-
-// Demo order so the order-history → detail flow is populated out of the box.
-const DEMO_ORDER: Order = {
-  id: 'ord_demo',
-  date: '2026-05-20T10:30:00.000Z',
-  kind: 'esim',
-  title: 'Japan eSIM',
-  subtitle: '5 GB · 30 days',
-  iso: 'JP',
-  amountUsd: 17,
-  currencyCode: 'USD',
-  paymentMethod: 'FIB',
-  status: 'paid',
-  lines: [
-    { label: 'Destination', value: 'Japan' },
-    { label: 'Plan', value: '5 GB · 30 days' },
-    { label: 'Type', value: 'Fixed data' },
-  ],
+  orders: OrderSummary[];
+  loading: boolean;
+  loaded: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  byId: (id: string | number) => OrderSummary | undefined;
 };
 
 export const useOrderStore = create<OrderState>((set, get) => ({
-  orders: [DEMO_ORDER],
-  hydrated: false,
-  add: (o) => {
-    const order: Order = {
-      ...o,
-      id: 'ord_' + Date.now(),
-      date: new Date().toISOString(),
-      status: o.status ?? 'paid',
-    };
-    const orders = [order, ...get().orders];
-    set({ orders });
-    AsyncStorage.setItem(KEY, JSON.stringify(orders)).catch(() => {});
-    return order;
-  },
-  hydrate: async () => {
+  orders: [],
+  loading: false,
+  loaded: false,
+  error: null,
+  byId: (id) => get().orders.find((o) => String(o.id) === String(id)),
+  refresh: async () => {
+    if (!useAuthStore.getState().isAuthed()) {
+      set({ orders: [], loaded: true, error: null });
+      return;
+    }
+    set({ loading: true, error: null });
     try {
-      const raw = await AsyncStorage.getItem(KEY);
-      if (raw) set({ orders: JSON.parse(raw) });
-    } catch {}
-    set({ hydrated: true });
+      const orders = await getMyOrders({ limit: 200 });
+      set({ orders, loaded: true });
+    } catch (e: any) {
+      set({ error: e?.message || 'Failed to load orders' });
+    } finally {
+      set({ loading: false });
+    }
   },
 }));

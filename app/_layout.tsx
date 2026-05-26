@@ -60,6 +60,7 @@ function ThemedStack() {
         <Stack.Screen name="admin/users" />
         <Stack.Screen name="admin/notifications" />
         <Stack.Screen name="admin/currency" />
+        <Stack.Screen name="admin/featured" />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       </Stack>
     </>
@@ -71,12 +72,12 @@ export default function RootLayout() {
   const hydrated = useThemeStore((s) => s.hydrated);
   const hydrateCurrency = useCurrencyStore((s) => s.hydrate);
   const hydrateAuth = useAuthStore((s) => s.hydrate);
-  const hydrateOrders = useOrderStore((s) => s.hydrate);
-  const hydrateTravelers = useTravelersStore((s) => s.hydrate);
   const hydrateLocale = useLocaleStore((s) => s.hydrate);
   const localeHydrated = useLocaleStore((s) => s.hydrated);
   const authUser = useAuthStore((s) => s.user);
   const refreshEsims = useEsimStore((s) => s.refresh);
+  const refreshOrders = useOrderStore((s) => s.refresh);
+  const refreshTravelers = useTravelersStore((s) => s.refresh);
 
   const [outfitLoaded, outfitError] = useOutfit({ Outfit_400Regular, Outfit_600SemiBold, Outfit_700Bold });
   const [jakartaLoaded, jakartaError] = useJakarta({
@@ -89,15 +90,15 @@ export default function RootLayout() {
     hydrate();
     hydrateCurrency();
     hydrateAuth();
-    hydrateOrders();
-    hydrateTravelers();
     hydrateLocale();
-  }, [hydrate, hydrateCurrency, hydrateAuth, hydrateOrders, hydrateTravelers, hydrateLocale]);
+  }, [hydrate, hydrateCurrency, hydrateAuth, hydrateLocale]);
 
-  // Load the signed-in user's eSIMs whenever auth state changes.
+  // Load the signed-in user's eSIMs, orders and travelers whenever auth changes.
   useEffect(() => {
     refreshEsims();
-  }, [authUser, refreshEsims]);
+    refreshOrders();
+    refreshTravelers();
+  }, [authUser, refreshEsims, refreshOrders, refreshTravelers]);
 
   // On web, font loading can occasionally fail or timeout; don't block initial render forever.
   const ready =

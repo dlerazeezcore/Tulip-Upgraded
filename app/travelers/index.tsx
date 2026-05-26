@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { ScrollView, View, Text, Pressable, TextInput, Modal } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { ScrollView, View, Text, Pressable, TextInput, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Plus, Pencil, Trash2, User, X } from 'lucide-react-native';
@@ -14,12 +14,17 @@ export default function Travelers() {
   const t = useTheme();
   const router = useRouter();
   const isWide = useIsWideWeb();
-  const { travelers, add, update, remove } = useTravelersStore();
+  const { travelers, add, update, remove, refresh } = useTravelersStore();
 
   const [editing, setEditing] = useState<Traveler | 'new' | null>(null);
   const [name, setName] = useState('');
   const [relation, setRelation] = useState('Primary');
   const [dob, setDob] = useState('');
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
 
   const openNew = () => {
     setEditing('new');
@@ -30,14 +35,27 @@ export default function Travelers() {
   const openEdit = (tr: Traveler) => {
     setEditing(tr);
     setName(tr.name);
-    setRelation(tr.relation);
-    setDob(tr.dob);
+    setRelation(tr.relation || 'Primary');
+    setDob(tr.dob || '');
   };
-  const save = () => {
-    if (!name.trim()) return;
-    if (editing === 'new') add({ name: name.trim(), relation, dob: dob.trim() });
-    else if (editing) update(editing.id, { name: name.trim(), relation, dob: dob.trim() });
-    setEditing(null);
+  const save = async () => {
+    if (!name.trim() || busy) return;
+    setBusy(true);
+    try {
+      if (editing === 'new') await add({ name: name.trim(), relation, dob: dob.trim() });
+      else if (editing) await update(editing.id, { name: name.trim(), relation, dob: dob.trim() });
+      setEditing(null);
+    } catch (e: any) {
+      Alert.alert('Error', e?.message || 'Could not save traveler');
+    } finally {
+      setBusy(false);
+    }
+  };
+  const onRemove = (id: number) => {
+    Alert.alert('Remove traveler', 'Remove this traveler?', [
+      { text: 'Cancel', style: 'cancel' },
+      { text: 'Remove', style: 'destructive', onPress: () => { remove(id).catch((e: any) => Alert.alert('Error', e?.message || 'Failed')); } },
+    ]);
   };
 
   const inputStyle = {
@@ -114,7 +132,7 @@ export default function Travelers() {
               <Pressable onPress={() => openEdit(tr)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                 <Pencil size={15} color={t.fg} />
               </Pressable>
-              <Pressable onPress={() => remove(tr.id)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => onRemove(tr.id)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
                 <Trash2 size={15} color={t.danger} />
               </Pressable>
             </View>
@@ -165,7 +183,7 @@ export default function Travelers() {
               <TextInput value={dob} onChangeText={setDob} placeholder="YYYY-MM-DD" placeholderTextColor={t.fgFaint} style={inputStyle} />
             </View>
 
-            <PrimaryButton label={editing === 'new' ? 'Add traveler' : 'Save changes'} onPress={save} style={{ marginTop: 4 }} />
+            <PrimaryButton label={busy ? 'Saving…' : editing === 'new' ? 'Add traveler' : 'Save changes'} onPress={save} style={{ marginTop: 4 }} />
           </Pressable>
         </Pressable>
       </Modal>

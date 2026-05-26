@@ -6,12 +6,11 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import {
-  Star, ChevronRight, CreditCard, User, Moon, Globe, Bell,
+  Star, ChevronRight, User, Moon, Globe, Bell,
   Coins, MessageCircle, Receipt, ShieldCheck,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStore } from '@/state/themeStore';
-import { USER } from '@/data/user';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { LanguagePicker } from '@/components/LanguagePicker';
@@ -90,6 +89,10 @@ export default function Profile() {
   const signOut = useAuthStore((s) => s.signOut);
   const isAdmin = !!user?.isAdmin;
   const travelerCount = useTravelersStore((s) => s.travelers.length);
+  const memberSince = user?.createdAt
+    ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
+    : null;
+  const tierLabel = user?.isLoyalty ? 'Loyalty' : 'Member';
 
   // ─── Hero ───
   const hero = (
@@ -118,7 +121,9 @@ export default function Profile() {
               <Text style={{ fontSize: 12, color: '#fff', opacity: 0.88 }}>{user.email ?? user.phone}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 999 }}>
                 <Star size={11} color="#fff" fill="#fff" />
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>{USER.tier} · Member since {USER.memberSince}</Text>
+                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+                  {tierLabel}{memberSince ? ` · Member since ${memberSince}` : ''}
+                </Text>
               </View>
             </View>
           </View>
@@ -149,21 +154,6 @@ export default function Profile() {
         last
         right={<ChevronRight size={16} color={t.fgFaint} />}
       />
-    </Section>
-  );
-
-  const paymentSection = (
-    <Section label="Payment methods">
-      {USER.payment.map((p, i) => (
-        <Row
-          key={p.id}
-          icon={<CreditCard size={16} color={t.fgMuted} />}
-          title={`${p.brand} •• ${p.last4}`}
-          sub={`Exp ${p.exp}${p.primary ? ' · Primary' : ''}`}
-          right={<ChevronRight size={16} color={t.fgFaint} />}
-          last={i === USER.payment.length - 1}
-        />
-      ))}
     </Section>
   );
 
@@ -216,10 +206,9 @@ export default function Profile() {
             <View style={{ flexDirection: 'row', gap: 20, alignItems: 'flex-start' }}>
               <View style={{ flex: 1, gap: 20 }}>
                 {travelersSection}
-                {paymentSection}
+                {preferencesSection}
               </View>
               <View style={{ flex: 1, gap: 20 }}>
-                {preferencesSection}
                 {accountSection}
                 {signOutBtn}
               </View>
@@ -227,7 +216,6 @@ export default function Profile() {
           ) : (
             <>
               {user && travelersSection}
-              {user && paymentSection}
               {preferencesSection}
               {accountSection}
               {signOutBtn}

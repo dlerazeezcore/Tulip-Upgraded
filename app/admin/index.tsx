@@ -1,26 +1,35 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
-import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck, MapPin } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
 import { useAuthStore } from '@/state/authStore';
 import { useIsWideWeb } from '@/lib/responsive';
-import { ADMIN_USERS } from '@/data/admin';
+import { getUsers, listFeaturedLocations } from '@/services/admin';
 
 export default function AdminHome() {
   const t = useTheme();
   const router = useRouter();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
   const isWide = useIsWideWeb();
+  const [userCount, setUserCount] = useState<number | null>(null);
+  const [featuredCount, setFeaturedCount] = useState<number | null>(null);
+
+  useEffect(() => {
+    if (!isAdmin) return;
+    getUsers({ limit: 200 }).then((u) => setUserCount(u.length)).catch(() => {});
+    listFeaturedLocations().then((f) => setFeaturedCount(f.length)).catch(() => {});
+  }, [isAdmin]);
 
   if (!isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   const cards = [
-    { id: 'users', title: 'Users', sub: `${ADMIN_USERS.length} signed up`, Icon: Users, color: '#1967D2', route: '/admin/users' },
+    { id: 'users', title: 'Users', sub: userCount === null ? 'View signups' : `${userCount} signed up`, Icon: Users, color: '#1967D2', route: '/admin/users' },
+    { id: 'featured', title: 'Popular destinations', sub: featuredCount === null ? 'Add, edit, remove' : `${featuredCount} configured`, Icon: MapPin, color: '#F59E0B', route: '/admin/featured' },
     { id: 'notif', title: 'Push notifications', sub: 'Compose & send', Icon: Bell, color: '#7C3AED', route: '/admin/notifications' },
-    { id: 'cur', title: 'Currency & markup', sub: 'Rates, markup, discounts', Icon: Coins, color: '#10B981', route: '/admin/currency' },
+    { id: 'cur', title: 'Exchange rate & markup', sub: 'USD→IQD rate, markup', Icon: Coins, color: '#10B981', route: '/admin/currency' },
   ];
 
   return (
@@ -39,20 +48,6 @@ export default function AdminHome() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, gap: 12, maxWidth: isWide ? 1000 : 780, width: '100%', alignSelf: 'center' }}>
-        <View
-          style={{
-            padding: 14,
-            borderRadius: 14,
-            backgroundColor: 'rgba(245,158,11,0.12)',
-            borderWidth: 1,
-            borderColor: 'rgba(245,158,11,0.3)',
-          }}
-        >
-          <Text style={{ fontSize: 12, color: t.warning, fontWeight: '700' }}>
-            Demo mode — data is mock. Live admin actions arrive with the backend.
-          </Text>
-        </View>
-
         <View style={{ flexDirection: isWide ? 'row' : 'column', flexWrap: 'wrap', marginHorizontal: isWide ? -6 : 0, gap: isWide ? 0 : 12 }}>
           {cards.map((c) => (
             <View key={c.id} style={{ width: isWide ? '33.333%' : '100%', padding: isWide ? 6 : 0 }}>

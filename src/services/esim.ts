@@ -5,6 +5,7 @@ import type {
   ExchangeSettings,
   FeaturedLocation,
   ManagedOrderResult,
+  OrderSummary,
   ProfileListResult,
   ProviderPackage,
 } from './types';
@@ -144,6 +145,11 @@ export function createManagedOrder(input: ManagedOrderInput): Promise<ManagedOrd
       customFields: input.customFields ?? {},
     },
   });
+}
+
+export async function getMyOrders(params: { limit?: number; offset?: number } = {}): Promise<OrderSummary[]> {
+  const res = await apiFetch(`${BASE}/orders/my`, { method: 'GET', query: params });
+  return unwrap<{ orders: OrderSummary[] }>(res).orders;
 }
 
 export function findTopUpPackages(iccid: string): Promise<ProviderPackage[]> {

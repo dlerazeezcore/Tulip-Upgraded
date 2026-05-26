@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View, Text, Pressable, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
@@ -8,9 +8,11 @@ import { ChevronLeft, ChevronRight, Search, Globe, MapPin } from 'lucide-react-n
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
-import { useMoney } from '@/lib/money';
+import { useIqdMoney } from '@/lib/pricing';
 import { useIsWideWeb } from '@/lib/responsive';
-import { ESIM_COUNTRIES, ESIM_REGIONS, POPULAR_COUNTRIES } from '@/data/esim';
+import { ESIM_COUNTRIES, ESIM_REGIONS } from '@/data/esim';
+import { getFeaturedLocations } from '@/services/esim';
+import type { FeaturedLocation } from '@/services/types';
 
 type Tab = 'countries' | 'regions';
 
@@ -19,10 +21,15 @@ const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 export default function EsimStore() {
   const t = useTheme();
   const router = useRouter();
-  const money = useMoney();
+  const money = useIqdMoney();
   const isWide = useIsWideWeb();
   const [tab, setTab] = useState<Tab>('countries');
   const [q, setQ] = useState('');
+  const [popular, setPopular] = useState<FeaturedLocation[]>([]);
+
+  useEffect(() => {
+    getFeaturedLocations('esim').then(setPopular).catch(() => setPopular([]));
+  }, []);
 
   const filteredCountries = useMemo(
     () => ESIM_COUNTRIES.filter((c) => c.name.toLowerCase().includes(q.trim().toLowerCase())),
@@ -82,44 +89,28 @@ export default function EsimStore() {
               />
             </View>
 
-            {/* Popular — photo cards (grid on web) */}
-            {q.trim() === '' && (
+            {/* Popular destinations — configured in the admin panel (DB-backed) */}
+            {q.trim() === '' && popular.length > 0 && (
               <View style={{ gap: 10 }}>
                 <Text style={{ fontFamily: t.font.display, fontSize: 16, fontWeight: '700', color: t.fg, letterSpacing: -0.3 }}>
                   Popular destinations
                 </Text>
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
-                  {POPULAR_COUNTRIES.map((c) => (
-                    <View key={c.iso} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
+                  {popular.map((c) => (
+                    <View key={c.code} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
                       <PressableScale
-                        onPress={() => router.push(`/esim-store/${c.iso}`)}
+                        onPress={() => router.push(`/esim-store/${c.code}`)}
                         scaleTo={0.98}
-                        style={{ height: 96, borderRadius: 16, overflow: 'hidden', ...t.shadow1 }}
+                        style={{
+                          flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16,
+                          backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1,
+                        }}
                       >
-                        <Image
-                          source={c.photo}
-                          placeholder={{ blurhash }}
-                          style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-                          contentFit="cover"
-                          transition={250}
-                        />
-                        <LinearGradient
-                          colors={['rgba(0,0,0,0.15)', 'rgba(0,0,0,0.62)']}
-                          start={{ x: 0, y: 0 }}
-                          end={{ x: 1, y: 0 }}
-                          style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16 }}
-                        >
-                          <Flag iso={c.iso} size={34} />
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: '#fff' }}>
-                              {c.name}
-                            </Text>
-                            <Text style={{ fontSize: 12, color: '#fff', opacity: 0.9, marginTop: 1 }}>
-                              From {money(c.from)}
-                            </Text>
-                          </View>
-                          <ChevronRight size={20} color="#fff" />
-                        </LinearGradient>
+                        <Flag iso={c.code} size={34} />
+                        <Text style={{ flex: 1, fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
+                          {c.name}
+                        </Text>
+                        <ChevronRight size={20} color={t.fgFaint} />
                       </PressableScale>
                     </View>
                   ))}

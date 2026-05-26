@@ -1,48 +1,56 @@
 import { create } from 'zustand';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { USER } from '@/data/user';
+import {
+  listTravelers,
+  createTraveler,
+  updateTraveler,
+  deleteTraveler,
+  type TravelerInput,
+} from '@/services/travelers';
+import type { Traveler } from '@/services/types';
+import { useAuthStore } from '@/state/authStore';
 
-export type Traveler = {
-  id: string;
-  name: string;
-  relation: string;
-  dob: string;
-};
+export type { Traveler };
 
 type TravelersState = {
   travelers: Traveler[];
-  hydrated: boolean;
-  add: (t: Omit<Traveler, 'id'>) => void;
-  update: (id: string, patch: Partial<Omit<Traveler, 'id'>>) => void;
-  remove: (id: string) => void;
-  hydrate: () => Promise<void>;
+  loading: boolean;
+  loaded: boolean;
+  error: string | null;
+  refresh: () => Promise<void>;
+  add: (t: TravelerInput) => Promise<void>;
+  update: (id: number, patch: TravelerInput) => Promise<void>;
+  remove: (id: number) => Promise<void>;
 };
 
-const KEY = 'tulip.travelers';
-
 export const useTravelersStore = create<TravelersState>((set, get) => ({
-  travelers: USER.travelers.map((t) => ({ ...t })),
-  hydrated: false,
-  add: (t) => {
-    const next = [...get().travelers, { ...t, id: 'tr_' + Date.now() }];
-    set({ travelers: next });
-    AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
-  },
-  update: (id, patch) => {
-    const next = get().travelers.map((t) => (t.id === id ? { ...t, ...patch } : t));
-    set({ travelers: next });
-    AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
-  },
-  remove: (id) => {
-    const next = get().travelers.filter((t) => t.id !== id);
-    set({ travelers: next });
-    AsyncStorage.setItem(KEY, JSON.stringify(next)).catch(() => {});
-  },
-  hydrate: async () => {
+  travelers: [],
+  loading: false,
+  loaded: false,
+  error: null,
+  refresh: async () => {
+    if (!useAuthStore.getState().isAuthed()) {
+      set({ travelers: [], loaded: true, error: null });
+      return;
+    }
+    set({ loading: true, error: null });
     try {
-      const raw = await AsyncStorage.getItem(KEY);
-      if (raw) set({ travelers: JSON.parse(raw) });
-    } catch {}
-    set({ hydrated: true });
+      set({ travelers: await listTravelers(), loaded: true });
+    } catch (e: any) {
+      set({ error: e?.message || 'Failed to load travelers' });
+    } finally {
+      set({ loading: false });
+    }
+  },
+  add: async (t) => {
+    await createTraveler(t);
+    await get().refresh();
+  },
+  update: async (id, patch) => {
+    await updateTraveler(id, patch);
+    await get().refresh();
+  },
+  remove: async (id) => {
+    await deleteTraveler(id);
+    await get().refresh();
   },
 }));

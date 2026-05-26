@@ -1,32 +1,45 @@
-import React, { useMemo } from 'react';
-import { ScrollView, View, Text, Pressable } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Receipt, Globe } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
-import { PressableScale } from '@/components/PressableScale';
 import { StatusPill } from '@/components/StatusPill';
-import { useOrderStore, type Order } from '@/state/orderStore';
-import { CURRENCIES, formatMoney } from '@/data/currency';
+import { useOrderStore } from '@/state/orderStore';
+import type { OrderSummary } from '@/services/types';
+import { formatIqd } from '@/lib/pricing';
 
+function orderDate(o: OrderSummary): string {
+  return o.bookedAt || o.createdAt || new Date().toISOString();
+}
 function monthLabel(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
 }
 function dayLabel(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
+function orderTitle(o: OrderSummary): string {
+  const it = o.items[0];
+  return it?.countryName ? `${it.countryName} eSIM` : 'eSIM order';
+}
 
 export default function Orders() {
   const t = useTheme();
   const router = useRouter();
   const orders = useOrderStore((s) => s.orders);
+  const loading = useOrderStore((s) => s.loading);
+  const loaded = useOrderStore((s) => s.loaded);
+  const refresh = useOrderStore((s) => s.refresh);
 
-  // Group newest-first orders by month, preserving order.
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
   const groups = useMemo(() => {
-    const out: { label: string; items: Order[] }[] = [];
+    const out: { label: string; items: OrderSummary[] }[] = [];
     for (const o of orders) {
-      const label = monthLabel(o.date);
+      const label = monthLabel(orderDate(o));
       const last = out[out.length - 1];
       if (last && last.label === label) last.items.push(o);
       else out.push({ label, items: [o] });
@@ -49,7 +62,9 @@ export default function Orders() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 20, maxWidth: 780, width: '100%', alignSelf: 'center' }}>
-        {orders.length === 0 ? (
+        {loading && !loaded ? (
+          <View style={{ paddingVertical: 60, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
+        ) : orders.length === 0 ? (
           <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 80, gap: 12 }}>
             <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
               <Receipt size={30} color={t.fgMuted} strokeWidth={2} />
@@ -64,42 +79,39 @@ export default function Orders() {
                 {g.label}
               </Text>
               <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
-                {g.items.map((o, i) => (
-                  <Pressable
-                    key={o.id}
-                    onPress={() => router.push(`/orders/${o.id}`)}
-                    style={({ pressed }) => ({
-                      flexDirection: 'row',
-                      alignItems: 'center',
-                      gap: 14,
-                      padding: 14,
-                      borderBottomWidth: i === g.items.length - 1 ? 0 : 1,
-                      borderBottomColor: t.border,
-                      opacity: pressed ? 0.85 : 1,
-                    })}
-                  >
-                    {o.iso ? <Flag iso={o.iso} size={38} /> : (
-                      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-                        <Globe size={20} color={t.primary} />
+                {g.items.map((o, i) => {
+                  const it = o.items[0];
+                  const completed = ['BOOKED', 'ACTIVE', 'COMPLETED', 'GOT_RESOURCE'].includes(String(o.status).toUpperCase());
+                  return (
+                    <Pressable
+                      key={o.id}
+                      onPress={() => router.push(`/orders/${o.id}`)}
+                      style={({ pressed }) => ({
+                        flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14,
+                        borderBottomWidth: i === g.items.length - 1 ? 0 : 1, borderBottomColor: t.border, opacity: pressed ? 0.85 : 1,
+                      })}
+                    >
+                      {it?.countryCode ? <Flag iso={it.countryCode} size={38} /> : (
+                        <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+                          <Globe size={20} color={t.primary} />
+                        </View>
+                      )}
+                      <View style={{ flex: 1 }}>
+                        <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 15, color: t.fg }}>{orderTitle(o)}</Text>
+                        {it?.packageName ? <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{it.packageName}</Text> : null}
+                        <Text style={{ fontSize: 11, color: t.fgFaint, marginTop: 2 }}>
+                          {dayLabel(orderDate(o))}{o.paymentMethod ? ` · ${o.paymentMethod}` : ''}
+                        </Text>
                       </View>
-                    )}
-                    <View style={{ flex: 1 }}>
-                      <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 15, color: t.fg }}>
-                        {o.title}
-                      </Text>
-                      <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{o.subtitle}</Text>
-                      <Text style={{ fontSize: 11, color: t.fgFaint, marginTop: 2 }}>
-                        {dayLabel(o.date)} · {o.paymentMethod}
-                      </Text>
-                    </View>
-                    <View style={{ alignItems: 'flex-end', gap: 6 }}>
-                      <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
-                        {formatMoney(o.amountUsd, CURRENCIES[o.currencyCode])}
-                      </Text>
-                      <StatusPill kind={o.status === 'paid' ? 'completed' : 'upcoming'} label={o.status} />
-                    </View>
-                  </Pressable>
-                ))}
+                      <View style={{ alignItems: 'flex-end', gap: 6 }}>
+                        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
+                          {formatIqd(o.totalMinor ?? 0)}
+                        </Text>
+                        <StatusPill kind={completed ? 'completed' : 'upcoming'} label={String(o.status).toLowerCase()} />
+                      </View>
+                    </Pressable>
+                  );
+                })}
               </View>
             </View>
           ))

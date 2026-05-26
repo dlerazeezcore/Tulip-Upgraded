@@ -142,5 +142,5 @@ export type PaymentMethod = { id: 'fib' | 'loyalty'; name: string; desc: string 
 
 export const PAYMENT_METHODS: PaymentMethod[] = [
   { id: 'fib', name: 'FIB', desc: 'First Iraqi Bank' },
-  { id: 'loyalty', name: 'Loyalty points', desc: 'Balance: 12,400 pts' },
+  { id: 'loyalty', name: 'Loyalty', desc: 'Pay with loyalty' },
 ];

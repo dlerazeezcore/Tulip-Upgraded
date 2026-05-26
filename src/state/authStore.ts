@@ -11,6 +11,8 @@ export type AuthUser = {
   email?: string;
   initials: string;
   isAdmin?: boolean;
+  isLoyalty?: boolean;
+  createdAt?: string | null;
   subjectType?: 'user' | 'admin';
 };
 
@@ -32,6 +34,8 @@ function userFromSession(s: AuthSession): AuthUser {
     email: s.email ?? undefined,
     initials: initials(s.name),
     isAdmin: !!s.isAdmin,
+    isLoyalty: !!s.isLoyalty,
+    createdAt: s.createdAt ?? null,
     subjectType: s.subjectType,
   };
 }
@@ -44,6 +48,8 @@ function userFromMe(m: AuthMe): AuthUser {
     email: m.email ?? undefined,
     initials: initials(m.name),
     isAdmin: m.subjectType === 'admin',
+    isLoyalty: !!m.isLoyalty,
+    createdAt: m.createdAt ?? null,
     subjectType: m.subjectType,
   };
 }

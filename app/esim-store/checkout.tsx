@@ -6,12 +6,11 @@ import { ChevronLeft, Check, Lock, Landmark, Gift, Globe } from 'lucide-react-na
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useMoney } from '@/lib/money';
+import { useIqdMoney, useIqdAmount } from '@/lib/pricing';
 import { useEsimCart } from '@/state/esimCart';
 import { useAuthStore } from '@/state/authStore';
 import { useEsimStore } from '@/state/esimStore';
 import { useOrderStore } from '@/state/orderStore';
-import { useCurrencyStore } from '@/state/currencyStore';
 import { useIsWideWeb } from '@/lib/responsive';
 import { PAYMENT_METHODS } from '@/data/esim';
 import { createManagedOrder } from '@/services/esim';
@@ -44,15 +43,15 @@ function SummaryRow({ label, value, strong }: { label: string; value: string; st
 export default function Checkout() {
   const t = useTheme();
   const router = useRouter();
-  const money = useMoney();
+  const money = useIqdMoney();
+  const iqdAmount = useIqdAmount();
   const { place, bundle, clear } = useEsimCart();
   const user = useAuthStore((s) => s.user);
+  const isAdmin = !!user?.isAdmin;
   const refreshEsims = useEsimStore((s) => s.refresh);
-  const addOrder = useOrderStore((s) => s.add);
-  const currencyCode = useCurrencyStore((s) => s.code);
-  const iqdPerUsd = useCurrencyStore((s) => s.iqdPerUsd);
+  const refreshOrders = useOrderStore((s) => s.refresh);
   const isWide = useIsWideWeb();
-  const [method, setMethod] = useState<'fib' | 'loyalty'>('fib');
+  const [method, setMethod] = useState<'fib' | 'loyalty'>('loyalty');
   const [busy, setBusy] = useState(false);
 
   const header = (
@@ -111,23 +110,6 @@ export default function Checkout() {
     );
   }
 
-  const recordLocalOrder = () => {
-    addOrder({
-      kind: 'esim',
-      title: `${place.name} eSIM`,
-      subtitle: `${planLabel} · ${bundle.days} days`,
-      iso: flagIso,
-      amountUsd: bundle.usd,
-      currencyCode,
-      paymentMethod: PAYMENT_METHODS.find((p) => p.id === method)!.name,
-      lines: [
-        { label: 'Destination', value: place.name },
-        { label: 'Plan', value: `${planLabel} · ${bundle.days} days` },
-        { label: 'Type', value: bundle.type === 'unlimited' ? 'Unlimited' : 'Fixed data' },
-      ],
-    });
-  };
-
   const placeOrder = async (payment: { method: 'loyalty' | 'fib'; status?: string; transactionId?: string }) => {
     const providerPriceMinor = bundle.providerPriceMinor ?? Math.round(bundle.usd * 10000);
     await createManagedOrder({
@@ -144,16 +126,20 @@ export default function Checkout() {
       paymentMethod: payment.method,
       paymentStatus: payment.status,
       paymentTransactionId: payment.transactionId,
-      salePriceMinor: Math.round(bundle.usd * iqdPerUsd),
+      salePriceMinor: iqdAmount(bundle.usd),
     });
-    recordLocalOrder();
     clear();
     await refreshEsims();
+    await refreshOrders();
     router.replace('/manage/esim');
   };
 
   const onPay = async () => {
     if (busy) return;
+    if (isAdmin) {
+      Alert.alert('Use a customer account', 'Purchasing requires a customer (non-admin) account. Please sign in as a user to buy.');
+      return;
+    }
     if (!bundle.packageCode) {
       Alert.alert('Plan unavailable', 'This plan can\'t be purchased yet. Please pick a country plan.');
       return;
@@ -185,7 +171,7 @@ export default function Checkout() {
       }
 
       // FIB: create payment, open the FIB app, poll for confirmation, then book.
-      const amountIqd = Math.round(bundle.usd * iqdPerUsd);
+      const amountIqd = iqdAmount(bundle.usd);
       const payment = await createFibPayment({
         amount: amountIqd,
         currency: 'IQD',
@@ -267,6 +253,11 @@ export default function Checkout() {
               <SummaryRow label="Total" value={money(bundle.usd)} strong />
             </View>
 
+            {isAdmin && (
+              <Text style={{ fontSize: 12, color: t.warning, textAlign: 'center' }}>
+                Purchasing requires a customer account. Sign in as a user to buy.
+              </Text>
+            )}
             <PrimaryButton
               label={busy ? 'Processing…' : `Pay ${money(bundle.usd)}`}
               icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}

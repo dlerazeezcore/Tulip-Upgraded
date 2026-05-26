@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
@@ -8,9 +8,10 @@ import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useOrderStore } from '@/state/orderStore';
-import { CURRENCIES, formatMoney } from '@/data/currency';
+import { formatIqd } from '@/lib/pricing';
 
-function fmtDateTime(iso: string) {
+function fmtDateTime(iso?: string | null) {
+  if (!iso) return '—';
   return new Date(iso).toLocaleString(undefined, {
     year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
   });
@@ -20,9 +21,15 @@ export default function OrderDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const t = useTheme();
   const router = useRouter();
-  const order = useOrderStore((s) => s.orders.find((o) => o.id === id));
+  const order = useOrderStore((s) => s.byId(id));
+  const refresh = useOrderStore((s) => s.refresh);
 
-  const money = (usd: number) => (order ? formatMoney(usd, CURRENCIES[order.currencyCode]) : '');
+  useEffect(() => {
+    if (!order) refresh();
+  }, [order, refresh]);
+
+  const item = order?.items[0];
+  const completed = order ? ['BOOKED', 'ACTIVE', 'COMPLETED', 'GOT_RESOURCE'].includes(String(order.status).toUpperCase()) : false;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -45,61 +52,55 @@ export default function OrderDetail() {
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
-          {/* Header card */}
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
-            {order.iso ? <Flag iso={order.iso} size={42} /> : <Globe size={32} color={t.primary} />}
+            {item?.countryCode ? <Flag iso={item.countryCode} size={42} /> : <Globe size={32} color={t.primary} />}
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>{order.title}</Text>
-              <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{order.subtitle}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>
+                {item?.countryName ? `${item.countryName} eSIM` : 'eSIM order'}
+              </Text>
+              {item?.packageName ? <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{item.packageName}</Text> : null}
               <View style={{ marginTop: 6 }}>
-                <StatusPill kind={order.status === 'paid' ? 'completed' : 'upcoming'} label={order.status} />
+                <StatusPill kind={completed ? 'completed' : 'upcoming'} label={String(order.status).toLowerCase()} />
               </View>
             </View>
           </View>
 
-          {/* Details */}
           <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
-            {[
-              ['Order ID', order.id.replace('ord_', '#')],
-              ['Date', fmtDateTime(order.date)],
-              ['Payment method', order.paymentMethod],
-              ['Currency', `${CURRENCIES[order.currencyCode].name} (${order.currencyCode})`],
-              ...order.lines.map((l) => [l.label, l.value] as [string, string]),
-            ].map(([k, v], i, arr) => (
+            {([
+              ['Order number', order.orderNumber],
+              ['Date', fmtDateTime(order.bookedAt || order.createdAt)],
+              ['Payment method', order.paymentMethod || '—'],
+              ['Destination', item?.countryName || '—'],
+              ['Plan', item?.packageName || item?.packageCode || '—'],
+              ['Quantity', String(item?.quantity ?? 1)],
+            ] as [string, string][]).map(([k, v], i, arr) => (
               <View
                 key={k + i}
                 style={{
-                  flexDirection: 'row',
-                  justifyContent: 'space-between',
-                  paddingVertical: 13,
-                  paddingHorizontal: 14,
-                  borderBottomWidth: i < arr.length - 1 ? 1 : 0,
-                  borderBottomColor: t.border,
+                  flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 14,
+                  borderBottomWidth: i < arr.length - 1 ? 1 : 0, borderBottomColor: t.border,
                 }}
               >
                 <Text style={{ fontSize: 13, color: t.fgMuted }}>{k}</Text>
-                <Text style={{ fontSize: 13, color: t.fg, fontWeight: '600', fontFamily: t.font.bodyMedium, maxWidth: '60%', textAlign: 'right' }}>
-                  {v}
-                </Text>
+                <Text style={{ fontSize: 13, color: t.fg, fontWeight: '600', fontFamily: t.font.bodyMedium, maxWidth: '60%', textAlign: 'right' }}>{v}</Text>
               </View>
             ))}
           </View>
 
-          {/* Total */}
           <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 15, color: t.fg }}>Total paid</Text>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.fg }}>{money(order.amountUsd)}</Text>
+              <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 15, color: t.fg }}>Total</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.fg }}>{formatIqd(order.totalMinor ?? 0)}</Text>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
-              <Check size={14} color={t.success} strokeWidth={2.5} />
-              <Text style={{ fontSize: 12, color: t.success, fontWeight: '600' }}>Payment successful</Text>
-            </View>
+            {completed && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
+                <Check size={14} color={t.success} strokeWidth={2.5} />
+                <Text style={{ fontSize: 12, color: t.success, fontWeight: '600' }}>Order confirmed</Text>
+              </View>
+            )}
           </View>
 
-          {order.kind === 'esim' && (
-            <PrimaryButton label="Manage eSIM" onPress={() => router.replace('/manage/esim')} />
-          )}
+          <PrimaryButton label="Manage eSIM" onPress={() => router.replace('/manage/esim')} />
         </ScrollView>
       )}
     </SafeAreaView>
