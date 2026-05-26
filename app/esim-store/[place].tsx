@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View, Text, Pressable, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Globe, Check, Infinity as InfinityIcon, X, ArrowRight } from 'lucide-react-native';
+import { ChevronLeft, Globe, Check, Infinity as InfinityIcon, X, ArrowRight, Clock } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
@@ -123,9 +123,21 @@ export default function PlaceDetail() {
         ) : (
           groups.map((g) => (
             <View key={g.days} style={{ gap: 10 }}>
-              <Text style={{ fontFamily: t.font.display, fontSize: 15, fontWeight: '700', color: t.fg, letterSpacing: -0.2 }}>
-                {g.days === 1 ? '1-day plans' : `${g.days}-day plans`}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 }}>
+                <View
+                  style={{
+                    flexDirection: 'row', alignItems: 'center', gap: 6,
+                    paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999,
+                    backgroundColor: t.brand.blue50, borderWidth: 1, borderColor: t.brand.blue100,
+                  }}
+                >
+                  <Clock size={13} color={t.primary} strokeWidth={2.4} />
+                  <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '800', fontSize: 12, color: t.primary, letterSpacing: 0.3 }}>
+                    {g.days === 1 ? '1 DAY' : `${g.days} DAYS`}
+                  </Text>
+                </View>
+                <View style={{ flex: 1, height: 1, backgroundColor: t.border }} />
+              </View>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
                 {g.items.map((b) => {
                   const isSelected = selected?.id === b.id;

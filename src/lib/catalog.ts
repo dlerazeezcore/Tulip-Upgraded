@@ -26,12 +26,17 @@ export function packageToBundle(p: ProviderPackage, placeId: string): Bundle {
 }
 
 export function packagesToBundles(packages: ProviderPackage[], placeId: string): Bundle[] {
-  const seen = new Set<string>();
-  const out: Bundle[] = [];
+  // The provider returns many coverage/quality variants for the same data+duration
+  // (e.g. ~9 "1GB/Day" options). Keep only the cheapest per (type, days, GB) so the
+  // customer sees one clean option per size — collapses 100+ rows to ~20.
+  const best = new Map<string, Bundle>();
   for (const p of packages) {
-    if (!p?.packageCode || seen.has(p.packageCode)) continue;
-    seen.add(p.packageCode);
-    out.push(packageToBundle(p, placeId));
+    if (!p?.packageCode) continue;
+    const b = packageToBundle(p, placeId);
+    if (b.days <= 0) continue;
+    const key = `${b.type}-${b.days}-${b.gb}`;
+    const cur = best.get(key);
+    if (!cur || b.usd < cur.usd) best.set(key, b);
   }
-  return out.sort((a, b) => a.usd - b.usd);
+  return [...best.values()].sort((a, b) => a.usd - b.usd);
 }

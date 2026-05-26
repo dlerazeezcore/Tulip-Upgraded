@@ -14,7 +14,12 @@ import { ESIM_REGIONS } from '@/data/esim';
 import { getFeaturedLocations, getCountries, type LocationCountry } from '@/services/esim';
 import type { FeaturedLocation } from '@/services/types';
 
-type Tab = 'countries' | 'regions';
+type Tab = 'popular' | 'countries' | 'regions';
+const TABS: { id: Tab; label: string }[] = [
+  { id: 'popular', label: 'Popular' },
+  { id: 'countries', label: 'Countries' },
+  { id: 'regions', label: 'Regions' },
+];
 
 const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 
@@ -23,7 +28,7 @@ export default function EsimStore() {
   const router = useRouter();
   const money = useIqdMoney();
   const isWide = useIsWideWeb();
-  const [tab, setTab] = useState<Tab>('countries');
+  const [tab, setTab] = useState<Tab>('popular');
   const [q, setQ] = useState('');
   const [popular, setPopular] = useState<FeaturedLocation[]>([]);
   const [countries, setCountries] = useState<LocationCountry[]>([]);
@@ -41,16 +46,22 @@ export default function EsimStore() {
     if (router.canGoBack()) router.back();
     else router.replace('/(tabs)/services');
   };
-
   const openPlace = (code: string, name: string) =>
     router.push(`/esim-store/${code}?name=${encodeURIComponent(name)}`);
 
+  // Resolve full country names (provider list) for popular codes like "TR" -> "Türkiye".
+  const nameByCode = useMemo(() => {
+    const m: Record<string, string> = {};
+    for (const c of countries) m[c.code] = c.name;
+    return m;
+  }, [countries]);
+
   const query = q.trim().toLowerCase();
-  const matches = useMemo(
+  const filteredCountries = useMemo(
     () =>
       query
         ? countries.filter((c) => c.name.toLowerCase().includes(query) || c.code.toLowerCase().includes(query))
-        : [],
+        : countries,
     [countries, query],
   );
 
@@ -75,23 +86,50 @@ export default function EsimStore() {
         keyboardShouldPersistTaps="handled"
       >
         <View style={{ flexDirection: 'row', backgroundColor: t.bgSunken, borderRadius: 12, padding: 4 }}>
-          {(['countries', 'regions'] as Tab[]).map((id) => {
-            const on = id === tab;
+          {TABS.map((tb) => {
+            const on = tb.id === tab;
             return (
               <Pressable
-                key={id}
-                onPress={() => setTab(id)}
+                key={tb.id}
+                onPress={() => setTab(tb.id)}
                 style={{ flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: on ? t.bgElev : 'transparent', ...(on ? t.shadow1 : {}) }}
               >
                 <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 13, color: on ? t.fg : t.fgMuted }}>
-                  {id === 'countries' ? 'Countries' : 'Regions'}
+                  {tb.label}
                 </Text>
               </Pressable>
             );
           })}
         </View>
 
-        {tab === 'countries' ? (
+        {tab === 'popular' && (
+          <View style={{ gap: 10 }}>
+            {popular.length === 0 ? (
+              <Text style={{ fontSize: 13, color: t.fgMuted }}>No popular destinations set. Use the Countries tab.</Text>
+            ) : (
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
+                {popular.map((c) => {
+                  const full = nameByCode[c.code.toUpperCase()] ?? c.name;
+                  return (
+                    <View key={c.code} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
+                      <PressableScale
+                        onPress={() => openPlace(c.code, full)}
+                        scaleTo={0.98}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
+                      >
+                        <Flag iso={c.code} size={34} />
+                        <Text style={{ flex: 1, fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{full}</Text>
+                        <ChevronRight size={20} color={t.fgFaint} />
+                      </PressableScale>
+                    </View>
+                  );
+                })}
+              </View>
+            )}
+          </View>
+        )}
+
+        {tab === 'countries' && (
           <>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: t.bgSunken }}>
               <Search size={18} color={t.fgMuted} />
@@ -104,56 +142,30 @@ export default function EsimStore() {
                 style={{ flex: 1, fontSize: 14, color: t.fg, fontFamily: t.font.bodyMedium, paddingVertical: 2 }}
               />
             </View>
-
-            {query === '' ? (
-              /* Default: only popular destinations (from the admin/DB). */
-              <View style={{ gap: 10 }}>
-                <Text style={{ fontFamily: t.font.display, fontSize: 16, fontWeight: '700', color: t.fg, letterSpacing: -0.3 }}>
-                  Popular destinations
-                </Text>
-                {popular.length === 0 ? (
-                  <Text style={{ fontSize: 13, color: t.fgMuted }}>Search above to find any country.</Text>
-                ) : (
-                  <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
-                    {popular.map((c) => (
-                      <View key={c.code} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
-                        <PressableScale
-                          onPress={() => openPlace(c.code, c.name)}
-                          scaleTo={0.98}
-                          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
-                        >
-                          <Flag iso={c.code} size={34} />
-                          <Text style={{ flex: 1, fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{c.name}</Text>
-                          <ChevronRight size={20} color={t.fgFaint} />
-                        </PressableScale>
-                      </View>
-                    ))}
-                  </View>
-                )}
-              </View>
-            ) : loadingCountries ? (
+            {loadingCountries ? (
               <View style={{ paddingVertical: 30, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
             ) : (
-              /* Search results across all provider countries. */
               <View style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
-                {matches.map((c, i) => (
+                {filteredCountries.map((c, i) => (
                   <Pressable
                     key={c.code}
                     onPress={() => openPlace(c.code, c.name)}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderBottomWidth: i === matches.length - 1 ? 0 : 1, borderBottomColor: t.border }}
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderBottomWidth: i === filteredCountries.length - 1 ? 0 : 1, borderBottomColor: t.border }}
                   >
                     <Flag iso={c.code} size={28} />
                     <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 14, color: t.fg }}>{c.name}</Text>
                     <ChevronRight size={16} color={t.fgFaint} />
                   </Pressable>
                 ))}
-                {matches.length === 0 && (
+                {filteredCountries.length === 0 && (
                   <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20 }}>No countries match "{q}"</Text>
                 )}
               </View>
             )}
           </>
-        ) : (
+        )}
+
+        {tab === 'regions' && (
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -6 : 0, gap: isWide ? 0 : 12 }}>
             {ESIM_REGIONS.map((r) => (
               <View key={r.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 6 : 0 }}>
