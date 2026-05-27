@@ -1,0 +1,184 @@
+name: iOS App Store Connect
+
+# Builds the Expo app for iOS and (optionally) uploads it to TestFlight.
+#
+# This app uses Expo's managed workflow (no committed `ios/` project), so the
+# native Xcode project is generated on the runner via `expo prebuild`. That is
+# the key difference from a Capacitor app, which commits `ios/App.xcodeproj`.
+#
+# Required GitHub config (Settings -> Secrets and variables -> Actions):
+#   Secrets:
+#     APPSTORE_CERTIFICATES_FILE_BASE64  base64 of the Apple Distribution .p12
+#     APPSTORE_CERTIFICATES_PASSWORD     password for that .p12
+#     KEYCHAIN_PASSWORD                  any throwaway password for the CI keychain
+#     APPSTORE_API_PRIVATE_KEY           contents of the App Store Connect API key (.p8)
+#   Variables:
+#     APPSTORE_API_KEY_ID                App Store Connect API Key ID
+#     APPSTORE_ISSUER_ID                 App Store Connect Issuer ID
+
+on:
+  workflow_dispatch:
+    inputs:
+      upload_to_testflight:
+        description: Upload exported IPA to TestFlight/App Store Connect
+        required: true
+        default: false
+        type: boolean
+      bundle_id:
+        description: iOS bundle identifier
+        required: true
+        default: com.tulip.booking
+        type: string
+      team_id:
+        description: Apple Developer Team ID
+        required: true
+        default: LFF7L83D75
+        type: string
+      runner:
+        description: macOS runner image (Xcode must be compatible with React Native 0.74)
+        required: true
+        default: macos-15
+        type: choice
+        options:
+          - macos-15
+          - macos-14
+          - macos-26
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-upload:
+    runs-on: ${{ inputs.runner }}
+    timeout-minutes: 90
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Show Xcode and SDK versions
+        run: |
+          xcodebuild -version
+          xcrun --sdk iphoneos --show-sdk-version
+
+      - name: Install JS dependencies
+        run: npm ci
+
+      - name: Expo prebuild (generate native iOS project)
+        run: npx expo prebuild --platform ios --clean --no-install
+        env:
+          EXPO_NO_TELEMETRY: "1"
+          CI: "1"
+
+      - name: Install CocoaPods
+        run: pod install --project-directory=ios
+
+      - name: Import signing certificates
+        uses: apple-actions/import-codesign-certs@v7
+        with:
+          p12-file-base64: ${{ secrets.APPSTORE_CERTIFICATES_FILE_BASE64 }}
+          p12-password: ${{ secrets.APPSTORE_CERTIFICATES_PASSWORD }}
+          keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
+
+      - name: Write App Store Connect API key file
+        id: asc_key
+        run: |
+          ASC_KEY_PATH="$RUNNER_TEMP/AuthKey_${{ vars.APPSTORE_API_KEY_ID }}.p8"
+          cat > "$ASC_KEY_PATH" <<'KEY'
+          ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          KEY
+          echo "path=$ASC_KEY_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Resolve workspace and scheme
+        id: xc
+        run: |
+          WORKSPACE="$(ls -d ios/*.xcworkspace | head -n1)"
+          SCHEME="$(basename "$WORKSPACE" .xcworkspace)"
+          echo "workspace=$WORKSPACE" >> "$GITHUB_OUTPUT"
+          echo "scheme=$SCHEME" >> "$GITHUB_OUTPUT"
+          echo "Resolved workspace=$WORKSPACE scheme=$SCHEME"
+
+      - name: Create export options
+        run: |
+          cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
+          <?xml version="1.0" encoding="UTF-8"?>
+          <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+          <plist version="1.0">
+          <dict>
+            <key>method</key>
+            <string>app-store</string>
+            <key>signingStyle</key>
+            <string>automatic</string>
+            <key>teamID</key>
+            <string>${{ inputs.team_id }}</string>
+            <key>uploadSymbols</key>
+            <true/>
+            <key>compileBitcode</key>
+            <false/>
+          </dict>
+          PLIST
+          # close the plist (kept out of the heredoc to avoid quoting issues)
+          echo "</plist>" >> "$RUNNER_TEMP/ExportOptions.plist"
+
+      - name: Archive iOS app
+        run: |
+          xcodebuild \
+            -workspace "${{ steps.xc.outputs.workspace }}" \
+            -scheme "${{ steps.xc.outputs.scheme }}" \
+            -configuration Release \
+            -destination "generic/platform=iOS" \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "${{ steps.asc_key.outputs.path }}" \
+            -authenticationKeyID "${{ vars.APPSTORE_API_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ vars.APPSTORE_ISSUER_ID }}" \
+            DEVELOPMENT_TEAM="${{ inputs.team_id }}" \
+            PRODUCT_BUNDLE_IDENTIFIER="${{ inputs.bundle_id }}" \
+            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CODE_SIGN_STYLE=Automatic \
+            clean archive
+
+      - name: Export IPA
+        run: |
+          xcodebuild \
+            -exportArchive \
+            -archivePath "$RUNNER_TEMP/App.xcarchive" \
+            -exportPath "$RUNNER_TEMP/export" \
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
+            -allowProvisioningUpdates \
+            -authenticationKeyPath "${{ steps.asc_key.outputs.path }}" \
+            -authenticationKeyID "${{ vars.APPSTORE_API_KEY_ID }}" \
+            -authenticationKeyIssuerID "${{ vars.APPSTORE_ISSUER_ID }}"
+
+      - name: Resolve IPA path
+        id: ipa
+        run: |
+          IPA_PATH="$(find "$RUNNER_TEMP/export" -maxdepth 1 -name "*.ipa" | head -n 1)"
+          if [ -z "$IPA_PATH" ]; then
+            echo "No IPA found in $RUNNER_TEMP/export"
+            exit 1
+          fi
+          echo "path=$IPA_PATH" >> "$GITHUB_OUTPUT"
+
+      - name: Upload IPA artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ios-ipa
+          path: ${{ steps.ipa.outputs.path }}
+
+      - name: Upload to TestFlight
+        if: ${{ inputs.upload_to_testflight }}
+        uses: apple-actions/upload-testflight-build@v5
+        with:
+          app-path: ${{ steps.ipa.outputs.path }}
+          issuer-id: ${{ vars.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ vars.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+          app-type: ios
+          wait-for-processing: true
