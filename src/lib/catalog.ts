@@ -25,12 +25,30 @@ export function packageToBundle(p: ProviderPackage, placeId: string): Bundle {
   };
 }
 
-export function packagesToBundles(packages: ProviderPackage[], placeId: string): Bundle[] {
+/** True when a package covers exactly one country, equal to `code`. */
+function isSingleCountry(p: ProviderPackage, code: string): boolean {
+  const parts = String(p.location ?? '')
+    .split(',')
+    .map((s) => s.trim().toUpperCase())
+    .filter(Boolean);
+  return parts.length === 1 && parts[0] === code.toUpperCase();
+}
+
+export function packagesToBundles(
+  packages: ProviderPackage[],
+  placeId: string,
+  opts: { countryCode?: string } = {},
+): Bundle[] {
+  // On a country page, show only plans specific to that country (exclude regional/
+  // multi-country bundles the country is merely part of). Regions pass no countryCode.
+  const filtered = opts.countryCode
+    ? packages.filter((p) => isSingleCountry(p, opts.countryCode!))
+    : packages;
   // The provider returns many coverage/quality variants for the same data+duration
   // (e.g. ~9 "1GB/Day" options). Keep only the cheapest per (type, days, GB) so the
   // customer sees one clean option per size — collapses 100+ rows to ~20.
   const best = new Map<string, Bundle>();
-  for (const p of packages) {
+  for (const p of filtered) {
     if (!p?.packageCode) continue;
     const b = packageToBundle(p, placeId);
     if (b.days <= 0) continue;

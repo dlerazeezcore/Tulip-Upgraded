@@ -44,7 +44,9 @@ export default function PlaceDetail() {
     setLoading(true);
     queryPackages({ locationCode })
       .then((pkgs) => {
-        if (!cancelled) setBundles(packagesToBundles(pkgs, place as string));
+        if (!cancelled) {
+          setBundles(packagesToBundles(pkgs, place as string, { countryCode: isRegion ? undefined : locationCode }));
+        }
       })
       .catch(() => {
         if (!cancelled) setBundles([]);

@@ -1,5 +1,5 @@
-import React from 'react';
-import { ScrollView, View, Text, Pressable, Linking, useWindowDimensions, Platform } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, Text, Pressable, Linking, useWindowDimensions, Platform, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { Image } from 'expo-image';
@@ -7,7 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import {
   Star, ChevronRight, User, Moon, Globe, Bell,
-  Coins, MessageCircle, Receipt, ShieldCheck,
+  Coins, MessageCircle, Receipt, ShieldCheck, UserCog, X, Trash2,
 } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useThemeStore } from '@/state/themeStore';
@@ -87,8 +87,49 @@ export default function Profile() {
   const language = useLocaleStore((s) => s.language);
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+  const updateProfile = useAuthStore((s) => s.updateProfile);
+  const deleteAccount = useAuthStore((s) => s.deleteAccount);
   const isAdmin = !!user?.isAdmin;
   const travelerCount = useTravelersStore((s) => s.travelers.length);
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editBusy, setEditBusy] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const openEdit = () => {
+    setEditName(user?.name ?? '');
+    setEditEmail(user?.email ?? '');
+    setEditError(null);
+    setEditOpen(true);
+  };
+  const onSaveProfile = async () => {
+    if (editBusy) return;
+    setEditBusy(true);
+    setEditError(null);
+    try {
+      await updateProfile({ name: editName.trim(), email: editEmail.trim() || null });
+      setEditOpen(false);
+    } catch (e: any) {
+      setEditError(e?.message || 'Could not save changes');
+    } finally {
+      setEditBusy(false);
+    }
+  };
+  const onDeleteAccount = async () => {
+    if (editBusy) return;
+    setEditBusy(true);
+    try {
+      await deleteAccount();
+      setEditOpen(false);
+      router.replace('/(tabs)/profile');
+    } catch (e: any) {
+      setEditError(e?.message || 'Could not delete account');
+    } finally {
+      setEditBusy(false);
+    }
+  };
   const memberSince = user?.createdAt
     ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
     : null;
@@ -168,12 +209,56 @@ export default function Profile() {
 
   const accountSection = (
     <Section label="Account & support">
-      {isAdmin && (
-        <Row icon={<ShieldCheck size={16} color={t.primary} />} title="Admin panel" sub="Users · notifications · currency" onPress={() => router.push('/admin')} right={<ChevronRight size={16} color={t.fgFaint} />} />
+      {user && (
+        <Row icon={<UserCog size={16} color={t.fgMuted} />} title="Edit profile" sub="Name, email" onPress={openEdit} right={<ChevronRight size={16} color={t.fgFaint} />} />
       )}
-      <Row icon={<Receipt size={16} color={t.fgMuted} />} title="Order history" sub="eSIMs, stays, flights" onPress={() => router.push('/orders')} right={<ChevronRight size={16} color={t.fgFaint} />} />
+      {isAdmin && (
+        <Row icon={<ShieldCheck size={16} color={t.primary} />} title="Admin panel" sub="Users · orders · currency" onPress={() => router.push('/admin')} right={<ChevronRight size={16} color={t.fgFaint} />} />
+      )}
+      <Row icon={<Receipt size={16} color={t.fgMuted} />} title="Order history" sub="Your eSIM orders" onPress={() => router.push('/orders')} right={<ChevronRight size={16} color={t.fgFaint} />} />
       <Row icon={<MessageCircle size={16} color={t.fgMuted} />} title="Support" sub="Chat with us on WhatsApp" onPress={() => Linking.openURL('https://wa.me/9647507201111')} right={<ChevronRight size={16} color={t.fgFaint} />} last />
     </Section>
+  );
+
+  const editModal = (
+    <Modal visible={editOpen} transparent animationType="slide" onRequestClose={() => setEditOpen(false)}>
+      <Pressable onPress={() => setEditOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Edit profile</Text>
+            <Pressable onPress={() => setEditOpen(false)}><X size={20} color={t.fgMuted} /></Pressable>
+          </View>
+
+          <View style={{ gap: 6 }}>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Full name</Text>
+            <TextInput value={editName} onChangeText={setEditName} placeholder="Your name" placeholderTextColor={t.fgFaint}
+              style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }} />
+          </View>
+
+          <View style={{ gap: 6 }}>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Email (optional)</Text>
+            <TextInput value={editEmail} onChangeText={setEditEmail} placeholder="you@example.com" placeholderTextColor={t.fgFaint} autoCapitalize="none" keyboardType="email-address"
+              style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }} />
+          </View>
+
+          <View style={{ gap: 6 }}>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Phone (cannot be changed)</Text>
+            <View style={{ backgroundColor: t.bgSunken, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13 }}>
+              <Text style={{ fontSize: 15, color: t.fgMuted, fontFamily: t.font.bodyMedium }}>{user?.phone}</Text>
+            </View>
+          </View>
+
+          {editError && <Text style={{ fontSize: 12, color: t.danger }}>{editError}</Text>}
+
+          <PrimaryButton label={editBusy ? 'Saving…' : 'Save changes'} onPress={onSaveProfile} />
+
+          <Pressable onPress={onDeleteAccount} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12 }}>
+            <Trash2 size={15} color={t.danger} />
+            <Text style={{ color: t.danger, fontWeight: '700', fontSize: 13 }}>Delete my account</Text>
+          </Pressable>
+        </Pressable>
+      </Pressable>
+    </Modal>
   );
 
   const signOutBtn = user ? (
@@ -225,6 +310,7 @@ export default function Profile() {
           {footer}
         </ScrollView>
       </AnimatedScreen>
+      {editModal}
     </SafeAreaView>
   );
 }

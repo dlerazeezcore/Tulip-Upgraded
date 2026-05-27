@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { UserPlus, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useAuthStore } from '@/state/authStore';
-import { AuthShell, AuthSegmented, Field } from '@/components/AuthShell';
+import { AuthShell, AuthSegmented, Field, PasswordField } from '@/components/AuthShell';
 import { CountryPhoneField } from '@/components/CountryPhoneField';
 import { OtpInput } from '@/components/OtpInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -90,12 +90,11 @@ export default function SignUp() {
 
       {mode === 'password' ? (
         <>
-          <Field
+          <PasswordField
             label="Password"
             value={password}
             onChangeText={setPassword}
             placeholder="Create a password (min 8 chars)"
-            secureTextEntry
           />
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
           <PrimaryButton

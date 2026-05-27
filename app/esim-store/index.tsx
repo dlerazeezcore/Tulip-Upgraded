@@ -1,17 +1,13 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight, Search, Globe, MapPin } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Search, Globe } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
-import { useIqdMoney } from '@/lib/pricing';
 import { useIsWideWeb } from '@/lib/responsive';
-import { ESIM_REGIONS } from '@/data/esim';
-import { getFeaturedLocations, getCountries, type LocationCountry } from '@/services/esim';
+import { getFeaturedLocations, getCountries, getRegions, type LocationCountry, type ProviderRegion } from '@/services/esim';
 import type { FeaturedLocation } from '@/services/types';
 
 type Tab = 'popular' | 'countries' | 'regions';
@@ -21,21 +17,20 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'regions', label: 'Regions' },
 ];
 
-const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
-
 export default function EsimStore() {
   const t = useTheme();
   const router = useRouter();
-  const money = useIqdMoney();
   const isWide = useIsWideWeb();
   const [tab, setTab] = useState<Tab>('popular');
   const [q, setQ] = useState('');
   const [popular, setPopular] = useState<FeaturedLocation[]>([]);
   const [countries, setCountries] = useState<LocationCountry[]>([]);
+  const [regions, setRegions] = useState<ProviderRegion[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(true);
 
   useEffect(() => {
     getFeaturedLocations('esim').then(setPopular).catch(() => setPopular([]));
+    getRegions().then(setRegions).catch(() => setRegions([]));
     getCountries()
       .then(setCountries)
       .catch(() => setCountries([]))
@@ -166,29 +161,25 @@ export default function EsimStore() {
         )}
 
         {tab === 'regions' && (
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -6 : 0, gap: isWide ? 0 : 12 }}>
-            {ESIM_REGIONS.map((r) => (
-              <View key={r.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 6 : 0 }}>
-                <PressableScale
-                  onPress={() => router.push(`/esim-store/${r.id}?region=1`)}
-                  scaleTo={0.98}
-                  style={{ height: 130, borderRadius: 18, overflow: 'hidden', ...t.shadow2 }}
+          regions.length === 0 ? (
+            <View style={{ paddingVertical: 30, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
+          ) : (
+            <View style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
+              {regions.map((r, i) => (
+                <Pressable
+                  key={r.code}
+                  onPress={() => router.push(`/esim-store/${r.code}?region=1&name=${encodeURIComponent(r.name)}`)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 14, borderBottomWidth: i === regions.length - 1 ? 0 : 1, borderBottomColor: t.border }}
                 >
-                  <Image source={r.photo} placeholder={{ blurhash }} style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} contentFit="cover" transition={250} />
-                  <LinearGradient colors={['rgba(11,17,32,0.25)', 'rgba(11,17,32,0.78)']} start={{ x: 0, y: 0 }} end={{ x: 0, y: 1 }} style={{ flex: 1, padding: 16, justifyContent: 'flex-end' }}>
-                    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                      <MapPin size={13} color="#fff" />
-                      <Text style={{ fontSize: 11, color: '#fff', opacity: 0.9 }}>{r.blurb}</Text>
-                    </View>
-                    <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', marginTop: 4 }}>
-                      <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: '#fff', letterSpacing: -0.4 }}>{r.name}</Text>
-                      <Text style={{ fontSize: 13, color: '#fff', fontWeight: '700' }}>From {money(r.fromUsd)}</Text>
-                    </View>
-                  </LinearGradient>
-                </PressableScale>
-              </View>
-            ))}
-          </View>
+                  <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+                    <Globe size={18} color={t.primary} strokeWidth={2} />
+                  </View>
+                  <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 14, color: t.fg }}>{r.name}</Text>
+                  <ChevronRight size={16} color={t.fgFaint} />
+                </Pressable>
+              ))}
+            </View>
+          )
         )}
       </ScrollView>
     </SafeAreaView>

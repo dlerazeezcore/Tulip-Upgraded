@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
-import { Search, ArrowRight, MapPin, Bell } from 'lucide-react-native';
+import { Search, ArrowRight, Bell } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { ServiceTile } from '@/components/ServiceTile';
 import { MultiServiceTabs } from '@/components/MultiServiceTabs';
@@ -15,21 +15,27 @@ import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
 import { PressableScale } from '@/components/PressableScale';
 import { SERVICES, SERVICE_SLOT, serviceRoute } from '@/data/services';
-import { USER } from '@/data/user';
-import { POPULAR_COUNTRIES } from '@/data/esim';
 import { useSearchStore } from '@/state/searchStore';
-import { useMoney } from '@/lib/money';
+import { useAuthStore } from '@/state/authStore';
 import { useIsWideWeb } from '@/lib/responsive';
+
+function greetingForHour(h: number): string {
+  if (h < 12) return 'Good morning';
+  if (h < 18) return 'Good afternoon';
+  return 'Good evening';
+}
 
 const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 
 export default function Home() {
   const t = useTheme();
   const router = useRouter();
-  const money = useMoney();
   const isWide = useIsWideWeb();
   const activeService = useSearchStore((s) => s.activeService);
   const svc = SERVICES.find((s) => s.id === activeService)!;
+  const user = useAuthStore((s) => s.user);
+  const firstName = user?.name?.trim().split(/\s+/)[0];
+  const greeting = greetingForHour(new Date().getHours());
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -49,7 +55,7 @@ export default function Home() {
         <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
           <View>
             <Text style={{ fontSize: 13, color: t.fgMuted, fontFamily: t.font.bodyMedium, fontWeight: '500' }}>
-              Good morning, {USER.firstName}
+              {greeting}{firstName ? `, ${firstName}` : ''}
             </Text>
             <Text
               style={{
@@ -204,83 +210,6 @@ export default function Home() {
           </View>
         </View>
 
-        {/* Popular destinations — photo cards */}
-        <View>
-          <Text
-            style={{
-              fontFamily: t.font.display,
-              fontSize: 18,
-              fontWeight: '700',
-              color: t.fg,
-              letterSpacing: -0.3,
-              marginBottom: 12,
-            }}
-          >
-            Popular destinations
-          </Text>
-          <ScrollView
-            horizontal={!isWide}
-            scrollEnabled={!isWide}
-            showsHorizontalScrollIndicator={false}
-            contentContainerStyle={
-              isWide
-                ? { flexDirection: 'row', flexWrap: 'wrap', gap: 12 }
-                : { gap: 10, paddingRight: 10 }
-            }
-          >
-            {POPULAR_COUNTRIES.map((c) => (
-              <PressableScale
-                key={c.iso}
-                scaleTo={0.96}
-                onPress={() => router.push(`/esim-store/${c.iso}`)}
-                style={{
-                  width: isWide ? 180 : 150,
-                  height: 200,
-                  borderRadius: 18,
-                  overflow: 'hidden',
-                  ...t.shadow2,
-                }}
-              >
-                <Image
-                  source={c.photo}
-                  placeholder={{ blurhash }}
-                  style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-                  contentFit="cover"
-                  transition={300}
-                />
-                <LinearGradient
-                  colors={['rgba(0,0,0,0)', 'rgba(0,0,0,0.78)']}
-                  start={{ x: 0, y: 0.3 }}
-                  end={{ x: 0, y: 1 }}
-                  style={{ flex: 1, padding: 14, justifyContent: 'flex-end' }}
-                >
-                  <Text
-                    style={{
-                      fontFamily: t.font.display,
-                      fontSize: 17,
-                      fontWeight: '700',
-                      color: '#fff',
-                      letterSpacing: -0.3,
-                    }}
-                  >
-                    {c.name}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: '#fff', opacity: 0.9, marginTop: 2 }}>
-                    eSIM from {money(c.from)}
-                  </Text>
-                  <View
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 6 }}
-                  >
-                    <MapPin size={11} color="#fff" />
-                    <Text style={{ fontSize: 10, color: '#fff', opacity: 0.85 }}>
-                      Top destination
-                    </Text>
-                  </View>
-                </LinearGradient>
-              </PressableScale>
-            ))}
-          </ScrollView>
-        </View>
       </ScrollView>
       </AnimatedScreen>
     </SafeAreaView>

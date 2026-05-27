@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Check } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useAuthStore } from '@/state/authStore';
-import { AuthShell, Field } from '@/components/AuthShell';
+import { AuthShell, Field, PasswordField } from '@/components/AuthShell';
 import { CountryPhoneField } from '@/components/CountryPhoneField';
 import { OtpInput } from '@/components/OtpInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -83,8 +83,8 @@ export default function Forgot() {
 
       {step === 'reset' && (
         <>
-          <Field label="New password" value={pw} onChangeText={setPw} placeholder="New password (min 8 chars)" secureTextEntry />
-          <Field label="Confirm password" value={pw2} onChangeText={setPw2} placeholder="Confirm password" secureTextEntry />
+          <PasswordField label="New password" value={pw} onChangeText={setPw} placeholder="New password (min 8 chars)" />
+          <PasswordField label="Confirm password" value={pw2} onChangeText={setPw2} placeholder="Confirm password" />
           {pw.length > 0 && pw !== pw2 && (
             <Text style={{ fontSize: 12, color: t.danger }}>Passwords don't match</Text>
           )}

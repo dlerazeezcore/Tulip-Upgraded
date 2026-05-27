@@ -75,6 +75,8 @@ type AuthState = {
   requestOtp: (phone: string, channel?: OtpChannel) => Promise<void>;
   verifyOtpAndAuth: (input: { phone: string; code: string; name?: string; channel?: OtpChannel; verificationSid?: string }) => Promise<AuthUser>;
   resetPassword: (input: { phone: string; otpCode: string; newPassword: string; otpChannel?: OtpChannel; verificationSid?: string }) => Promise<AuthUser>;
+  updateProfile: (patch: { name?: string; email?: string | null }) => Promise<AuthUser>;
+  deleteAccount: () => Promise<void>;
   startPhoneFlow: (phone: string) => void;
   signOut: () => void;
 };
@@ -133,6 +135,22 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   requestOtp: async (phone, channel = 'sms') => {
     await authApi.requestOtp(phone, channel);
     set({ pendingPhone: phone });
+  },
+
+  updateProfile: async (patch) => {
+    const me = await authApi.updateMe(patch);
+    const user = userFromMe(me);
+    set({ user });
+    persist(user, get().token);
+    return user;
+  },
+
+  deleteAccount: async () => {
+    try {
+      await authApi.deleteAccount();
+    } finally {
+      get().signOut();
+    }
   },
 
   startPhoneFlow: (phone) => set({ pendingPhone: phone }),

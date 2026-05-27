@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, Pressable, Alert, Linking } from 'react-native';
+import { ScrollView, View, Text, Pressable, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Check, Lock, Landmark, Gift, Globe } from 'lucide-react-native';
@@ -15,7 +15,6 @@ import { useIsWideWeb } from '@/lib/responsive';
 import { PAYMENT_METHODS } from '@/data/esim';
 import { createManagedOrder } from '@/services/esim';
 import { createFibPayment, pollFibPayment, isPaid } from '@/services/payments';
-import { checkEsimSupport, isDefinitelyUnsupported } from '@/services/device';
 
 // Representative flag for region eSIMs (mock).
 const REGION_FLAG: Record<string, string> = {
@@ -47,12 +46,12 @@ export default function Checkout() {
   const iqdAmount = useIqdAmount();
   const { place, bundle, clear } = useEsimCart();
   const user = useAuthStore((s) => s.user);
-  const isAdmin = !!user?.isAdmin;
   const refreshEsims = useEsimStore((s) => s.refresh);
   const refreshOrders = useOrderStore((s) => s.refresh);
   const isWide = useIsWideWeb();
   const [method, setMethod] = useState<'fib' | 'loyalty'>('loyalty');
   const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -141,35 +140,13 @@ export default function Checkout() {
 
   const onPay = async () => {
     if (busy) return;
-    if (isAdmin) {
-      Alert.alert('Use a customer account', 'Purchasing requires a customer (non-admin) account. Please sign in as a user to buy.');
-      return;
-    }
+    setError(null);
     if (!bundle.packageCode) {
-      Alert.alert('Plan unavailable', 'This plan can\'t be purchased yet. Please pick a country plan.');
+      setError("This plan can't be purchased right now. Please pick a country plan.");
       return;
     }
     setBusy(true);
     try {
-      // Notify if the device can't use eSIM (still allow — they may install elsewhere).
-      const support = await checkEsimSupport();
-      if (isDefinitelyUnsupported(support)) {
-        const proceed = await new Promise<boolean>((resolve) => {
-          Alert.alert(
-            'Device may not support eSIM',
-            'This device does not appear to support eSIM. You can still buy and install it on a compatible device. Continue?',
-            [
-              { text: 'Cancel', style: 'cancel', onPress: () => resolve(false) },
-              { text: 'Continue', onPress: () => resolve(true) },
-            ],
-          );
-        });
-        if (!proceed) {
-          setBusy(false);
-          return;
-        }
-      }
-
       if (method === 'loyalty') {
         await placeOrder({ method: 'loyalty', status: 'paid' });
         return;
@@ -190,10 +167,10 @@ export default function Checkout() {
       if (isPaid(final)) {
         await placeOrder({ method: 'fib', status: 'paid', transactionId: payment.paymentId });
       } else {
-        Alert.alert('Payment not completed', 'We could not confirm your FIB payment. Please try again.');
+        setError('We could not confirm your FIB payment. Please try again.');
       }
     } catch (e: any) {
-      Alert.alert('Checkout failed', e?.message || 'Please try again.');
+      setError(e?.message || 'Checkout failed. Please try again.');
     } finally {
       setBusy(false);
     }
@@ -258,10 +235,8 @@ export default function Checkout() {
               <SummaryRow label="Total" value={money(bundle.usd)} strong />
             </View>
 
-            {isAdmin && (
-              <Text style={{ fontSize: 12, color: t.warning, textAlign: 'center' }}>
-                Purchasing requires a customer account. Sign in as a user to buy.
-              </Text>
+            {error && (
+              <Text style={{ fontSize: 12, color: t.danger, textAlign: 'center' }}>{error}</Text>
             )}
             <PrimaryButton
               label={busy ? 'Processing…' : `Pay ${money(bundle.usd)}`}

@@ -1,10 +1,27 @@
-// Admin wiring: users list, exchange-rate save, featured-locations CRUD.
-import { apiFetch } from '@/lib/api';
-import type { AdminUserRow, FeaturedLocationAdmin } from './types';
+// Admin wiring: users list/update, orders, exchange-rate save, featured-locations CRUD.
+import { apiFetch, unwrap } from '@/lib/api';
+import type { AdminOrder, AdminUserRow, FeaturedLocationAdmin } from './types';
 
 export async function getUsers(params: { limit?: number; offset?: number; search?: string } = {}): Promise<AdminUserRow[]> {
   const res: any = await apiFetch('/api/v1/admin/users', { method: 'GET', query: params });
   return (res?.users ?? []) as AdminUserRow[];
+}
+
+export async function updateUser(
+  id: string,
+  patch: { isLoyalty?: boolean; blocked?: boolean; name?: string; status?: string },
+): Promise<AdminUserRow> {
+  const res: any = await apiFetch(`/api/v1/admin/users/${id}`, { method: 'PATCH', body: patch });
+  return res.user as AdminUserRow;
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await apiFetch(`/api/v1/admin/users/${id}`, { method: 'DELETE' });
+}
+
+export async function getAdminOrders(params: { month?: string } = {}): Promise<AdminOrder[]> {
+  const res = await apiFetch('/api/v1/admin/orders/detailed', { method: 'GET', query: params });
+  return unwrap<{ orders: AdminOrder[] }>(res).orders;
 }
 
 /** Save the active USD->IQD rate + markup% (markup stored in custom_fields). */

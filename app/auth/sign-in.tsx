@@ -4,7 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { LogIn, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useAuthStore } from '@/state/authStore';
-import { AuthShell, AuthSegmented, Field } from '@/components/AuthShell';
+import { AuthShell, AuthSegmented, Field, PasswordField } from '@/components/AuthShell';
 import { CountryPhoneField } from '@/components/CountryPhoneField';
 import { OtpInput } from '@/components/OtpInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -112,12 +112,11 @@ export default function SignIn() {
               keyboardType="email-address"
             />
           )}
-          <Field
+          <PasswordField
             label="Password"
             value={password}
             onChangeText={setPassword}
             placeholder="••••••••"
-            secureTextEntry
           />
           <Pressable onPress={() => router.push('/auth/forgot')} style={{ alignSelf: 'flex-end' }}>
             <Text style={{ fontSize: 12, color: t.primary, fontWeight: '700' }}>Forgot password?</Text>

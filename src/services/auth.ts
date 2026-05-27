@@ -114,3 +114,7 @@ export function updateMe(patch: Partial<{
 }>): Promise<AuthMe> {
   return apiFetch<AuthMe>('/api/v1/auth/me', { method: 'PATCH', body: patch });
 }
+
+export function deleteAccount(): Promise<unknown> {
+  return apiFetch('/api/v1/auth/me', { method: 'DELETE' });
+}

@@ -61,6 +61,7 @@ function ThemedStack() {
         <Stack.Screen name="admin/notifications" />
         <Stack.Screen name="admin/currency" />
         <Stack.Screen name="admin/featured" />
+        <Stack.Screen name="admin/orders" />
         <Stack.Screen name="onboarding" options={{ gestureEnabled: false }} />
       </Stack>
     </>

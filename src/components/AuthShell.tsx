@@ -1,9 +1,9 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { ScrollView, View, Text, Pressable, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Eye, EyeOff } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { TulipLogo } from './TulipLogo';
 
@@ -180,6 +180,53 @@ export function Field({
           fontFamily: t.font.bodyMedium,
         }}
       />
+    </View>
+  );
+}
+
+/** Password input with a show/hide eye toggle. */
+export function PasswordField({
+  label,
+  value,
+  onChangeText,
+  placeholder,
+}: {
+  label: string;
+  value: string;
+  onChangeText: (v: string) => void;
+  placeholder?: string;
+}) {
+  const t = useTheme();
+  const [show, setShow] = useState(false);
+  return (
+    <View style={{ gap: 6 }}>
+      <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+        {label}
+      </Text>
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          backgroundColor: t.bgElev,
+          borderColor: t.border,
+          borderWidth: 1,
+          borderRadius: 14,
+          overflow: 'hidden',
+        }}
+      >
+        <TextInput
+          value={value}
+          onChangeText={onChangeText}
+          placeholder={placeholder}
+          placeholderTextColor={t.fgFaint}
+          secureTextEntry={!show}
+          autoCapitalize="none"
+          style={{ flex: 1, paddingHorizontal: 14, paddingVertical: 14, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }}
+        />
+        <Pressable onPress={() => setShow((s) => !s)} hitSlop={8} style={{ paddingHorizontal: 14, paddingVertical: 14 }}>
+          {show ? <EyeOff size={18} color={t.fgMuted} /> : <Eye size={18} color={t.fgMuted} />}
+        </Pressable>
+      </View>
     </View>
   );
 }

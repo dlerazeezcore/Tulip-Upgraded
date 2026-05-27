@@ -44,6 +44,24 @@ export async function getCountries(): Promise<LocationCountry[]> {
   return out;
 }
 
+export type ProviderRegion = { code: string; name: string };
+
+/** Provider regions (type=2), e.g. EU-42 "Europe (40+ areas)". Used for the Regions tab. */
+export async function getRegions(): Promise<ProviderRegion[]> {
+  const res: any = await apiFetch(`${BASE}/locations/query`, { method: 'POST', auth: false, body: {} });
+  const list = (res?.obj?.locationList ?? []) as any[];
+  const out: ProviderRegion[] = [];
+  const seen = new Set<string>();
+  for (const l of list) {
+    const code = String(l?.code ?? '').toUpperCase();
+    if (l?.type !== 2 || !code || seen.has(code)) continue;
+    seen.add(code);
+    out.push({ code, name: String(l?.name ?? code) });
+  }
+  out.sort((a, b) => a.name.localeCompare(b.name));
+  return out;
+}
+
 export async function getExchangeSettings(): Promise<ExchangeSettings> {
   const res = await apiFetch(`${BASE}/exchange-rates/current`, { method: 'GET', auth: false });
   return unwrap<ExchangeSettings>(res);

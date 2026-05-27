@@ -64,7 +64,8 @@ export type ProviderPackage = {
   unusedValidTime?: number;
   duration?: number;
   durationUnit?: string;
-  location?: string;
+  location?: string; // comma-separated ISO list, e.g. "CN" or "JP,KR,CN"
+  locationCode?: string;
   speed?: string;
   supportTopUpType?: number;
   includedCountries?: IncludedCountry[];
@@ -196,4 +197,10 @@ export type OrderSummary = {
   bookedAt?: string | null;
   createdAt?: string | null;
   items: OrderItemSummary[];
+};
+
+export type AdminOrder = OrderSummary & {
+  user?: { id: string; name: string; phone: string } | null;
+  esimStatus: 'installed' | 'not_installed' | 'expired' | 'used' | 'pending';
+  esim?: { status: string; installed: boolean; remainingDataMb?: number | null; totalDataMb?: number | null } | null;
 };

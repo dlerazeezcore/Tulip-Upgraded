@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
-import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck, MapPin } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck, MapPin, Receipt } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
 import { useAuthStore } from '@/state/authStore';
@@ -27,6 +27,7 @@ export default function AdminHome() {
 
   const cards = [
     { id: 'users', title: 'Users', sub: userCount === null ? 'View signups' : `${userCount} signed up`, Icon: Users, color: '#1967D2', route: '/admin/users' },
+    { id: 'orders', title: 'Order history', sub: 'All users · filter by month', Icon: Receipt, color: '#0EA5E9', route: '/admin/orders' },
     { id: 'featured', title: 'Popular destinations', sub: featuredCount === null ? 'Add, edit, remove' : `${featuredCount} configured`, Icon: MapPin, color: '#F59E0B', route: '/admin/featured' },
     { id: 'notif', title: 'Push notifications', sub: 'Compose & send', Icon: Bell, color: '#7C3AED', route: '/admin/notifications' },
     { id: 'cur', title: 'Exchange rate & markup', sub: 'USD→IQD rate, markup', Icon: Coins, color: '#10B981', route: '/admin/currency' },
