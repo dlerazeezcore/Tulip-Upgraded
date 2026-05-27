@@ -9,18 +9,25 @@ type CurrencyState = {
   hydrated: boolean;
   /** Effective IQD per 1 USD = backend rate × (1 + markup%). */
   iqdPerUsd: number;
+  /** True once the live (database) rate has been fetched this session. */
+  exchangeLoaded: boolean;
   setCode: (c: CurrencyCode) => void;
   hydrate: () => Promise<void>;
   loadExchange: () => Promise<void>;
 };
 
 const KEY = 'tulip.currency';
+// Cache the last database-derived effective rate so the app boots with the real
+// price instead of the hardcoded bootstrap rate (which has no markup and would
+// show bundle prices far below what is actually charged).
+const RATE_KEY = 'tulip.iqdPerUsd';
 
 export const useCurrencyStore = create<CurrencyState>((set) => ({
   // Default to IQD: pricing is always shown in Iraqi Dinar.
   code: 'IQD',
   hydrated: false,
   iqdPerUsd: CURRENCIES.IQD.rate,
+  exchangeLoaded: false,
   setCode: (code) => {
     set({ code });
     AsyncStorage.setItem(KEY, code).catch(() => {});
@@ -32,19 +39,25 @@ export const useCurrencyStore = create<CurrencyState>((set) => ({
       const markup = parseFloat(s.markupPercent);
       if (Number.isFinite(rate) && rate > 0) {
         const effective = rate * (1 + (Number.isFinite(markup) ? markup : 0) / 100);
-        set({ iqdPerUsd: effective });
+        set({ iqdPerUsd: effective, exchangeLoaded: true });
+        AsyncStorage.setItem(RATE_KEY, String(effective)).catch(() => {});
       }
     } catch {
-      // keep fallback rate on failure
+      // keep the last-known rate on failure
     }
   },
   hydrate: async () => {
     try {
-      const stored = await AsyncStorage.getItem(KEY);
+      const [stored, storedRate] = await Promise.all([
+        AsyncStorage.getItem(KEY),
+        AsyncStorage.getItem(RATE_KEY),
+      ]);
       if (stored === 'USD' || stored === 'EUR' || stored === 'IQD') set({ code: stored });
+      const cached = storedRate ? parseFloat(storedRate) : NaN;
+      if (Number.isFinite(cached) && cached > 0) set({ iqdPerUsd: cached });
     } catch {}
     set({ hydrated: true });
-    // Refresh the live IQD rate in the background.
+    // Refresh the live IQD rate from the database in the background.
     void useCurrencyStore.getState().loadExchange();
   },
 }));

@@ -65,9 +65,12 @@ type EsimState = {
 };
 
 function ingest(profiles: EsimProfile[]) {
+  // Newest first (higher id = more recently created) so a just-bought eSIM
+  // appears at the top instead of stale older ones flashing first.
+  const sorted = [...profiles].sort((a, b) => Number(b.id) - Number(a.id));
   const raw: Record<string, EsimProfile> = {};
-  for (const p of profiles) raw[String(p.id)] = p;
-  return { esims: profiles.map(toDisplay), raw };
+  for (const p of sorted) raw[String(p.id)] = p;
+  return { esims: sorted.map(toDisplay), raw };
 }
 
 export const useEsimStore = create<EsimState>((set, get) => ({

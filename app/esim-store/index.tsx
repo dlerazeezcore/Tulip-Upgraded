@@ -3,9 +3,18 @@ import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, Search, Globe } from 'lucide-react-native';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
+
+// Distinct, vibrant gradients so the Regions grid looks polished without
+// needing a photo per region (the provider gives no region imagery).
+const REGION_GRADIENTS: [string, string][] = [
+  ['#1967D2', '#0B4FB0'], ['#10B981', '#047857'], ['#7C3AED', '#5B21B6'],
+  ['#F59E0B', '#B45309'], ['#EC4899', '#9D174D'], ['#0EA5E9', '#0369A1'],
+  ['#EF4444', '#991B1B'], ['#14B8A6', '#0F766E'],
+];
 import { useIsWideWeb } from '@/lib/responsive';
 import { getFeaturedLocations, getCountries, getRegions, type LocationCountry, type ProviderRegion } from '@/services/esim';
 import type { FeaturedLocation } from '@/services/types';
@@ -164,20 +173,33 @@ export default function EsimStore() {
           regions.length === 0 ? (
             <View style={{ paddingVertical: 30, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
           ) : (
-            <View style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
-              {regions.map((r, i) => (
-                <Pressable
-                  key={r.code}
-                  onPress={() => router.push(`/esim-store/${r.code}?region=1&name=${encodeURIComponent(r.name)}`)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 13, paddingHorizontal: 14, borderBottomWidth: i === regions.length - 1 ? 0 : 1, borderBottomColor: t.border }}
-                >
-                  <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-                    <Globe size={18} color={t.primary} strokeWidth={2} />
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
+              {regions.map((r, idx) => {
+                const g = REGION_GRADIENTS[idx % REGION_GRADIENTS.length];
+                return (
+                  <View key={r.code} style={{ width: isWide ? '33.333%' : '50%', padding: 5 }}>
+                    <PressableScale
+                      onPress={() => router.push(`/esim-store/${r.code}?region=1&name=${encodeURIComponent(r.name)}`)}
+                      scaleTo={0.97}
+                    >
+                      <LinearGradient
+                        colors={g}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={{ borderRadius: 16, padding: 14, minHeight: 116, justifyContent: 'space-between', ...t.shadow1 }}
+                      >
+                        <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+                          <Globe size={20} color="#fff" strokeWidth={2.2} />
+                        </View>
+                        <View style={{ marginTop: 10 }}>
+                          <Text numberOfLines={2} style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: '#fff' }}>{r.name}</Text>
+                          <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>Multi-country eSIM</Text>
+                        </View>
+                      </LinearGradient>
+                    </PressableScale>
                   </View>
-                  <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 14, color: t.fg }}>{r.name}</Text>
-                  <ChevronRight size={16} color={t.fgFaint} />
-                </Pressable>
-              ))}
+                );
+              })}
             </View>
           )
         )}

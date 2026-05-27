@@ -52,10 +52,6 @@ on:
 permissions:
   contents: read
 
-# Run JS-based actions on Node 24 (Node 20 is deprecated as of 2026-06-02).
-env:
-  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
-
 jobs:
   build-and-upload:
     runs-on: ${{ inputs.runner }}
@@ -63,10 +59,10 @@ jobs:
 
     steps:
       - name: Checkout
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
 
       - name: Setup Node
-        uses: actions/setup-node@v4
+        uses: actions/setup-node@v6
         with:
           node-version: 20
           cache: npm
@@ -200,7 +196,7 @@ jobs:
           echo "path=$IPA_PATH" >> "$GITHUB_OUTPUT"
 
       - name: Upload IPA artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ios-ipa
           path: ${{ steps.ipa.outputs.path }}

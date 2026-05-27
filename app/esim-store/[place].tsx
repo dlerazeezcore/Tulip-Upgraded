@@ -10,8 +10,8 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { useIqdMoney } from '@/lib/pricing';
 import { useIsWideWeb } from '@/lib/responsive';
 import { packagesToBundles } from '@/lib/catalog';
-import { queryPackages } from '@/services/esim';
-import { ESIM_COUNTRIES, ESIM_REGIONS, type Bundle } from '@/data/esim';
+import { queryPackages, getCountries } from '@/services/esim';
+import type { Bundle } from '@/data/esim';
 import { useEsimCart } from '@/state/esimCart';
 
 export default function PlaceDetail() {
@@ -27,10 +27,12 @@ export default function PlaceDetail() {
   const [selected, setSelected] = useState<Bundle | null>(null);
   const [bundles, setBundles] = useState<Bundle[]>([]);
   const [loading, setLoading] = useState(true);
+  // For regions: the ISO codes this region's plans actually cover, and a
+  // code -> full-name map so we can show "Germany" instead of "DE".
+  const [coverage, setCoverage] = useState<string[]>([]);
+  const [nameByCode, setNameByCode] = useState<Record<string, string>>({});
 
-  const regionData = isRegion ? ESIM_REGIONS.find((r) => r.id === place) : undefined;
-  const countryData = !isRegion ? ESIM_COUNTRIES.find((c) => c.iso === place) : undefined;
-  const name = nameParam || regionData?.name || countryData?.name || (place as string) || 'eSIM';
+  const name = nameParam || (place as string) || 'eSIM';
   const iso = isRegion ? undefined : String(place || '').toUpperCase();
 
   const goBack = () => {
@@ -44,8 +46,19 @@ export default function PlaceDetail() {
     setLoading(true);
     queryPackages({ locationCode })
       .then((pkgs) => {
-        if (!cancelled) {
-          setBundles(packagesToBundles(pkgs, place as string, { countryCode: isRegion ? undefined : locationCode }));
+        if (cancelled) return;
+        setBundles(packagesToBundles(pkgs, place as string, { countryCode: isRegion ? undefined : locationCode }));
+        if (isRegion) {
+          // Union of every covered country across this region's plans.
+          const codes = new Set<string>();
+          for (const p of pkgs) {
+            String(p.location ?? '')
+              .split(',')
+              .map((s) => s.trim().toUpperCase())
+              .filter(Boolean)
+              .forEach((c) => codes.add(c));
+          }
+          setCoverage([...codes].sort());
         }
       })
       .catch(() => {
@@ -58,6 +71,18 @@ export default function PlaceDetail() {
       cancelled = true;
     };
   }, [iso, place]);
+
+  // Resolve ISO codes to full country names for the coverage list (regions only).
+  useEffect(() => {
+    if (!isRegion) return;
+    getCountries()
+      .then((cs) => {
+        const m: Record<string, string> = {};
+        for (const c of cs) m[c.code.toUpperCase()] = c.name;
+        setNameByCode(m);
+      })
+      .catch(() => {});
+  }, [isRegion]);
 
   // Group plans by duration, ascending (1-day plans, then 7-day, etc.).
   const groups = useMemo(() => {
@@ -97,7 +122,7 @@ export default function PlaceDetail() {
         contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 120, gap: 16, maxWidth: isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
       >
-        {isRegion && regionData && (
+        {isRegion && coverage.length > 0 && (
           <PressableScale
             onPress={() => setCoverageOpen(true)}
             scaleTo={0.98}
@@ -106,7 +131,7 @@ export default function PlaceDetail() {
             <Globe size={20} color={t.primary} strokeWidth={2} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.brand.blue800 }}>
-                Coverage in {regionData.countries.length}+ countries
+                Coverage in {coverage.length} countries
               </Text>
               <Text style={{ fontSize: 12, color: t.brand.blue700, marginTop: 1 }}>Tap to see where this eSIM works</Text>
             </View>
@@ -198,14 +223,14 @@ export default function PlaceDetail() {
         <Pressable onPress={() => setCoverageOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '76%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Coverage — {regionData?.name}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Coverage — {name}</Text>
               <Pressable onPress={() => setCoverageOpen(false)}><X size={20} color={t.fgMuted} /></Pressable>
             </View>
             <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {regionData?.countries.map((c) => (
+              {coverage.map((c) => (
                 <View key={c} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 10, borderRadius: 999, backgroundColor: t.bgSunken }}>
                   <Flag iso={c} size={18} />
-                  <Text style={{ fontSize: 12, color: t.fg, fontWeight: '600' }}>{c}</Text>
+                  <Text style={{ fontSize: 12, color: t.fg, fontWeight: '600' }}>{nameByCode[c] || c}</Text>
                 </View>
               ))}
             </ScrollView>
