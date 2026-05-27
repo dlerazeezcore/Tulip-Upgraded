@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "bundleIdentifier": "com.tulip.booking",
+      "bundleIdentifier": "com.theesim.app",
       "userInterfaceStyle": "automatic"
     },
     "android": {

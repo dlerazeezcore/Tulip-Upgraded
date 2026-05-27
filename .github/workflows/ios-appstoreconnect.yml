@@ -27,7 +27,7 @@ on:
       bundle_id:
         description: iOS bundle identifier
         required: true
-        default: com.tulip.booking
+        default: com.theesim.app
         type: string
       team_id:
         description: Apple Developer Team ID
@@ -46,6 +46,10 @@ on:
 
 permissions:
   contents: read
+
+# Run JS-based actions on Node 24 (Node 20 is deprecated as of 2026-06-02).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
 
 jobs:
   build-and-upload:
@@ -128,6 +132,10 @@ jobs:
 
       - name: Archive iOS app
         run: |
+          # Unique, monotonic build number (CFBundleVersion) so TestFlight never
+          # rejects it as a duplicate of an existing build on this app record.
+          BUILD_NUMBER="$(date +%s)"
+          echo "Using CFBundleVersion (build number): $BUILD_NUMBER"
           xcodebuild \
             -workspace "${{ steps.xc.outputs.workspace }}" \
             -scheme "${{ steps.xc.outputs.scheme }}" \
@@ -140,7 +148,7 @@ jobs:
             -authenticationKeyIssuerID "${{ vars.APPSTORE_ISSUER_ID }}" \
             DEVELOPMENT_TEAM="${{ inputs.team_id }}" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ inputs.bundle_id }}" \
-            CURRENT_PROJECT_VERSION="${{ github.run_number }}" \
+            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGN_STYLE=Automatic \
             clean archive
 

@@ -15,6 +15,10 @@ concurrency:
   group: pages
   cancel-in-progress: true
 
+# Run JS-based actions on Node 24 (Node 20 is deprecated as of 2026-06-02).
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   build:
     runs-on: ubuntu-latest
