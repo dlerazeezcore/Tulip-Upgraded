@@ -35,14 +35,14 @@ on:
         default: LFF7L83D75
         type: string
       runner:
-        description: macOS runner image (Xcode must be compatible with React Native 0.74)
+        description: macOS runner image (must provide Xcode 26 / iOS 26 SDK for App Store uploads)
         required: true
-        default: macos-15
+        default: macos-26
         type: choice
         options:
+          - macos-26
           - macos-15
           - macos-14
-          - macos-26
 
 permissions:
   contents: read
@@ -108,6 +108,20 @@ jobs:
           echo "scheme=$SCHEME" >> "$GITHUB_OUTPUT"
           echo "Resolved workspace=$WORKSPACE scheme=$SCHEME"
 
+      - name: Set unique build number
+        run: |
+          # Expo writes a literal CFBundleVersion into Info.plist, so the
+          # xcodebuild CURRENT_PROJECT_VERSION build setting has no effect.
+          # Patch the generated Info.plist directly with a monotonic value so
+          # TestFlight never sees a duplicate build number.
+          BUILD_NUMBER="$(date +%s)"
+          PLIST="$(find ios -maxdepth 2 -name Info.plist -path "*/${{ steps.xc.outputs.scheme }}/*" | head -n1)"
+          if [ -z "$PLIST" ]; then PLIST="ios/${{ steps.xc.outputs.scheme }}/Info.plist"; fi
+          echo "Patching $PLIST -> CFBundleVersion=$BUILD_NUMBER"
+          /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $BUILD_NUMBER" "$PLIST"
+          echo "CFBundleShortVersionString: $(/usr/libexec/PlistBuddy -c "Print :CFBundleShortVersionString" "$PLIST")"
+          echo "CFBundleVersion: $(/usr/libexec/PlistBuddy -c "Print :CFBundleVersion" "$PLIST")"
+
       - name: Create export options
         run: |
           cat > "$RUNNER_TEMP/ExportOptions.plist" <<'PLIST'
@@ -132,10 +146,6 @@ jobs:
 
       - name: Archive iOS app
         run: |
-          # Unique, monotonic build number (CFBundleVersion) so TestFlight never
-          # rejects it as a duplicate of an existing build on this app record.
-          BUILD_NUMBER="$(date +%s)"
-          echo "Using CFBundleVersion (build number): $BUILD_NUMBER"
           xcodebuild \
             -workspace "${{ steps.xc.outputs.workspace }}" \
             -scheme "${{ steps.xc.outputs.scheme }}" \
@@ -148,7 +158,6 @@ jobs:
             -authenticationKeyIssuerID "${{ vars.APPSTORE_ISSUER_ID }}" \
             DEVELOPMENT_TEAM="${{ inputs.team_id }}" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ inputs.bundle_id }}" \
-            CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
             CODE_SIGN_STYLE=Automatic \
             clean archive
 
