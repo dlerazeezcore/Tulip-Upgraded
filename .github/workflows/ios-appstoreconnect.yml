@@ -34,6 +34,11 @@ on:
         required: true
         default: LFF7L83D75
         type: string
+      profile_name:
+        description: Name of the IOS_APP_STORE provisioning profile to sign with
+        required: true
+        default: TheeSIM App Store CI
+        type: string
       runner:
         description: macOS runner image (must provide Xcode 26 / iOS 26 SDK for App Store uploads)
         required: true
@@ -90,6 +95,15 @@ jobs:
           p12-password: ${{ secrets.APPSTORE_CERTIFICATES_PASSWORD }}
           keychain-password: ${{ secrets.KEYCHAIN_PASSWORD }}
 
+      - name: Download App Store provisioning profile
+        uses: apple-actions/download-provisioning-profiles@v6
+        with:
+          bundle-id: ${{ inputs.bundle_id }}
+          profile-type: IOS_APP_STORE
+          issuer-id: ${{ vars.APPSTORE_ISSUER_ID }}
+          api-key-id: ${{ vars.APPSTORE_API_KEY_ID }}
+          api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
+
       - name: Write App Store Connect API key file
         id: asc_key
         run: |
@@ -132,9 +146,16 @@ jobs:
             <key>method</key>
             <string>app-store</string>
             <key>signingStyle</key>
-            <string>automatic</string>
+            <string>manual</string>
             <key>teamID</key>
             <string>${{ inputs.team_id }}</string>
+            <key>signingCertificate</key>
+            <string>Apple Distribution</string>
+            <key>provisioningProfiles</key>
+            <dict>
+              <key>${{ inputs.bundle_id }}</key>
+              <string>${{ inputs.profile_name }}</string>
+            </dict>
             <key>uploadSymbols</key>
             <true/>
             <key>compileBitcode</key>
@@ -143,6 +164,7 @@ jobs:
           PLIST
           # close the plist (kept out of the heredoc to avoid quoting issues)
           echo "</plist>" >> "$RUNNER_TEMP/ExportOptions.plist"
+          echo "--- ExportOptions.plist ---"; cat "$RUNNER_TEMP/ExportOptions.plist"
 
       - name: Archive iOS app
         run: |
@@ -152,13 +174,11 @@ jobs:
             -configuration Release \
             -destination "generic/platform=iOS" \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "${{ steps.asc_key.outputs.path }}" \
-            -authenticationKeyID "${{ vars.APPSTORE_API_KEY_ID }}" \
-            -authenticationKeyIssuerID "${{ vars.APPSTORE_ISSUER_ID }}" \
             DEVELOPMENT_TEAM="${{ inputs.team_id }}" \
             PRODUCT_BUNDLE_IDENTIFIER="${{ inputs.bundle_id }}" \
-            CODE_SIGN_STYLE=Automatic \
+            CODE_SIGN_STYLE=Manual \
+            CODE_SIGN_IDENTITY="Apple Distribution" \
+            PROVISIONING_PROFILE_SPECIFIER="${{ inputs.profile_name }}" \
             clean archive
 
       - name: Export IPA
@@ -167,11 +187,7 @@ jobs:
             -exportArchive \
             -archivePath "$RUNNER_TEMP/App.xcarchive" \
             -exportPath "$RUNNER_TEMP/export" \
-            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist" \
-            -allowProvisioningUpdates \
-            -authenticationKeyPath "${{ steps.asc_key.outputs.path }}" \
-            -authenticationKeyID "${{ vars.APPSTORE_API_KEY_ID }}" \
-            -authenticationKeyIssuerID "${{ vars.APPSTORE_ISSUER_ID }}"
+            -exportOptionsPlist "$RUNNER_TEMP/ExportOptions.plist"
 
       - name: Resolve IPA path
         id: ipa
