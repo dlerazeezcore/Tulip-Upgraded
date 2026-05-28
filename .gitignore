@@ -1,6 +1,9 @@
 node_modules/
 .expo/
 dist/
+# Native projects are generated on demand via `expo prebuild` (managed workflow).
+/android
+/ios
 web-build/
 .metro-cache/
 *.tsbuildinfo
