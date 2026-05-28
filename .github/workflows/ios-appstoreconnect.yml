@@ -22,7 +22,7 @@ on:
       upload_to_testflight:
         description: Upload exported IPA to TestFlight/App Store Connect
         required: true
-        default: false
+        default: true
         type: boolean
       bundle_id:
         description: iOS bundle identifier
