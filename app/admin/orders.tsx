@@ -139,7 +139,7 @@ export default function AdminOrders() {
                         {o.user?.name || 'Unknown'} <Text style={{ color: t.fgMuted, fontWeight: '400' }}>· {o.user?.phone || ''}</Text>
                       </Text>
                       <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                        {it?.packageName || it?.countryName || 'eSIM'}{orderDate(o) ? ` · ${new Date(orderDate(o)).toLocaleDateString()}` : ''}
+                        {it?.countryName || it?.countryCode || 'eSIM'}{orderDate(o) ? ` · ${new Date(orderDate(o)).toLocaleDateString()}` : ''}
                       </Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                         <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, backgroundColor: t.bgSunken }}>
@@ -160,18 +160,21 @@ export default function AdminOrders() {
                       <Text style={{ fontSize: 10, fontWeight: '800', color: t.fgMuted, letterSpacing: 0.4 }}>
                         BUNDLE{o.items.length > 1 ? `S (${o.items.length})` : ''} · ORDER {o.orderNumber}
                       </Text>
-                      {o.items.map((item) => (
-                        <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                          {item.countryCode ? <Flag iso={item.countryCode} size={20} /> : null}
-                          <View style={{ flex: 1 }}>
-                            <Text style={{ fontSize: 13, fontWeight: '600', color: t.fg, fontFamily: t.font.bodyMedium }}>
-                              {item.packageName || item.packageCode || 'eSIM bundle'}
+                      {o.items.map((item) => {
+                        const data = item.unlimited ? 'Unlimited' : item.dataGb ? `${item.dataGb} GB` : null;
+                        const spec = [data, item.validityDays ? `${item.validityDays} days` : null]
+                          .filter(Boolean)
+                          .join(' · ') || 'eSIM bundle';
+                        return (
+                          <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                            {item.countryCode ? <Flag iso={item.countryCode} size={20} /> : null}
+                            <Text style={{ flex: 1, fontSize: 13, fontWeight: '700', color: t.fg, fontFamily: t.font.bodyMedium }}>
+                              {spec}
                             </Text>
-                            {item.countryName ? <Text style={{ fontSize: 11, color: t.fgMuted }}>{item.countryName}</Text> : null}
+                            <Text style={{ fontSize: 12, fontWeight: '700', color: t.fg }}>{formatIqd(item.salePriceMinor ?? 0)}</Text>
                           </View>
-                          <Text style={{ fontSize: 12, fontWeight: '700', color: t.fg }}>{formatIqd(item.salePriceMinor ?? 0)}</Text>
-                        </View>
-                      ))}
+                        );
+                      })}
                     </View>
                   )}
                 </View>

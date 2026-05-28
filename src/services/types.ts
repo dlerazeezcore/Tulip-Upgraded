@@ -185,6 +185,9 @@ export type OrderItemSummary = {
   packageName?: string | null;
   quantity?: number;
   salePriceMinor?: number | null;
+  dataGb?: number | null;
+  validityDays?: number | null;
+  unlimited?: boolean;
 };
 
 export type OrderSummary = {
