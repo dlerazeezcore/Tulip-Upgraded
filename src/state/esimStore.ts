@@ -3,6 +3,7 @@ import {
   listMyProfiles,
   refreshMyUsage,
   activateMyProfile,
+  installMyProfile,
   findTopUpPackages,
   applyTopUp,
 } from '@/services/esim';
@@ -35,7 +36,8 @@ function toDisplay(p: EsimProfile): Esim {
     country: p.countryName || p.countryCode || 'eSIM',
     iso: p.countryCode || 'UN',
     planGb: unlimited ? 0 : round1(p.totalDataGb ?? 0),
-    planDays: p.daysLeft ?? 0,
+    // The bundle's total validity (e.g. "7 days"), not the live countdown.
+    planDays: p.validityDays ?? p.daysLeft ?? 0,
     status: p.status,
     usedGb: round1(p.usedDataGb ?? 0),
     daysLeft: p.daysLeft ?? 0,
@@ -61,6 +63,7 @@ type EsimState = {
   refresh: () => Promise<void>;
   refreshUsage: () => Promise<void>;
   activate: (id: string) => Promise<void>;
+  install: (id: string) => Promise<void>;
   topUp: (id: string) => Promise<{ ok: boolean; message?: string }>;
 };
 
@@ -115,6 +118,14 @@ export const useEsimStore = create<EsimState>((set, get) => ({
     const profile = get().raw[id];
     if (!profile) return;
     await activateMyProfile(identifierFor(profile));
+    await get().refresh();
+  },
+
+  // Record in the database that the user has installed this eSIM.
+  install: async (id) => {
+    const profile = get().raw[id];
+    if (!profile) return;
+    await installMyProfile(identifierFor(profile));
     await get().refresh();
   },
 

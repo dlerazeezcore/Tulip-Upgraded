@@ -1,13 +1,11 @@
 import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, ChevronRight, Plane, Calendar, MapPin, Clock } from 'lucide-react-native';
+import { ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, serviceRoute } from '@/data/services';
 import { useEsimStore } from '@/state/esimStore';
-import { MY_STAYS, MY_FLIGHTS, MY_TRANSFERS, MY_CARS } from '@/data/myBookings';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
@@ -121,110 +119,14 @@ function EsimList() {
   );
 }
 
-function StaysList() {
+function ComingSoon({ label }: { label: string }) {
   const t = useTheme();
   return (
-    <View style={{ gap: 10 }}>
-      {MY_STAYS.map((s) => (
-        <Card key={s.id}>
-          <View style={{ flexDirection: 'row', gap: 12 }}>
-            <Image source={s.photo} style={{ width: 64, height: 64, borderRadius: 12 }} contentFit="cover" transition={200} />
-            <View style={{ flex: 1 }}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 15, color: t.fg, flex: 1 }}>
-                  {s.hotel}
-                </Text>
-                <StatusPill kind={s.status} />
-              </View>
-              <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{s.city}</Text>
-              <Text style={{ fontSize: 12, color: t.fg, marginTop: 6 }}>
-                {s.checkIn} – {s.checkOut} · {s.nights} nights · {s.guests} guests
-              </Text>
-              <Text style={{ fontSize: 11, color: t.fgFaint, marginTop: 2 }}>
-                Confirmation {s.confirmation}
-              </Text>
-            </View>
-          </View>
-        </Card>
-      ))}
-    </View>
-  );
-}
-
-function FlightsList() {
-  const t = useTheme();
-  return (
-    <View style={{ gap: 10 }}>
-      {MY_FLIGHTS.map((f) => (
-        <Card key={f.id}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: f.color, alignItems: 'center', justifyContent: 'center' }}>
-              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>{f.airlineCode}</Text>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 15, color: t.fg }}>
-                {f.from} → {f.to}
-              </Text>
-              <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                {f.number} · {f.date} · {f.depart}
-              </Text>
-              <Text style={{ fontSize: 11, color: t.fgFaint, marginTop: 2 }}>PNR {f.pnr}</Text>
-            </View>
-            <StatusPill kind={f.status} />
-          </View>
-        </Card>
-      ))}
-    </View>
-  );
-}
-
-function TransfersList() {
-  const t = useTheme();
-  return (
-    <View style={{ gap: 10 }}>
-      {MY_TRANSFERS.map((tr) => (
-        <Card key={tr.id}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 15, color: t.fg }}>
-              {tr.vehicle}
-            </Text>
-            <StatusPill kind={tr.status} />
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
-            <MapPin size={13} color={t.fgMuted} />
-            <Text style={{ fontSize: 13, color: t.fg }}>{tr.from} → {tr.to}</Text>
-          </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-            <Clock size={13} color={t.fgMuted} />
-            <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr.date} · {tr.time}</Text>
-          </View>
-          <Text style={{ fontSize: 11, color: t.fgFaint, marginTop: 6 }}>Confirmation {tr.confirmation}</Text>
-        </Card>
-      ))}
-    </View>
-  );
-}
-
-function CarsList() {
-  const t = useTheme();
-  return (
-    <View style={{ gap: 10 }}>
-      {MY_CARS.map((c) => (
-        <Card key={c.id}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 15, color: t.fg }}>
-              {c.model}
-            </Text>
-            <StatusPill kind={c.status} />
-          </View>
-          <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 4 }}>{c.supplier} · {c.location}</Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 }}>
-            <Calendar size={13} color={t.fgMuted} />
-            <Text style={{ fontSize: 12, color: t.fg }}>{c.pickUp} → {c.dropOff}</Text>
-          </View>
-          <Text style={{ fontSize: 11, color: t.fgFaint, marginTop: 6 }}>Confirmation {c.confirmation}</Text>
-        </Card>
-      ))}
+    <View style={{ paddingVertical: 48, alignItems: 'center', gap: 8 }}>
+      <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Coming soon</Text>
+      <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center', maxWidth: 320 }}>
+        {label} booking isn't available yet. eSIMs are live today — check the eSIM store.
+      </Text>
     </View>
   );
 }
@@ -258,7 +160,7 @@ export default function ManageService() {
             {title}
           </Text>
         </View>
-        {svc && (
+        {svc && service === 'esim' && (
           <Pressable
             onPress={() => router.push(serviceRoute(svc.id) as any)}
             style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: svc.color }}
@@ -271,11 +173,7 @@ export default function ManageService() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 10, maxWidth: 900, width: '100%', alignSelf: 'center' }}>
-        {service === 'esim' && <EsimList />}
-        {service === 'hotels' && <StaysList />}
-        {service === 'flights' && <FlightsList />}
-        {service === 'transfers' && <TransfersList />}
-        {service === 'cars' && <CarsList />}
+        {service === 'esim' ? <EsimList /> : <ComingSoon label={svc?.label ?? 'This'} />}
       </ScrollView>
     </SafeAreaView>
   );

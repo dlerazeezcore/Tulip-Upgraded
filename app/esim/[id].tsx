@@ -44,6 +44,7 @@ export default function EsimDetail() {
   const refreshUsage = useEsimStore((s) => s.refreshUsage);
   const refreshing = useEsimStore((s) => s.refreshing);
   const activate = useEsimStore((s) => s.activate);
+  const install = useEsimStore((s) => s.install);
   const topUp = useEsimStore((s) => s.topUp);
 
   const [support, setSupport] = useState<EsimSupportResult | null>(null);
@@ -114,7 +115,7 @@ export default function EsimDetail() {
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: t.fg, letterSpacing: -0.4 }}>{esim.country}</Text>
             <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 2 }}>
-              {esim.unlimited ? 'Unlimited data' : `${esim.planGb} GB`}{esim.daysLeft ? ` · ${esim.daysLeft} days left` : ''}
+              {esim.unlimited ? 'Unlimited data' : `${esim.planGb} GB`}{esim.planDays ? ` · ${esim.planDays} days` : ''}
             </Text>
           </View>
           <StatusPill kind={esim.status} />
@@ -193,12 +194,24 @@ export default function EsimDetail() {
               <PrimaryButton
                 label="Install on this iPhone"
                 icon={<Smartphone size={16} color="#fff" strokeWidth={2.2} />}
-                onPress={() =>
+                onPress={() => {
+                  // Record the install in our database, then open iOS eSIM setup.
+                  install(esim.id).catch(() => {});
                   Linking.openURL(appleUrl).catch(() =>
                     Alert.alert('Could not open eSIM setup', 'Use the QR code or manual details instead.'),
-                  )
-                }
+                  );
+                }}
               />
+            )}
+            {!profile?.installed && (
+              <Pressable
+                onPress={() => run(() => install(esim.id))}
+                style={{ alignItems: 'center', paddingVertical: 10 }}
+              >
+                <Text style={{ color: t.primary, fontWeight: '700', fontSize: 13 }}>
+                  {busy ? 'Saving…' : "I've installed this eSIM"}
+                </Text>
+              </Pressable>
             )}
             {(smdp || activationCode) && (
               <View style={{ borderWidth: 1, borderColor: t.border, borderRadius: 12, overflow: 'hidden' }}>

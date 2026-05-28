@@ -10,7 +10,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { useIqdMoney } from '@/lib/pricing';
 import { useIsWideWeb } from '@/lib/responsive';
 import { packagesToBundles } from '@/lib/catalog';
-import { queryPackages, getCountries } from '@/services/esim';
+import { queryPackages, getCountries, cachedCountries } from '@/services/esim';
 import type { Bundle } from '@/data/esim';
 import { useEsimCart } from '@/state/esimCart';
 
@@ -30,7 +30,11 @@ export default function PlaceDetail() {
   // For regions: the ISO codes this region's plans actually cover, and a
   // code -> full-name map so we can show "Germany" instead of "DE".
   const [coverage, setCoverage] = useState<string[]>([]);
-  const [nameByCode, setNameByCode] = useState<Record<string, string>>({});
+  const [nameByCode, setNameByCode] = useState<Record<string, string>>(() => {
+    const m: Record<string, string> = {};
+    for (const c of cachedCountries()) m[c.code.toUpperCase()] = c.name;
+    return m;
+  });
 
   const name = nameParam || (place as string) || 'eSIM';
   const iso = isRegion ? undefined : String(place || '').toUpperCase();

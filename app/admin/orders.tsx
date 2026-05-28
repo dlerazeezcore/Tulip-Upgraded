@@ -10,6 +10,9 @@ import { getAdminOrders } from '@/services/admin';
 import type { AdminOrder } from '@/services/types';
 import { formatIqd } from '@/lib/pricing';
 
+const YEARS = [2026, 2027, 2028, 2029, 2030];
+const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
 const ESIM_FILTERS: { id: string; label: string }[] = [
   { id: 'all', label: 'All' },
   { id: 'installed', label: 'Installed' },
@@ -29,61 +32,47 @@ const ESIM_LABEL: Record<string, string> = {
 function orderDate(o: AdminOrder): string {
   return o.bookedAt || o.createdAt || '';
 }
-function monthKey(iso: string): string {
-  if (!iso) return '';
-  const d = new Date(iso);
-  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-}
-function monthLabel(key: string): string {
-  if (!key) return '—';
-  const [y, m] = key.split('-').map(Number);
-  return new Date(y, m - 1, 1).toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
-}
 
 export default function AdminOrders() {
   const t = useTheme();
   const router = useRouter();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
+  const [year, setYear] = useState<number>(new Date().getFullYear());
+  const [month, setMonth] = useState<number | null>(null); // 1-12; null = nothing selected yet
   const [orders, setOrders] = useState<AdminOrder[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [month, setMonth] = useState<string>('all');
   const [esim, setEsim] = useState<string>('all');
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const toggle = (id: number) => setExpanded((m) => ({ ...m, [id]: !m[id] }));
 
+  // Load orders only once a year + month are chosen — filtered server-side, so
+  // nothing is fetched by default and we never pull the whole table.
   useEffect(() => {
-    getAdminOrders()
-      .then(setOrders)
-      .catch((e: any) => setError(e?.message || 'Failed to load orders'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const months = useMemo(() => {
-    const set = new Set<string>();
-    // Always offer the last 12 months so any month is selectable, even with no orders.
-    const now = new Date();
-    for (let i = 0; i < 12; i++) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      set.add(`${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`);
+    if (month === null) {
+      setOrders([]);
+      return;
     }
-    // Include any older months that actually have orders.
-    orders.forEach((o) => { const k = monthKey(orderDate(o)); if (k) set.add(k); });
-    return ['all', ...Array.from(set).sort().reverse()];
-  }, [orders]);
+    const key = `${year}-${String(month).padStart(2, '0')}`;
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setExpanded({});
+    getAdminOrders({ month: key })
+      .then((rows) => { if (!cancelled) setOrders(rows); })
+      .catch((e: any) => { if (!cancelled) setError(e?.message || 'Failed to load orders'); })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [year, month]);
 
   const filtered = useMemo(
-    () =>
-      orders.filter(
-        (o) =>
-          (month === 'all' || monthKey(orderDate(o)) === month) &&
-          (esim === 'all' || o.esimStatus === esim),
-      ),
-    [orders, month, esim],
+    () => orders.filter((o) => esim === 'all' || o.esimStatus === esim),
+    [orders, esim],
   );
 
   if (!isAdmin) return <Redirect href="/(tabs)/profile" />;
 
+  const labelStyle = { fontSize: 11, fontWeight: '700' as const, color: t.fgMuted, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
   const Chip = ({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) => (
     <Pressable onPress={onPress} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}>
       <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 12, color: on ? '#fff' : t.fgMuted }}>{label}</Text>
@@ -100,28 +89,38 @@ export default function AdminOrders() {
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-          All orders{loading ? '' : ` · ${orders.length}`}
+          Order history{month !== null && !loading ? ` · ${orders.length}` : ''}
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 14, maxWidth: 820, width: '100%', alignSelf: 'center' }}>
         <View style={{ gap: 8 }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Month</Text>
+          <Text style={labelStyle}>Year</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {months.map((m) => <Chip key={m} on={month === m} label={m === 'all' ? 'All' : monthLabel(m)} onPress={() => setMonth(m)} />)}
+            {YEARS.map((y) => <Chip key={y} on={year === y} label={String(y)} onPress={() => setYear(y)} />)}
           </ScrollView>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginTop: 4 }}>eSIM status</Text>
+          <Text style={[labelStyle, { marginTop: 4 }]}>Month</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {ESIM_FILTERS.map((f) => <Chip key={f.id} on={esim === f.id} label={f.label} onPress={() => setEsim(f.id)} />)}
+            {MONTHS.map((m, i) => <Chip key={m} on={month === i + 1} label={m} onPress={() => setMonth(i + 1)} />)}
           </ScrollView>
+          {month !== null && (
+            <>
+              <Text style={[labelStyle, { marginTop: 4 }]}>eSIM status</Text>
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
+                {ESIM_FILTERS.map((f) => <Chip key={f.id} on={esim === f.id} label={f.label} onPress={() => setEsim(f.id)} />)}
+              </ScrollView>
+            </>
+          )}
         </View>
 
-        {loading ? (
+        {month === null ? (
+          <Text style={{ color: t.fgMuted, textAlign: 'center', paddingVertical: 40 }}>Select a year and month to view orders.</Text>
+        ) : loading ? (
           <View style={{ paddingVertical: 50, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
         ) : error ? (
           <Text style={{ color: t.danger, textAlign: 'center', paddingVertical: 20 }}>{error}</Text>
         ) : filtered.length === 0 ? (
-          <Text style={{ color: t.fgMuted, textAlign: 'center', paddingVertical: 40 }}>No orders match these filters.</Text>
+          <Text style={{ color: t.fgMuted, textAlign: 'center', paddingVertical: 40 }}>No orders for {MONTHS[month - 1]} {year}.</Text>
         ) : (
           <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
             {filtered.map((o, i) => {

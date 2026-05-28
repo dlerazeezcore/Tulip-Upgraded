@@ -98,6 +98,7 @@ export type EsimProfile = {
   usedDataGb?: number | null;
   remainingDataGb?: number | null;
   daysLeft?: number | null;
+  validityDays?: number | null;
   supportTopUpType?: number;
   activationCode?: string | null;
   qrCodeUrl?: string | null;

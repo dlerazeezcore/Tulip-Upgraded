@@ -131,7 +131,7 @@ export default function Profile() {
     }
   };
   const memberSince = user?.createdAt
-    ? new Date(user.createdAt).toLocaleDateString(undefined, { year: 'numeric', month: 'short' })
+    ? String(new Date(user.createdAt).getFullYear())
     : null;
   const tierLabel = user?.isLoyalty ? 'Loyalty' : 'Member';
 

@@ -1,4 +1,5 @@
 // eSIM wiring: catalog, pricing, orders, profiles, install/activate, usage, top-up.
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { apiFetch, unwrap } from '@/lib/api';
 import type {
   EsimProfile,
@@ -28,6 +29,24 @@ export async function queryPackages(params: {
 
 export type LocationCountry = { code: string; name: string };
 
+// In-memory cache so full country names are available synchronously after the
+// first load (eliminates the "2-letter code then full name" flash). Persisted
+// to AsyncStorage so it survives app restarts and is warm on the next launch.
+const COUNTRIES_KEY = 'tulip.countries';
+let countriesCache: LocationCountry[] = [];
+AsyncStorage.getItem(COUNTRIES_KEY)
+  .then((raw) => {
+    if (raw && countriesCache.length === 0) {
+      try { countriesCache = JSON.parse(raw); } catch {}
+    }
+  })
+  .catch(() => {});
+
+/** Synchronously read the cached country list (may be empty before first load). */
+export function cachedCountries(): LocationCountry[] {
+  return countriesCache;
+}
+
 /** All provider countries (ISO-2, type=country), for the searchable catalog list. */
 export async function getCountries(): Promise<LocationCountry[]> {
   const res: any = await apiFetch(`${BASE}/locations/query`, { method: 'POST', auth: false, body: {} });
@@ -41,6 +60,10 @@ export async function getCountries(): Promise<LocationCountry[]> {
     out.push({ code, name: String(l?.name ?? code) });
   }
   out.sort((a, b) => a.name.localeCompare(b.name));
+  if (out.length) {
+    countriesCache = out;
+    AsyncStorage.setItem(COUNTRIES_KEY, JSON.stringify(out)).catch(() => {});
+  }
   return out;
 }
 

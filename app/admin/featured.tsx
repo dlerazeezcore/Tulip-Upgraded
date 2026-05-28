@@ -22,6 +22,7 @@ export default function AdminFeatured() {
   const [code, setCode] = useState('');
   const [name, setName] = useState('');
   const [sortOrder, setSortOrder] = useState('0');
+  const [confirmRow, setConfirmRow] = useState<FeaturedLocationAdmin | null>(null);
 
   const load = () => {
     setLoading(true);
@@ -54,11 +55,15 @@ export default function AdminFeatured() {
       isPopular: row.is_popular ?? true, enabled: !(row.enabled ?? true), locationType: row.location_type,
     }));
 
-  const onDelete = (row: FeaturedLocationAdmin) =>
-    Alert.alert('Remove', `Remove ${row.name}?`, [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => run(() => deleteFeaturedLocation(row.id)) },
-    ]);
+  // Inline confirm modal instead of Alert.alert (which is a no-op on web,
+  // so the delete button appeared to "do nothing" in the browser).
+  const onDelete = (row: FeaturedLocationAdmin) => setConfirmRow(row);
+  const confirmDelete = () => {
+    const row = confirmRow;
+    if (!row) return;
+    setConfirmRow(null);
+    run(() => deleteFeaturedLocation(row.id));
+  };
 
   const numStyle = {
     backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 12,
@@ -102,6 +107,25 @@ export default function AdminFeatured() {
           </View>
         )}
       </ScrollView>
+
+      <Modal visible={!!confirmRow} transparent animationType="fade" onRequestClose={() => setConfirmRow(null)}>
+        <Pressable onPress={() => setConfirmRow(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+          <Pressable style={{ backgroundColor: t.bgElev, borderRadius: 20, padding: 22, gap: 8, maxWidth: 380, width: '100%' }}>
+            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Remove destination</Text>
+            <Text style={{ fontSize: 13, color: t.fgMuted }}>
+              Permanently remove {confirmRow?.name} from popular destinations? You can also just hide it with the eye toggle.
+            </Text>
+            <View style={{ flexDirection: 'row', gap: 10, marginTop: 10 }}>
+              <Pressable onPress={() => setConfirmRow(null)} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, borderWidth: 1, borderColor: t.border, alignItems: 'center' }}>
+                <Text style={{ color: t.fg, fontWeight: '700', fontSize: 14 }}>Cancel</Text>
+              </Pressable>
+              <Pressable onPress={confirmDelete} style={{ flex: 1, paddingVertical: 12, borderRadius: 12, backgroundColor: t.danger, alignItems: 'center' }}>
+                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 14 }}>Remove</Text>
+              </Pressable>
+            </View>
+          </Pressable>
+        </Pressable>
+      </Modal>
 
       <Modal visible={adding} transparent animationType="slide" onRequestClose={() => setAdding(false)}>
         <Pressable onPress={() => setAdding(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>

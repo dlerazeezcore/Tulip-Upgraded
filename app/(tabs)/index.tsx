@@ -9,7 +9,6 @@ import { Search, ArrowRight, Bell } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { ServiceTile } from '@/components/ServiceTile';
 import { MultiServiceTabs } from '@/components/MultiServiceTabs';
-import { TripCard } from '@/components/TripCard';
 import { ActiveEsimCard } from '@/components/ActiveEsimCard';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
@@ -17,7 +16,6 @@ import { PressableScale } from '@/components/PressableScale';
 import { SERVICES, SERVICE_SLOT, serviceRoute } from '@/data/services';
 import { useSearchStore } from '@/state/searchStore';
 import { useAuthStore } from '@/state/authStore';
-import { useIsWideWeb } from '@/lib/responsive';
 
 function greetingForHour(h: number): string {
   if (h < 12) return 'Good morning';
@@ -30,7 +28,6 @@ const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 export default function Home() {
   const t = useTheme();
   const router = useRouter();
-  const isWide = useIsWideWeb();
   const activeService = useSearchStore((s) => s.activeService);
   const svc = SERVICES.find((s) => s.id === activeService)!;
   const user = useAuthStore((s) => s.user);
@@ -52,8 +49,8 @@ export default function Home() {
         showsVerticalScrollIndicator={false}
       >
         {/* Greeting */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 10 }}>
+          <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 13, color: t.fgMuted, fontFamily: t.font.bodyMedium, fontWeight: '500' }}>
               {greeting}{firstName ? `, ${firstName}` : ''}
             </Text>
@@ -159,22 +156,8 @@ export default function Home() {
           </BlurView>
         </View>
 
-        {/* Trip card + active eSIM (side by side on desktop) */}
-        {isWide ? (
-          <View style={{ flexDirection: 'row', gap: 18, alignItems: 'flex-start' }}>
-            <View style={{ flex: 1 }}>
-              <TripCard />
-            </View>
-            <View style={{ flex: 1 }}>
-              <ActiveEsimCard />
-            </View>
-          </View>
-        ) : (
-          <>
-            <TripCard />
-            <ActiveEsimCard />
-          </>
-        )}
+        {/* Active eSIM (real data from the user's profiles) */}
+        <ActiveEsimCard />
 
         {/* Services grid */}
         <View>

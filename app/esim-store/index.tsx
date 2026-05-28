@@ -16,7 +16,7 @@ const REGION_GRADIENTS: [string, string][] = [
   ['#EF4444', '#991B1B'], ['#14B8A6', '#0F766E'],
 ];
 import { useIsWideWeb } from '@/lib/responsive';
-import { getFeaturedLocations, getCountries, getRegions, type LocationCountry, type ProviderRegion } from '@/services/esim';
+import { getFeaturedLocations, getCountries, getRegions, cachedCountries, type LocationCountry, type ProviderRegion } from '@/services/esim';
 import type { FeaturedLocation } from '@/services/types';
 
 type Tab = 'popular' | 'countries' | 'regions';
@@ -33,9 +33,9 @@ export default function EsimStore() {
   const [tab, setTab] = useState<Tab>('popular');
   const [q, setQ] = useState('');
   const [popular, setPopular] = useState<FeaturedLocation[]>([]);
-  const [countries, setCountries] = useState<LocationCountry[]>([]);
+  const [countries, setCountries] = useState<LocationCountry[]>(cachedCountries());
   const [regions, setRegions] = useState<ProviderRegion[]>([]);
-  const [loadingCountries, setLoadingCountries] = useState(true);
+  const [loadingCountries, setLoadingCountries] = useState(cachedCountries().length === 0);
 
   useEffect(() => {
     getFeaturedLocations('esim').then(setPopular).catch(() => setPopular([]));
@@ -113,7 +113,10 @@ export default function EsimStore() {
             ) : (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
                 {popular.map((c) => {
-                  const full = nameByCode[c.code.toUpperCase()] ?? c.name;
+                  // Prefer the stored display name; only fall back to the country
+                  // map when the stored name is just a 2-letter code.
+                  const isCode = /^[A-Za-z]{2}$/.test((c.name ?? '').trim());
+                  const full = isCode ? (nameByCode[c.code.toUpperCase()] ?? c.name) : c.name;
                   return (
                     <View key={c.code} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
                       <PressableScale
