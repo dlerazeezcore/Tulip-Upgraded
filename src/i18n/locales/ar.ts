@@ -20,7 +20,6 @@ export default {
     home: 'الرئيسية',
     services: 'الخدمات',
     bookings: 'الحجوزات',
-    inbox: 'الوارد',
     profile: 'الملف الشخصي',
   },
   langNames: {

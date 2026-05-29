@@ -20,7 +20,6 @@ export default {
     home: 'Home',
     services: 'Services',
     bookings: 'Bookings',
-    inbox: 'Inbox',
     profile: 'Profile',
   },
   langNames: {

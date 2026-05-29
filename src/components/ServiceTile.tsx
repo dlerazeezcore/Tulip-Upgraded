@@ -45,6 +45,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
       </View>
       <View>
         <Text
+          numberOfLines={2}
           style={{
             fontSize: big ? 16 : small ? 13 : 14,
             fontFamily: t.font.display,
@@ -55,7 +56,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
         >
           {svc.label}
         </Text>
-        <Text style={{ fontSize: 11, color: t.fgMuted, marginTop: 2 }}>
+        <Text numberOfLines={2} style={{ fontSize: 11, color: t.fgMuted, marginTop: 2 }}>
           {placeholder ? 'New services soon' : svc.verb}
         </Text>
       </View>
@@ -73,7 +74,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
           borderStyle: 'dashed',
           gap: big ? 14 : 10,
           opacity: 0.6,
-          minHeight: big ? 130 : small ? 92 : 110,
+          height: big ? 148 : small ? 108 : 132,
         }}
       >
         {content}

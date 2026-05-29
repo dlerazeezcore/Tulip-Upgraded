@@ -20,7 +20,6 @@ export default {
     home: 'ماڵەوە',
     services: 'خزمەتگوزاریەکان',
     bookings: 'حیجزەکان',
-    inbox: 'پەیامەکان',
     profile: 'پرۆفایل',
   },
   langNames: {

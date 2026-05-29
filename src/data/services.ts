@@ -8,7 +8,6 @@ import {
   Home,
   Bookmark,
   Ticket,
-  Bell,
   User,
   LucideIcon,
 } from 'lucide-react-native';
@@ -42,7 +41,7 @@ export const SERVICE_SLOT = {
 };
 
 export type NavItem = {
-  key: 'home' | 'services' | 'bookings' | 'inbox' | 'profile';
+  key: 'home' | 'services' | 'bookings' | 'profile';
   label: string;
   Icon: LucideIcon;
   route: string;
@@ -52,7 +51,6 @@ export const NAV: NavItem[] = [
   { key: 'home',     label: 'Home',     Icon: Home,     route: '/(tabs)' },
   { key: 'services', label: 'Services', Icon: Bookmark, route: '/(tabs)/services' },
   { key: 'bookings', label: 'Bookings', Icon: Ticket,   route: '/(tabs)/bookings' },
-  { key: 'inbox',    label: 'Inbox',    Icon: Bell,     route: '/(tabs)/inbox' },
   { key: 'profile',  label: 'Profile',  Icon: User,     route: '/(tabs)/profile' },
 ];
 

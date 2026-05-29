@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
-import { Search, ArrowRight, Bell } from 'lucide-react-native';
+import { Search, ArrowRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { ServiceTile } from '@/components/ServiceTile';
 import { MultiServiceTabs } from '@/components/MultiServiceTabs';
@@ -67,25 +67,7 @@ export default function Home() {
               Where to next?
             </Text>
           </View>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <CurrencyPicker />
-            <PressableScale
-              scaleTo={0.92}
-              style={{
-                width: 40,
-                height: 40,
-                borderRadius: 20,
-                backgroundColor: t.bgElev,
-                borderWidth: 1,
-                borderColor: t.border,
-                alignItems: 'center',
-                justifyContent: 'center',
-                ...t.shadow1,
-              }}
-            >
-              <Bell size={18} color={t.fg} strokeWidth={2} />
-            </PressableScale>
-          </View>
+          <CurrencyPicker />
         </View>
 
         {/* Hero search — frosted glass over a photo backdrop */}

@@ -96,7 +96,6 @@ export default function TabsLayout() {
             <Tabs.Screen name="index" />
             <Tabs.Screen name="services" />
             <Tabs.Screen name="bookings" />
-            <Tabs.Screen name="inbox" />
             <Tabs.Screen name="profile" />
           </Tabs>
         </View>
@@ -112,7 +111,6 @@ export default function TabsLayout() {
       <Tabs.Screen name="index" options={{ title: 'Home' }} />
       <Tabs.Screen name="services" options={{ title: 'Services' }} />
       <Tabs.Screen name="bookings" options={{ title: 'Bookings' }} />
-      <Tabs.Screen name="inbox" options={{ title: 'Inbox' }} />
       <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
     </Tabs>
   );
