@@ -21,7 +21,7 @@
       "package": "com.tulip.booking",
       "userInterfaceStyle": "automatic",
       "adaptiveIcon": {
-        "foregroundImage": "./assets/tulip-logo-full.png",
+        "foregroundImage": "./assets/icon-android-foreground.png",
         "backgroundColor": "#1967D2"
       }
     },
