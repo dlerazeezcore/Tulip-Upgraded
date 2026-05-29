@@ -93,7 +93,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
         borderWidth: 1,
         borderColor: t.border,
         gap: big ? 14 : 10,
-        minHeight: big ? 130 : small ? 92 : 110,
+        height: big ? 148 : small ? 108 : 132,
         ...t.shadow1,
       }}
     >
