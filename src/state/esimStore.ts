@@ -12,6 +12,12 @@ import { useAuthStore } from '@/state/authStore';
 
 export type EsimStatus = 'inactive' | 'active' | 'expired';
 
+export type EsimDataLabel =
+  | { kind: 'gb'; gb: number }       // "1.0 GB"
+  | { kind: 'unlimited' }              // "Unlimited data"
+  | { kind: 'package'; name: string }  // fallback to provider's package name
+  | { kind: 'pending' };               // we don't know yet
+
 export type Esim = {
   id: string;
   country: string;
@@ -23,27 +29,67 @@ export type Esim = {
   daysLeft: number;
   iccid: string;
   unlimited?: boolean;
+  /** Pre-resolved label for the data plan — use this for display instead of
+   *  building "unlimited ? ... : ..." in every render site. */
+  dataLabel: EsimDataLabel;
 };
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
 }
 
+/**
+ * Decide what to show for the data plan.
+ *
+ * IMPORTANT: "Unlimited" is positive-evidence-only. The previous logic
+ * (`unlimited = !p.totalDataMb`) treated any missing data as unlimited, which
+ * made every placeholder profile (the broken ones the provider hasn't yet
+ * populated) wrongly display as "Unlimited data". That misled users into
+ * thinking they had bought a different plan than they did.
+ *
+ * Priority:
+ *   1. positive totalDataMb > 0  → show the GB amount
+ *   2. package name from the order (e.g. "Iraq 0.5 GB · 1d") → show as-is
+ *   3. neither → "pending" placeholder
+ */
+function buildDataLabel(p: EsimProfile): EsimDataLabel {
+  const mb = p.totalDataMb;
+  if (typeof mb === 'number' && mb > 0) {
+    return { kind: 'gb', gb: round1(mb / 1024) };
+  }
+  if (p.packageName && p.packageName.trim()) {
+    return { kind: 'package', name: p.packageName.trim() };
+  }
+  return { kind: 'pending' };
+}
+
 function toDisplay(p: EsimProfile): Esim {
-  const unlimited = !p.totalDataMb;
+  const label = buildDataLabel(p);
+  const isUnlimited = label.kind === 'unlimited';
   return {
     id: String(p.id),
     country: p.countryName || p.countryCode || 'eSIM',
     iso: p.countryCode || 'UN',
-    planGb: unlimited ? 0 : round1(p.totalDataGb ?? 0),
+    planGb: label.kind === 'gb' ? label.gb : 0,
     // The bundle's total validity (e.g. "7 days"), not the live countdown.
     planDays: p.validityDays ?? p.daysLeft ?? 0,
     status: p.status,
     usedGb: round1(p.usedDataGb ?? 0),
     daysLeft: p.daysLeft ?? 0,
     iccid: p.iccid || p.esimTranNo || '',
-    unlimited,
+    unlimited: isUnlimited,
+    dataLabel: label,
   };
+}
+
+/** Convenience: turn an EsimDataLabel into the user-visible string. */
+export function formatEsimDataLabel(label: EsimDataLabel): string {
+  switch (label.kind) {
+    case 'gb':        return `${label.gb} GB`;
+    case 'unlimited': return 'Unlimited data';
+    case 'package':   return label.name;
+    case 'pending':   return 'Plan details loading…';
+  }
 }
 
 function identifierFor(p: EsimProfile): { iccid?: string; esimTranNo?: string; providerOrderNo?: string; id?: number } {

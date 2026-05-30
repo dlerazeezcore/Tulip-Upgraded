@@ -5,7 +5,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, serviceRoute } from '@/data/services';
-import { useEsimStore } from '@/state/esimStore';
+import { formatEsimDataLabel, useEsimStore } from '@/state/esimStore';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
@@ -33,8 +33,13 @@ function Card({ children, onPress }: { children: React.ReactNode; onPress?: () =
 function EsimList() {
   const t = useTheme();
   const router = useRouter();
-  const esims = useEsimStore((s) => s.esims);
-  const activate = useEsimStore((s) => s.activate);
+  const allEsims = useEsimStore((s) => s.esims);
+  // Hide CANCELLED / dead profiles from the list — they confuse users (they
+  // can't install or top them up). They're still in the DB if we need them.
+  const esims = React.useMemo(
+    () => allEsims.filter((e) => e.status !== 'cancelled' as any),
+    [allEsims],
+  );
   const refresh = useEsimStore((s) => s.refresh);
   const refreshing = useEsimStore((s) => s.refreshing);
   const loaded = useEsimStore((s) => s.loaded);
@@ -75,7 +80,7 @@ function EsimList() {
                   {e.country}
                 </Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                  {e.unlimited ? 'Unlimited data' : `${e.planGb} GB`} · {e.planDays} days
+                  {formatEsimDataLabel(e.dataLabel)}{e.planDays > 0 ? ` · ${e.planDays} days` : ''}
                 </Text>
               </View>
               <StatusPill kind={e.status} />
@@ -96,21 +101,16 @@ function EsimList() {
             )}
 
             {e.status === 'inactive' && (
-              <Pressable
-                onPress={() => activate(e.id)}
-                style={{
-                  marginTop: 12,
-                  alignSelf: 'flex-start',
-                  paddingVertical: 8,
-                  paddingHorizontal: 16,
-                  borderRadius: 999,
-                  backgroundColor: t.primary,
-                }}
-              >
-                <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
-                  Activate
+              // Don't render a separate Activate button here — tapping the
+              // whole card takes the user to the detail page, where the full
+              // install flow lives (Activate + QR + Share). A duplicate
+              // button on the list calls the wrong backend action and
+              // confuses users about "did I install or not?".
+              <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ fontSize: 11, color: t.fgMuted }}>
+                  Tap to install →
                 </Text>
-              </Pressable>
+              </View>
             )}
           </Card>
         );

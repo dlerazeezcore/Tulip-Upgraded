@@ -43,16 +43,35 @@ export function buildLpaString(
  *
  * iOS 17.4+: opens directly into Settings → Cellular → Set Up eSIM with the
  * SM-DP+ prefilled. Older iOS versions fall through to Safari (still works as
- * a manual hand-off). On non-iOS platforms we still return the URL — caller
- * decides whether to expose the button.
+ * a manual hand-off).
  */
 export function buildAppleUniversalUrl(lpa: string): string {
   return `${APPLE_UNIVERSAL_BASE}?carddata=${encodeURIComponent(lpa)}`;
 }
 
-/** True when the install button should be shown — only meaningful on iOS. */
+/**
+ * The right deeplink target for the current platform.
+ *
+ *   iOS     → Apple universal URL (opens iOS Settings → Add eSIM).
+ *   Android → LPA: scheme URI (caught by Android Settings on API 28+).
+ *   Web     → null; show the QR instead.
+ *
+ * Returning null signals "show greyed/disabled Activate" to the caller.
+ */
+export function buildActivationDeeplink(lpa: string): string | null {
+  if (Platform.OS === 'ios') return buildAppleUniversalUrl(lpa);
+  if (Platform.OS === 'android') return lpa; // already in LPA: format
+  return null;
+}
+
+/** True when this platform supports a one-tap activation deeplink. */
+export function isActivationSupported(): boolean {
+  return Platform.OS === 'ios' || Platform.OS === 'android';
+}
+
+/** @deprecated use isActivationSupported() — kept for compat with old call sites */
 export function isAppleUniversalSupported(): boolean {
-  return Platform.OS === 'ios';
+  return isActivationSupported();
 }
 
 /**

@@ -81,6 +81,8 @@ export type EsimProfile = {
   iccid?: string | null;
   countryCode?: string | null;
   countryName?: string | null;
+  packageName?: string | null;
+  packageCode?: string | null;
   status: 'inactive' | 'active' | 'expired';
   isExpired?: boolean;
   canActivate?: boolean;

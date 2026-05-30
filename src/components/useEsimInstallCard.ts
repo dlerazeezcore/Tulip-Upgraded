@@ -4,10 +4,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
 import {
-  buildAppleUniversalUrl,
+  buildActivationDeeplink,
   buildLpaString,
   generateQrDataUrl,
-  isAppleUniversalSupported,
+  isActivationSupported,
   shareEsimQr,
 } from '@/lib/esimActivation';
 
@@ -77,30 +77,35 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     };
   }, [lpa, qrRevealed, qrDataUrl]);
 
-  const appleUrl = useMemo(() => (lpa ? buildAppleUniversalUrl(lpa) : null), [lpa]);
-  const activateEnabled = isAppleUniversalSupported();
+  // Platform-aware deeplink: iOS → Apple universal URL,
+  // Android → LPA: scheme URI, Web → null (button disabled).
+  const activationUrl = useMemo(
+    () => (lpa ? buildActivationDeeplink(lpa) : null),
+    [lpa],
+  );
+  const activateEnabled = !!activationUrl && isActivationSupported();
   const activateDisabledReason = activateEnabled
     ? null
     : Platform.OS === 'web'
-    ? 'iPhone only — open the app on your iPhone or scan the QR'
-    : 'iPhone only — use the QR to install on this device';
+    ? 'Open the app on your phone to install — or scan the QR'
+    : 'Use the QR to install on this device';
 
   const activate = () => {
-    if (!activateEnabled) {
+    if (!activateEnabled || !activationUrl) {
       Alert.alert(
-        'Activate works on iPhone only',
-        'Open Tulip on your iPhone to install this eSIM, or tap the QR button to scan it from another iPhone.',
+        'Open Tulip on your phone',
+        'Activate works on iPhone or Android. Open this eSIM from the app on your phone — or tap QR and scan it from another phone.',
       );
       return;
     }
-    if (!appleUrl) return;
-    // Opens iOS Settings → Cellular → Add eSIM with the SM-DP+ prefilled.
-    // iOS takes over the screen; the user finishes the install there. We
-    // detect that completion later via the cron's periodic provider sync.
-    Linking.openURL(appleUrl).catch(() =>
+    // iOS:    iOS Settings → Cellular → Add eSIM with SM-DP+ prefilled.
+    // Android: System eSIM setup intent (Android 9 / API 28+).
+    // In both cases the system takes over the screen; user finishes there.
+    // We detect completion via the cron's 30-min provider sync OR pull-to-refresh.
+    Linking.openURL(activationUrl).catch(() =>
       Alert.alert(
         'Could not open eSIM setup',
-        "Tap the QR button instead — scan it with another phone, or share to install on a different device.",
+        "Tap QR instead — scan it with another phone or share to install elsewhere.",
       ),
     );
   };
@@ -132,7 +137,7 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
 
   return {
     hasActivationData: !!lpa,
-    showActivateButton: !!appleUrl,
+    showActivateButton: !!lpa,
     activateEnabled,
     activateDisabledReason,
     showQrButton: !!lpa,
