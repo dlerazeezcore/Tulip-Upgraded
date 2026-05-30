@@ -33,13 +33,10 @@ function Card({ children, onPress }: { children: React.ReactNode; onPress?: () =
 function EsimList() {
   const t = useTheme();
   const router = useRouter();
-  const allEsims = useEsimStore((s) => s.esims);
-  // Hide CANCELLED / dead profiles from the list — they confuse users (they
-  // can't install or top them up). They're still in the DB if we need them.
-  const esims = React.useMemo(
-    () => allEsims.filter((e) => e.status !== 'cancelled' as any),
-    [allEsims],
-  );
+  // Show all profiles — user policy: "the plan stays there if used or not".
+  // Cancelled / expired profiles get the EXPIRED pill and the detail screen
+  // hides the install card for them.
+  const esims = useEsimStore((s) => s.esims);
   const refresh = useEsimStore((s) => s.refresh);
   const refreshing = useEsimStore((s) => s.refreshing);
   const loaded = useEsimStore((s) => s.loaded);
