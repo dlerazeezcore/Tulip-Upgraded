@@ -14,21 +14,22 @@ import {
 export type EsimInstallCardViewModel = {
   // Render gates
   hasActivationData: boolean;
-  showAppleInstallButton: boolean; // iOS only + LPA available
-  showQr: boolean; // we computed a QR
-  showShare: boolean; // sharing is available on this platform
+  showActivateButton: boolean; // iOS only + LPA available — opens iOS install sheet
+  showQrButton: boolean;       // we have an LPA → can render a QR
+  qrRevealed: boolean;         // user tapped QR button; show the image + share button
+  showShare: boolean;          // sharing is available on this platform (always with QR)
 
   // Display
-  qrDataUrl: string | null; // PNG data URL for <Image source={{ uri }} />
+  qrDataUrl: string | null;    // PNG data URL for <Image source={{ uri }} />
   qrLoading: boolean;
   smdp: string | null;
   activationCodeManual: string | null;
 
   // Actions
   busy: boolean;
-  openInIphone: () => void; // tap → iOS one-tap install
-  share: () => Promise<void>; // tap → native share sheet for QR PNG
-  markInstalled: () => Promise<void>; // backend marker: "I've installed it"
+  activate: () => void;         // tap → iOS one-tap install sheet
+  toggleQr: () => void;         // tap → reveal/hide the QR
+  share: () => Promise<void>;   // tap → native share sheet for QR PNG
 };
 
 type Input = {
@@ -37,8 +38,6 @@ type Input = {
   activationCode: string | null | undefined;
   country: string;
   dataLabel?: string;
-  // Backend side-effect: marks the profile as installed in our DB
-  onMarkInstalled?: () => Promise<void>;
 };
 
 export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
@@ -49,14 +48,14 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
 
   const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
   const [qrLoading, setQrLoading] = useState<boolean>(false);
+  const [qrRevealed, setQrRevealed] = useState<boolean>(false);
   const [busy, setBusy] = useState<boolean>(false);
 
-  // Generate the QR data URL whenever LPA changes. Cheap (~10ms), no native deps.
+  // Generate the QR data URL lazily — only when the user taps "QR" (saves a
+  // few ms on initial render and ensures users who only use Activate never
+  // pay the cost). Cheap (~10ms), no native deps.
   useEffect(() => {
-    if (!lpa) {
-      setQrDataUrl(null);
-      return;
-    }
+    if (!lpa || !qrRevealed || qrDataUrl) return;
     let cancelled = false;
     setQrLoading(true);
     generateQrDataUrl(lpa)
@@ -72,21 +71,26 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     return () => {
       cancelled = true;
     };
-  }, [lpa]);
+  }, [lpa, qrRevealed, qrDataUrl]);
 
   const appleUrl = useMemo(() => (lpa ? buildAppleUniversalUrl(lpa) : null), [lpa]);
 
-  const openInIphone = () => {
+  const activate = () => {
     if (!appleUrl) return;
-    // Fire the backend "mark installed" side-effect optimistically; iOS sheet
-    // covers the app so the user can't see the error toast anyway.
-    if (input.onMarkInstalled) input.onMarkInstalled().catch(() => {});
+    // Opens iOS Settings → Cellular → Add eSIM with the SM-DP+ prefilled.
+    // iOS takes over the screen; the user finishes the install there. We
+    // detect that completion later via the cron's periodic provider sync.
     Linking.openURL(appleUrl).catch(() =>
       Alert.alert(
         'Could not open eSIM setup',
-        "Open Settings → Cellular → Add eSIM and scan the QR code instead.",
+        "Tap the QR button instead — scan it with another phone, or share to install on a different device.",
       ),
     );
+  };
+
+  const toggleQr = () => {
+    if (!lpa) return;
+    setQrRevealed((v) => !v);
   };
 
   const share = async () => {
@@ -109,30 +113,19 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     }
   };
 
-  const markInstalled = async () => {
-    if (busy || !input.onMarkInstalled) return;
-    setBusy(true);
-    try {
-      await input.onMarkInstalled();
-    } catch (e: any) {
-      Alert.alert('Could not save', e?.message || 'Try again.');
-    } finally {
-      setBusy(false);
-    }
-  };
-
   return {
     hasActivationData: !!lpa,
-    showAppleInstallButton: !!appleUrl && isAppleUniversalSupported(),
-    showQr: !!qrDataUrl,
+    showActivateButton: !!appleUrl && isAppleUniversalSupported(),
+    showQrButton: !!lpa,
+    qrRevealed,
     showShare: Platform.OS !== 'web' && !!lpa,
     qrDataUrl,
     qrLoading,
     smdp: input.smdp ?? null,
     activationCodeManual: input.activationCode ?? null,
     busy,
-    openInIphone,
+    activate,
+    toggleQr,
     share,
-    markInstalled,
   };
 }

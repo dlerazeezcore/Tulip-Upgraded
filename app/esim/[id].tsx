@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Text, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Plus, Signal, Clock, RefreshCw, AlertTriangle, Check } from 'lucide-react-native';
+import { ChevronLeft, Plus, Signal, Clock, RefreshCw, AlertTriangle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimStore } from '@/state/esimStore';
 import { Flag } from '@/components/Flag';
@@ -43,8 +43,6 @@ export default function EsimDetail() {
   const refresh = useEsimStore((s) => s.refresh);
   const refreshUsage = useEsimStore((s) => s.refreshUsage);
   const refreshing = useEsimStore((s) => s.refreshing);
-  const activate = useEsimStore((s) => s.activate);
-  const install = useEsimStore((s) => s.install);
   const topUp = useEsimStore((s) => s.topUp);
 
   const [support, setSupport] = useState<EsimSupportResult | null>(null);
@@ -181,42 +179,19 @@ export default function EsimDetail() {
           )}
         </View>
 
-        {/* Install section: iOS one-tap + local QR (shareable) + manual entry */}
+        {/* Install panel: two-button layout (Activate / QR). Tapping Activate
+            opens iOS Settings → Add eSIM; tapping QR reveals the local QR with
+            a Share QR button. We DON'T need a separate "Mark as activated"
+            backend marker — when the user finishes the iOS install flow, the
+            provider sees the eSIM go to IN_USE within seconds, and the 30-min
+            cron picks it up next pass (or the user can pull-to-refresh sooner). */}
         {showInstall && (
           <EsimInstallCard
             smdp={smdp}
             activationCode={activationCode}
             country={esim.country}
             dataLabel={dataLabel}
-            alreadyInstalled={!!profile?.installed}
-            onMarkInstalled={() => install(esim.id)}
           />
-        )}
-
-        {/* "Mark as activated" — secondary backend marker, only when inactive
-            and we have install data. Distinct from "Install on this iPhone"
-            (which is what actually opens the iOS install sheet). */}
-        {esim.status === 'inactive' && !!activationCode && (
-          <Pressable
-            onPress={() => run(() => activate(esim.id))}
-            disabled={busy}
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              padding: 14,
-              borderRadius: 14,
-              borderWidth: 1.5,
-              borderColor: t.border,
-              opacity: pressed || busy ? 0.7 : 1,
-            })}
-          >
-            <Check size={16} color={t.fg} strokeWidth={2.2} />
-            <Text style={{ color: t.fg, fontWeight: '700', fontSize: 14 }}>
-              {busy ? 'Saving…' : 'Mark as activated'}
-            </Text>
-          </Pressable>
         )}
         {(esim.status === 'active' || esim.status === 'expired') && (
           <PrimaryButton
