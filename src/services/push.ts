@@ -11,7 +11,6 @@
 // prompt; rn-firebase owns the token retrieval. The two coexist cleanly.
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
-import * as Device from 'expo-device';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
 import { apiFetch } from '@/lib/api';
@@ -44,10 +43,11 @@ type RegisterPayload = {
 
 let lastRegisteredToken: string | null = null;
 
-/** Ask for notification permission. Returns true if granted. Web/Simulator → false. */
+/** Ask for notification permission. Returns true if granted. Web → false. */
 export async function ensurePushPermission(): Promise<boolean> {
   if (Platform.OS === 'web') return false;
-  if (!Device.isDevice) return false; // simulators/emulators can't get real push tokens
+  // Simulators/emulators are filtered downstream — messaging().getToken() returns
+  // null on simulator-without-APNs, and our token registration silently skips.
   try {
     const current = await Notifications.getPermissionsAsync();
     if (current.granted) return true;
