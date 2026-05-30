@@ -118,6 +118,29 @@ export async function listPushNotifications(
 
 // ─── App release info ───────────────────────────────────────────────────────
 
+export type RefreshOrdersResult = {
+  attempted: number;
+  activeRefreshed: number;
+  placeholdersRecovered: number;
+  errorCount: number;
+  errors?: { profileId?: number; orderNo?: string; iccid?: string; error?: string }[];
+  ranAt?: string;
+};
+
+/**
+ * Trigger an immediate provider sync for every ACTIVE eSIM profile + recovery
+ * pass for recent broken-placeholder profiles. Same logic as the 30-min cron,
+ * but admin-auth'd so the admin Orders page can call it on demand.
+ *
+ * Takes ~5-30s depending on how many profiles exist. The caller should show a
+ * loading state while it runs.
+ */
+export function refreshOrdersFromProvider(): Promise<RefreshOrdersResult> {
+  return apiFetch<RefreshOrdersResult>('/api/v1/admin/orders/refresh-from-provider', {
+    method: 'POST',
+  });
+}
+
 export function getAppVersionInfo(): Promise<AppVersionInfo> {
   return apiFetch<AppVersionInfo>('/api/v1/app/version-info', { method: 'GET', auth: false });
 }

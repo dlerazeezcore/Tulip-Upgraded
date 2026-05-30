@@ -2,11 +2,11 @@ import React, { useEffect, useMemo, useState } from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter, Redirect } from 'expo-router';
-import { ChevronLeft, Globe, ChevronDown } from 'lucide-react-native';
+import { ChevronLeft, Globe, ChevronDown, RefreshCw, Check, AlertCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { useAuthStore } from '@/state/authStore';
-import { getAdminOrders } from '@/services/admin';
+import { getAdminOrders, refreshOrdersFromProvider, type RefreshOrdersResult } from '@/services/admin';
 import type { AdminOrder } from '@/services/types';
 import { formatIqd } from '@/lib/pricing';
 
@@ -45,6 +45,36 @@ export default function AdminOrders() {
   const [esim, setEsim] = useState<string>('all');
   const [expanded, setExpanded] = useState<Record<number, boolean>>({});
   const toggle = (id: number) => setExpanded((m) => ({ ...m, [id]: !m[id] }));
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshSummary, setRefreshSummary] = useState<RefreshOrdersResult | null>(null);
+
+  // Reload the same month's orders after an admin refresh. Triggered by the
+  // "Refresh from provider" button below.
+  const reloadCurrentMonth = React.useCallback(() => {
+    if (month === null) return Promise.resolve();
+    const key = `${year}-${String(month).padStart(2, '0')}`;
+    return getAdminOrders({ month: key })
+      .then((rows) => setOrders(rows))
+      .catch((e: any) => setError(e?.message || 'Failed to reload orders'));
+  }, [year, month]);
+
+  const onRefreshFromProvider = async () => {
+    if (refreshing) return;
+    setRefreshing(true);
+    setRefreshSummary(null);
+    try {
+      const summary = await refreshOrdersFromProvider();
+      setRefreshSummary(summary);
+      await reloadCurrentMonth();
+    } catch (e: any) {
+      setRefreshSummary({
+        attempted: 0, activeRefreshed: 0, placeholdersRecovered: 0,
+        errorCount: 1, errors: [{ error: e?.message || 'Refresh failed' }],
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   // Load orders only once a year + month are chosen — filtered server-side, so
   // nothing is fetched by default and we never pull the whole table.
@@ -91,7 +121,41 @@ export default function AdminOrders() {
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
           Order history{month !== null && !loading ? ` · ${orders.length}` : ''}
         </Text>
+        <Pressable
+          onPress={onRefreshFromProvider}
+          disabled={refreshing}
+          style={({ pressed }) => ({
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingVertical: 8,
+            paddingHorizontal: 14,
+            borderRadius: 999,
+            borderWidth: 1.5,
+            borderColor: t.primary,
+            backgroundColor: refreshing ? t.bgSunken : 'transparent',
+            opacity: pressed || refreshing ? 0.7 : 1,
+          })}
+        >
+          <RefreshCw size={14} color={t.primary} strokeWidth={2.2} />
+          <Text style={{ color: t.primary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
+            {refreshing ? 'Refreshing…' : 'Refresh from provider'}
+          </Text>
+        </Pressable>
       </View>
+
+      {refreshSummary && (
+        <View style={{ marginHorizontal: 20, marginTop: 4, padding: 10, borderRadius: 12, backgroundColor: refreshSummary.errorCount > 0 ? 'rgba(245,158,11,0.10)' : 'rgba(22,163,74,0.10)', borderWidth: 1, borderColor: refreshSummary.errorCount > 0 ? 'rgba(245,158,11,0.35)' : 'rgba(22,163,74,0.35)', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          {refreshSummary.errorCount > 0 ? (
+            <AlertCircle size={14} color={t.warning ?? '#F59E0B'} />
+          ) : (
+            <Check size={14} color={t.success} strokeWidth={2.5} />
+          )}
+          <Text style={{ flex: 1, fontSize: 11, color: t.fg }}>
+            Synced {refreshSummary.attempted} profile{refreshSummary.attempted === 1 ? '' : 's'} from provider · {refreshSummary.activeRefreshed} updated · {refreshSummary.placeholdersRecovered} recovered{refreshSummary.errorCount > 0 ? ` · ${refreshSummary.errorCount} error${refreshSummary.errorCount === 1 ? '' : 's'}` : ''}
+          </Text>
+        </View>
+      )}
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 14, maxWidth: 820, width: '100%', alignSelf: 'center' }}>
         <View style={{ gap: 8 }}>
