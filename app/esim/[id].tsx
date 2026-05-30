@@ -1,15 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, View, Text, Pressable, Alert, Linking, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, Pressable, Alert, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Image } from 'expo-image';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Smartphone, Plus, Signal, Clock, RefreshCw, AlertTriangle } from 'lucide-react-native';
+import { ChevronLeft, Plus, Signal, Clock, RefreshCw, AlertTriangle, Check } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimStore } from '@/state/esimStore';
 import { Flag } from '@/components/Flag';
 import { UsageRing } from '@/components/UsageRing';
 import { StatusPill } from '@/components/StatusPill';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { EsimInstallCard } from '@/components/EsimInstallCard';
 import { checkEsimSupport, isDefinitelyUnsupported, type EsimSupportResult } from '@/services/device';
 
 function Stat({ label, value }: { label: string; value: string }) {
@@ -76,11 +76,14 @@ export default function EsimDetail() {
   const fraction = esim.planGb > 0 ? remainingGb / esim.planGb : 0;
   const ringColor = esim.status === 'active' ? t.success : esim.status === 'expired' ? t.danger : t.warning;
 
-  const qrUrl = profile?.qrCodeUrl ?? null;
-  const appleUrl = profile?.appleInstallUrl ?? null;
   const smdp = profile?.manualEntry?.smdpAddress ?? profile?.smdpAddress ?? null;
   const activationCode = profile?.manualEntry?.activationCode ?? profile?.activationCode ?? null;
-  const showInstall = esim.status !== 'expired' && (qrUrl || activationCode);
+  // Show install card whenever the plan isn't expired — the card itself handles
+  // the empty-activation-data case (shows an explanatory empty state).
+  const showInstall = esim.status !== 'expired';
+  const dataLabel = esim.unlimited
+    ? `Unlimited · ${esim.planDays} days`
+    : `${esim.planGb} GB · ${esim.planDays} days`;
 
   const run = async (fn: () => Promise<void>) => {
     if (busy) return;
@@ -178,60 +181,42 @@ export default function EsimDetail() {
           )}
         </View>
 
-        {/* Install section: QR + iPhone one-tap + manual entry */}
+        {/* Install section: iOS one-tap + local QR (shareable) + manual entry */}
         {showInstall && (
-          <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 18, gap: 14, ...t.shadow1 }}>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>Install eSIM</Text>
-            {qrUrl && (
-              <View style={{ alignItems: 'center', gap: 6 }}>
-                <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 16 }}>
-                  <Image source={qrUrl} style={{ width: 180, height: 180 }} contentFit="contain" transition={200} />
-                </View>
-                <Text style={{ fontSize: 12, color: t.fgMuted }}>Scan with another device's camera</Text>
-              </View>
-            )}
-            {appleUrl && (
-              <PrimaryButton
-                label="Install on this iPhone"
-                icon={<Smartphone size={16} color="#fff" strokeWidth={2.2} />}
-                onPress={() => {
-                  // Record the install in our database, then open iOS eSIM setup.
-                  install(esim.id).catch(() => {});
-                  Linking.openURL(appleUrl).catch(() =>
-                    Alert.alert('Could not open eSIM setup', 'Use the QR code or manual details instead.'),
-                  );
-                }}
-              />
-            )}
-            {!profile?.installed && (
-              <Pressable
-                onPress={() => run(() => install(esim.id))}
-                style={{ alignItems: 'center', paddingVertical: 10 }}
-              >
-                <Text style={{ color: t.primary, fontWeight: '700', fontSize: 13 }}>
-                  {busy ? 'Saving…' : "I've installed this eSIM"}
-                </Text>
-              </Pressable>
-            )}
-            {(smdp || activationCode) && (
-              <View style={{ borderWidth: 1, borderColor: t.border, borderRadius: 12, overflow: 'hidden' }}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, padding: 12, paddingBottom: 0 }}>
-                  Manual entry
-                </Text>
-                {smdp && <Row label="SM-DP+ address" value={smdp} />}
-                {activationCode && <Row label="Activation code" value={activationCode} />}
-              </View>
-            )}
-          </View>
+          <EsimInstallCard
+            smdp={smdp}
+            activationCode={activationCode}
+            country={esim.country}
+            dataLabel={dataLabel}
+            alreadyInstalled={!!profile?.installed}
+            onMarkInstalled={() => install(esim.id)}
+          />
         )}
 
-        {/* Primary action by state */}
-        {esim.status === 'inactive' && (
-          <PrimaryButton
-            label={busy ? 'Activating…' : 'Activate eSIM'}
-            icon={<Signal size={16} color="#fff" strokeWidth={2.2} />}
+        {/* "Mark as activated" — secondary backend marker, only when inactive
+            and we have install data. Distinct from "Install on this iPhone"
+            (which is what actually opens the iOS install sheet). */}
+        {esim.status === 'inactive' && !!activationCode && (
+          <Pressable
             onPress={() => run(() => activate(esim.id))}
-          />
+            disabled={busy}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: 14,
+              borderRadius: 14,
+              borderWidth: 1.5,
+              borderColor: t.border,
+              opacity: pressed || busy ? 0.7 : 1,
+            })}
+          >
+            <Check size={16} color={t.fg} strokeWidth={2.2} />
+            <Text style={{ color: t.fg, fontWeight: '700', fontSize: 14 }}>
+              {busy ? 'Saving…' : 'Mark as activated'}
+            </Text>
+          </Pressable>
         )}
         {(esim.status === 'active' || esim.status === 'expired') && (
           <PrimaryButton

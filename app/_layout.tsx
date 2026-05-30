@@ -66,7 +66,11 @@ function ThemedStack() {
         <Stack.Screen name="travelers/index" />
         <Stack.Screen name="admin/index" />
         <Stack.Screen name="admin/users" />
-        <Stack.Screen name="admin/notifications" />
+        <Stack.Screen name="admin/notifications/index" />
+        <Stack.Screen name="admin/notifications/update" />
+        <Stack.Screen name="admin/notifications/user" />
+        <Stack.Screen name="admin/notifications/custom" />
+        <Stack.Screen name="admin/notifications/history" />
         <Stack.Screen name="admin/currency" />
         <Stack.Screen name="admin/featured" />
         <Stack.Screen name="admin/orders" />
