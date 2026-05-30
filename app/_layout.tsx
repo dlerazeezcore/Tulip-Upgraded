@@ -24,9 +24,13 @@ import { useEsimStore } from '@/state/esimStore';
 import { useOrderStore } from '@/state/orderStore';
 import { useTravelersStore } from '@/state/travelersStore';
 import { useLocaleStore } from '@/state/localeStore';
+import { configureNotificationHandler } from '@/services/push';
+import { UpdateAvailableModal } from '@/components/UpdateAvailableModal';
 import '@/i18n';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+// Set how foreground notifications display. Safe at module load (no-op on web).
+configureNotificationHandler();
 
 function ThemedStack() {
   const t = useTheme();
@@ -121,6 +125,7 @@ export default function RootLayout() {
     <SafeAreaProvider>
       <ThemeProvider>
         <ThemedStack />
+        <UpdateAvailableModal />
       </ThemeProvider>
     </SafeAreaProvider>
   );

@@ -208,3 +208,83 @@ export type AdminOrder = OrderSummary & {
   esimStatus: 'installed' | 'not_installed' | 'expired' | 'used' | 'pending';
   esim?: { status: string; installed: boolean; remainingDataMb?: number | null; totalDataMb?: number | null } | null;
 };
+
+// ─── App release / version info ─────────────────────────────────────────────
+export type AppVersionInfo = {
+  latestVersion: string;
+  minSupportedVersion: string;
+  appStoreUrl: string | null;
+  playStoreUrl: string | null;
+  releaseNotes: {
+    en?: string | null;
+    ar?: string | null;
+    ku?: string | null;
+  };
+  updatedAt?: string | null;
+};
+
+// ─── Push notifications (admin) ─────────────────────────────────────────────
+export type LocalizedText = { en?: string; ar?: string; ku?: string };
+
+export type AdminSendPushPayload = {
+  title: string; // EN, used as the audit row and as fallback for unknown locales
+  body: string;  // EN, same
+  titles?: LocalizedText;
+  bodies?: LocalizedText;
+  audience?: 'all' | 'authenticated' | 'loyalty' | 'active_esim' | 'admins' | 'all_devices';
+  userIds?: string[];
+  tokens?: string[];
+  sendToAllActive?: boolean;
+  channelId?: string;
+  image?: string;
+  dryRun?: boolean;
+  data?: Record<string, any>;
+};
+
+export type AdminSendAppUpdatePayload = {
+  appStoreUrl?: string;
+  playStoreUrl?: string;
+  title?: string;
+  body?: string;
+  titles?: LocalizedText;
+  bodies?: LocalizedText;
+  audience?: 'all' | 'authenticated' | 'loyalty' | 'active_esim' | 'all_devices';
+  dryRun?: boolean;
+};
+
+export type PushDeliverySummary = {
+  requestedTokens: number;
+  successCount: number;
+  failureCount: number;
+  invalidTokenCount: number;
+  invalidTokens?: string[];
+  failureReasons?: Record<string, number>;
+  perLanguageCounts?: Record<string, number>;
+  localized?: boolean;
+};
+
+export type PushNotificationRow = {
+  id: string;
+  recipientScope: string;
+  title: string;
+  body: string;
+  channelId?: string;
+  imageUrl?: string | null;
+  status: string;
+  provider?: string;
+  successCount: number;
+  failureCount: number;
+  invalidTokenCount: number;
+  invalidTokens?: string[];
+  errorMessage?: string | null;
+  sentByAdminId?: string | null;
+  targetUserIds?: string[];
+  sentAt?: string | null;
+  createdAt?: string | null;
+};
+
+export type AdminSendResponse = {
+  notification: PushNotificationRow;
+  delivery: PushDeliverySummary;
+  data?: { debug?: Record<string, any>; tokenResults?: any[] };
+};

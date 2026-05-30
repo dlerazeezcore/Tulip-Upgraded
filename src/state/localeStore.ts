@@ -2,6 +2,9 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { I18nManager, Platform } from 'react-native';
 import i18n, { Lang, RTL_LANGS } from '@/i18n';
+import { useAuthStore } from '@/state/authStore';
+import * as authApi from '@/services/auth';
+import * as push from '@/services/push';
 
 function applyDirection(lang: Lang) {
   const rtl = RTL_LANGS.includes(lang);
@@ -39,6 +42,21 @@ export const useLocaleStore = create<LocaleState>((set) => ({
     i18n.changeLanguage(language);
     applyDirection(language);
     AsyncStorage.setItem(LANG_KEY, language).catch(() => {});
+    // Sync to backend when authed:
+    //   1. PATCH /auth/me to persist app_users.preferred_language (used as fallback
+    //      and for non-push channels).
+    //   2. Re-register the device so push_devices.locale matches (per-device truth).
+    // Both calls are fire-and-forget — UI must not block on the network.
+    try {
+      if (useAuthStore.getState().isAuthed()) {
+        Promise.allSettled([
+          authApi.updateMe({ preferredLanguage: language }),
+          push.registerDevice({ locale: language }),
+        ]).catch(() => {});
+      }
+    } catch {
+      // best-effort; UI is not affected
+    }
   },
   completeOnboarding: () => {
     set({ onboarded: true });

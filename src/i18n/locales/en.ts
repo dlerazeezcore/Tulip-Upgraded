@@ -27,4 +27,12 @@ export default {
     ar: 'العربية',
     ku: 'کوردی',
   },
+  update: {
+    title: 'Update available 🌷',
+    body: 'A new version of Tulip is ready. Tap to update for the smoothest experience.',
+    forcedBody:
+      'A new version of Tulip is required to continue. Please update now.',
+    updateNow: 'Update now',
+    later: 'Later',
+  },
 } as const;

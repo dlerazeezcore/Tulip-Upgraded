@@ -2,6 +2,8 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setAuthToken } from '@/lib/api';
 import * as authApi from '@/services/auth';
+import { registerDevice, unregisterDevice } from '@/services/push';
+import { useLocaleStore } from '@/state/localeStore';
 import type { AuthSession, AuthMe, OtpChannel } from '@/services/types';
 
 export type AuthUser = {
@@ -123,6 +125,15 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     setAuthToken(session.accessToken);
     set({ user, token: session.accessToken, pendingPhone: null });
     persist(user, session.accessToken);
+    // Fire-and-forget: register this device's push token + locale with the backend.
+    // We read the language at call time (not at module load) so the latest value wins
+    // — the imported store reference is stable; .getState() is what we care about.
+    try {
+      const lang = useLocaleStore.getState().language;
+      registerDevice({ locale: lang }).catch(() => {});
+    } catch {
+      // ignore — push registration must not block login UX
+    }
     return user;
   },
 
@@ -156,6 +167,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   startPhoneFlow: (phone) => set({ pendingPhone: phone }),
 
   signOut: () => {
+    // Fire-and-forget device unregistration before we drop the token (the request
+    // needs the bearer to identify the actor). Failure must not block sign-out.
+    unregisterDevice().catch(() => {});
     setAuthToken(null);
     set({ user: null, token: null, pendingPhone: null });
     persist(null, null);
