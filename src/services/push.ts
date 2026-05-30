@@ -14,8 +14,24 @@ import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
-import messaging from '@react-native-firebase/messaging';
 import { apiFetch } from '@/lib/api';
+
+// @react-native-firebase/messaging has no web implementation — a static import
+// crashes the web bundle at module load (= white screen on tulipbookings.com).
+// Resolve it lazily and only on native, so Metro's web bundle never executes it.
+type FirebaseMessagingModule = () => {
+  registerDeviceForRemoteMessages: () => Promise<void>;
+  getToken: () => Promise<string>;
+};
+let firebaseMessaging: FirebaseMessagingModule | null = null;
+if (Platform.OS !== 'web') {
+  try {
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    firebaseMessaging = require('@react-native-firebase/messaging').default as FirebaseMessagingModule;
+  } catch {
+    firebaseMessaging = null;
+  }
+}
 
 type RegisterPayload = {
   token: string;
@@ -45,14 +61,14 @@ export async function ensurePushPermission(): Promise<boolean> {
 
 /** Get an FCM registration token (both platforms), or null on failure / web. */
 export async function getFcmDeviceToken(): Promise<string | null> {
-  if (Platform.OS === 'web') return null;
+  if (Platform.OS === 'web' || !firebaseMessaging) return null;
   try {
     // iOS must register for remote messages before the FCM token is available.
     // No-op on Android. Safe to call repeatedly.
     if (Platform.OS === 'ios') {
-      await messaging().registerDeviceForRemoteMessages();
+      await firebaseMessaging().registerDeviceForRemoteMessages();
     }
-    const token = await messaging().getToken();
+    const token = await firebaseMessaging().getToken();
     return (token || '').trim() || null;
   } catch {
     return null;
