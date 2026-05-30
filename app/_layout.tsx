@@ -24,13 +24,17 @@ import { useEsimStore } from '@/state/esimStore';
 import { useOrderStore } from '@/state/orderStore';
 import { useTravelersStore } from '@/state/travelersStore';
 import { useLocaleStore } from '@/state/localeStore';
-import { configureNotificationHandler, registerDevice } from '@/services/push';
+import { configureForegroundPushHandler, configureNotificationHandler, registerDevice } from '@/services/push';
 import { UpdateAvailableModal } from '@/components/UpdateAvailableModal';
 import '@/i18n';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 // Set how foreground notifications display. Safe at module load (no-op on web).
 configureNotificationHandler();
+// Forward rn-firebase foreground messages to expo-notifications so iOS shows
+// the banner when the app is open (iOS hides the banner by default in that
+// state; this is the most common silent-failure mode for FCM on iOS).
+configureForegroundPushHandler();
 
 function ThemedStack() {
   const t = useTheme();

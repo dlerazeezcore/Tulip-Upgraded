@@ -148,3 +148,47 @@ export function configureNotificationHandler(): void {
     // Defensive: never let notification setup blank-screen the app
   }
 }
+
+/**
+ * Wire rn-firebase's foreground onMessage to expo-notifications.
+ *
+ * On iOS, when the app is in the FOREGROUND, APNs delivers the payload to the
+ * app process but iOS does NOT show a system banner — that's by design. The
+ * push silently disappears unless you handle it in JS. (This is the most
+ * common "I sent a push, the device didn't ring" symptom.)
+ *
+ * We forward each FCM foreground message to expo-notifications as a local
+ * notification with `trigger: null` (fires immediately), which respects the
+ * notification handler set above and shows the system banner.
+ *
+ * Backgrounded / killed apps are unaffected: iOS shows the system banner
+ * natively without JS involvement.
+ */
+let foregroundSubscription: (() => void) | null = null;
+export function configureForegroundPushHandler(): void {
+  if (Platform.OS === 'web' || !firebaseMessaging) return;
+  if (foregroundSubscription) return; // idempotent — guard against double-mount
+  try {
+    foregroundSubscription = firebaseMessaging().onMessage(async (msg: any) => {
+      const title =
+        msg?.notification?.title ||
+        msg?.data?.title ||
+        '';
+      const body =
+        msg?.notification?.body ||
+        msg?.data?.body ||
+        '';
+      if (!title && !body) return;
+      try {
+        await Notifications.scheduleNotificationAsync({
+          content: { title, body, data: msg?.data ?? {} },
+          trigger: null, // immediate
+        });
+      } catch {
+        // ignore — better than crashing
+      }
+    });
+  } catch {
+    // ignore — defensive
+  }
+}
