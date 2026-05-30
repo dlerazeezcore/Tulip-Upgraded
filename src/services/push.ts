@@ -21,6 +21,7 @@ import { apiFetch } from '@/lib/api';
 type FirebaseMessagingModule = () => {
   registerDeviceForRemoteMessages: () => Promise<void>;
   getToken: () => Promise<string>;
+  onMessage: (handler: (msg: any) => void | Promise<void>) => () => void;
 };
 let firebaseMessaging: FirebaseMessagingModule | null = null;
 if (Platform.OS !== 'web') {
