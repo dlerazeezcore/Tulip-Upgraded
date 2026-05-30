@@ -1,18 +1,21 @@
 // Thin UI for the eSIM install panel. All wiring is in useEsimInstallCard.
 //
-// Two-button layout per spec:
-//   [Activate]  [QR]
-//
-//   "Activate" opens iOS Settings → Add eSIM (iPhone-only).
-//   "QR"        toggles the QR image + a Share QR button so the user can
-//               install on a different phone (or send to someone else via
-//               WhatsApp / AirDrop / Save Image / etc.).
-//
-// Manual entry rows (SM-DP+ / activation code) live below for advanced users.
+// Layout (top-to-bottom):
+//   [Activate]                              ← iOS/Android one-tap deeplink;
+//                                            greyed with caption on web.
+//   <QR image — always visible when ready>  ← scan with another phone, or
+//                                            share/download to install on
+//                                            someone else's device.
+//   [Share QR]   (native)   or
+//   [Download QR PNG]   (web)
+//   ---
+//   MANUAL ENTRY
+//     SM-DP+ address: …
+//     Activation code: …
 import React from 'react';
 import { View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { Image } from 'expo-image';
-import { Smartphone, QrCode, Share2, AlertCircle } from 'lucide-react-native';
+import { Smartphone, Share2, Download, AlertCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimInstallCard } from './useEsimInstallCard';
 
@@ -44,8 +47,6 @@ export function EsimInstallCard(props: Props) {
     dataLabel: props.dataLabel,
   });
 
-  // Provider data missing — clear empty state (the "I bought it but nothing
-  // installs" case). Backend's 31s retry + 30-min cron should make this rare.
   if (!vm.hasActivationData) {
     return (
       <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 18, gap: 10, ...t.shadow1 }}>
@@ -68,23 +69,19 @@ export function EsimInstallCard(props: Props) {
         Install eSIM
       </Text>
 
-      {/* Two buttons side-by-side: Activate (iOS deeplink) + QR (toggle reveal).
-          Activate is always rendered when we have an LPA — when disabled (web,
-          Android), it's greyed with a small "iPhone only" caption beneath so
-          the user sees the option without being misled into thinking it works. */}
-      <View style={{ flexDirection: 'row', gap: 10 }}>
-        {vm.showActivateButton && (
+      {/* Activate — primary CTA. Always rendered; greyed on web. */}
+      {vm.showActivateButton && (
+        <>
           <Pressable
             onPress={vm.activate}
             style={({ pressed }) => ({
-              flex: 1,
               flexDirection: 'row',
               alignItems: 'center',
               justifyContent: 'center',
               gap: 8,
               backgroundColor: vm.activateEnabled ? t.primary : t.bgSunken,
               borderRadius: t.radius.pill,
-              paddingVertical: 12,
+              paddingVertical: 13,
               opacity: pressed ? 0.85 : vm.activateEnabled ? 1 : 0.6,
               ...(vm.activateEnabled ? t.shadowGlow : {}),
             })}
@@ -94,85 +91,62 @@ export function EsimInstallCard(props: Props) {
               Activate
             </Text>
           </Pressable>
+          {!vm.activateEnabled && vm.activateDisabledReason && (
+            <Text style={{ fontSize: 11, color: t.fgMuted, textAlign: 'center', marginTop: -8 }}>
+              {vm.activateDisabledReason}
+            </Text>
+          )}
+        </>
+      )}
+
+      {/* QR — always visible when we have activation data. */}
+      <View style={{ alignItems: 'center', gap: 10, paddingVertical: 8 }}>
+        {vm.qrLoading || !vm.qrDataUrl ? (
+          <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderRadius: 16 }}>
+            <ActivityIndicator color={t.primary} />
+          </View>
+        ) : (
+          <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 16 }}>
+            <Image
+              source={{ uri: vm.qrDataUrl }}
+              style={{ width: 220, height: 220 }}
+              contentFit="contain"
+              transition={120}
+            />
+          </View>
         )}
-        {vm.showQrButton && (
+        <Text style={{ fontSize: 11, color: t.fgMuted, textAlign: 'center', paddingHorizontal: 12 }}>
+          Scan with another phone's camera, or send to someone to install on their device.
+        </Text>
+        {(vm.showShareButton || vm.showDownloadButton) && (
           <Pressable
-            onPress={vm.toggleQr}
+            onPress={vm.showShareButton ? vm.share : vm.download}
+            disabled={vm.busy || !vm.qrDataUrl}
             style={({ pressed }) => ({
-              flex: 1,
               flexDirection: 'row',
               alignItems: 'center',
-              justifyContent: 'center',
-              gap: 8,
-              backgroundColor: vm.qrRevealed ? t.bgSunken : 'transparent',
+              gap: 6,
+              paddingVertical: 9,
+              paddingHorizontal: 18,
+              borderRadius: 999,
               borderWidth: 1.5,
-              borderColor: vm.qrRevealed ? t.primary : t.border,
-              borderRadius: t.radius.pill,
-              paddingVertical: 12,
-              opacity: pressed ? 0.85 : 1,
+              borderColor: t.primary,
+              opacity: pressed || vm.busy || !vm.qrDataUrl ? 0.6 : 1,
             })}
           >
-            <QrCode size={16} color={vm.qrRevealed ? t.primary : t.fg} strokeWidth={2.2} />
-            <Text style={{ color: vm.qrRevealed ? t.primary : t.fg, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14 }}>
-              {vm.qrRevealed ? 'Hide QR' : 'QR'}
+            {vm.showShareButton ? (
+              <Share2 size={14} color={t.primary} strokeWidth={2.2} />
+            ) : (
+              <Download size={14} color={t.primary} strokeWidth={2.2} />
+            )}
+            <Text style={{ color: t.primary, fontWeight: '700', fontSize: 13 }}>
+              {vm.busy ? 'Sharing…' : vm.showShareButton ? 'Share QR' : 'Download QR'}
             </Text>
           </Pressable>
         )}
       </View>
-      {vm.showActivateButton && !vm.activateEnabled && vm.activateDisabledReason && (
-        <Text style={{ fontSize: 11, color: t.fgMuted, textAlign: 'center', marginTop: -6 }}>
-          {vm.activateDisabledReason}
-        </Text>
-      )}
 
-      {/* QR panel — only when user taps the QR button. */}
-      {vm.qrRevealed && (
-        <View style={{ alignItems: 'center', gap: 10, paddingTop: 4 }}>
-          {vm.qrLoading ? (
-            <View style={{ width: 200, height: 200, alignItems: 'center', justifyContent: 'center' }}>
-              <ActivityIndicator color={t.primary} />
-            </View>
-          ) : vm.qrDataUrl ? (
-            <>
-              <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 16 }}>
-                <Image
-                  source={{ uri: vm.qrDataUrl }}
-                  style={{ width: 220, height: 220 }}
-                  contentFit="contain"
-                  transition={120}
-                />
-              </View>
-              <Text style={{ fontSize: 11, color: t.fgMuted, textAlign: 'center', paddingHorizontal: 8 }}>
-                Scan with another phone's camera, or share to install on someone else's device.
-              </Text>
-              {vm.showShare && (
-                <Pressable
-                  onPress={vm.share}
-                  disabled={vm.busy}
-                  style={({ pressed }) => ({
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    gap: 6,
-                    paddingVertical: 9,
-                    paddingHorizontal: 18,
-                    borderRadius: 999,
-                    borderWidth: 1.5,
-                    borderColor: t.primary,
-                    opacity: pressed || vm.busy ? 0.6 : 1,
-                  })}
-                >
-                  <Share2 size={14} color={t.primary} strokeWidth={2.2} />
-                  <Text style={{ color: t.primary, fontWeight: '700', fontSize: 13 }}>
-                    {vm.busy ? 'Sharing…' : 'Share QR'}
-                  </Text>
-                </Pressable>
-              )}
-            </>
-          ) : null}
-        </View>
-      )}
-
-      {/* Manual entry — for the few users who prefer typing into iOS Settings. */}
+      {/* Manual entry — for users who type into iOS Settings. */}
       {(vm.smdp || vm.activationCodeManual) && (
         <View style={{ borderWidth: 1, borderColor: t.border, borderRadius: 12, overflow: 'hidden' }}>
           <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, padding: 12, paddingBottom: 0 }}>
