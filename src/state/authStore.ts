@@ -16,6 +16,7 @@ export type AuthUser = {
   isLoyalty?: boolean;
   createdAt?: string | null;
   subjectType?: 'user' | 'admin';
+  notificationsEnabled?: boolean;
 };
 
 const USER_KEY = 'tulip.auth';
@@ -53,6 +54,7 @@ function userFromMe(m: AuthMe): AuthUser {
     isLoyalty: !!m.isLoyalty,
     createdAt: m.createdAt ?? null,
     subjectType: m.subjectType,
+    notificationsEnabled: m.notificationsEnabled !== false, // default ON when undefined
   };
 }
 
@@ -77,7 +79,8 @@ type AuthState = {
   requestOtp: (phone: string, channel?: OtpChannel) => Promise<void>;
   verifyOtpAndAuth: (input: { phone: string; code: string; name?: string; channel?: OtpChannel; verificationSid?: string }) => Promise<AuthUser>;
   resetPassword: (input: { phone: string; otpCode: string; newPassword: string; otpChannel?: OtpChannel; verificationSid?: string }) => Promise<AuthUser>;
-  updateProfile: (patch: { name?: string; email?: string | null }) => Promise<AuthUser>;
+  updateProfile: (patch: { name?: string; email?: string | null; notificationsEnabled?: boolean }) => Promise<AuthUser>;
+  setNotificationsEnabled: (enabled: boolean) => Promise<void>;
   deleteAccount: () => Promise<void>;
   startPhoneFlow: (phone: string) => void;
   signOut: () => void;
@@ -163,6 +166,26 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ user });
     persist(user, get().token);
     return user;
+  },
+
+  // Optimistic toggle for the profile Notifications switch. Reverts on failure.
+  setNotificationsEnabled: async (enabled) => {
+    const prev = get().user;
+    if (!prev) return;
+    const optimistic = { ...prev, notificationsEnabled: enabled };
+    set({ user: optimistic });
+    persist(optimistic, get().token);
+    try {
+      const me = await authApi.updateMe({ notificationsEnabled: enabled });
+      const user = userFromMe(me);
+      set({ user });
+      persist(user, get().token);
+    } catch {
+      // Revert
+      set({ user: prev });
+      persist(prev, get().token);
+      throw new Error('Could not update notification preference');
+    }
   },
 
   deleteAccount: async () => {

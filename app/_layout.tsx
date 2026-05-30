@@ -24,7 +24,7 @@ import { useEsimStore } from '@/state/esimStore';
 import { useOrderStore } from '@/state/orderStore';
 import { useTravelersStore } from '@/state/travelersStore';
 import { useLocaleStore } from '@/state/localeStore';
-import { configureNotificationHandler } from '@/services/push';
+import { configureNotificationHandler, registerDevice } from '@/services/push';
 import { UpdateAvailableModal } from '@/components/UpdateAvailableModal';
 import '@/i18n';
 
@@ -97,6 +97,19 @@ export default function RootLayout() {
     hydrateAuth();
     hydrateLocale();
   }, [hydrate, hydrateCurrency, hydrateAuth, hydrateLocale]);
+
+  // Trigger the iOS / Android notification permission prompt as early as
+  // possible — on the FIRST screen, before login. The backend's register
+  // endpoint accepts unauthenticated calls and stores the device as anonymous;
+  // when the user later signs in, setSession() re-registers and the existing
+  // device row (matched by token) is upserted to that user. This way:
+  //   - Users get prompted once when they open the app for the first time.
+  //   - Anonymous users (browsing without signing in) can still receive pushes.
+  // Runs once locale has hydrated so the right `locale` is stamped on the row.
+  useEffect(() => {
+    if (!localeHydrated) return;
+    registerDevice({ locale: useLocaleStore.getState().language }).catch(() => {});
+  }, [localeHydrated]);
 
   // Load the signed-in user's eSIMs, orders and travelers whenever auth changes.
   useEffect(() => {

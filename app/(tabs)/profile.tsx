@@ -91,6 +91,8 @@ export default function Profile() {
   const deleteAccount = useAuthStore((s) => s.deleteAccount);
   const isAdmin = !!user?.isAdmin;
   const travelerCount = useTravelersStore((s) => s.travelers.length);
+  const setNotificationsEnabled = useAuthStore((s) => s.setNotificationsEnabled);
+  const notificationsOn = user?.notificationsEnabled !== false; // default ON
 
   const [editOpen, setEditOpen] = useState(false);
   const [editName, setEditName] = useState('');
@@ -203,7 +205,24 @@ export default function Profile() {
       <Row icon={<Moon size={16} color={t.fgMuted} />} title="Dark mode" sub={mode === 'dark' ? 'On' : 'Off'} right={<Toggle value={mode === 'dark'} onChange={toggle} />} />
       <Row icon={<Coins size={16} color={t.fgMuted} />} title="Currency" sub={currencyName} right={<CurrencyPicker />} />
       <Row icon={<Globe size={16} color={t.fgMuted} />} title="Language" sub={LANG_LABEL[language]} right={<LanguagePicker />} />
-      <Row icon={<Bell size={16} color={t.fgMuted} />} title="Notifications" sub="Trip alerts, deals" last right={<ChevronRight size={16} color={t.fgFaint} />} />
+      <Row
+        icon={<Bell size={16} color={t.fgMuted} />}
+        title="Notifications"
+        sub={user ? (notificationsOn ? 'On — trip alerts, deals, updates' : 'Off — you won’t receive pushes') : 'Sign in to manage'}
+        last
+        right={
+          user ? (
+            <Toggle
+              value={notificationsOn}
+              onChange={(next) => {
+                setNotificationsEnabled(next).catch(() => {});
+              }}
+            />
+          ) : (
+            <ChevronRight size={16} color={t.fgFaint} />
+          )
+        }
+      />
     </Section>
   );
 
