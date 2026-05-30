@@ -14,6 +14,7 @@ import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
 import { PressableScale } from '@/components/PressableScale';
 import { SERVICES, SERVICE_SLOT, serviceRoute } from '@/data/services';
+import { EsimSupportBanner } from '@/components/EsimSupportBanner';
 import { useSearchStore } from '@/state/searchStore';
 import { useAuthStore } from '@/state/authStore';
 
@@ -140,6 +141,9 @@ export default function Home() {
 
         {/* Active eSIM (real data from the user's profiles) */}
         <ActiveEsimCard />
+
+        {/* eSIM hardware advisory — only shown when the OS definitively says no. */}
+        <EsimSupportBanner />
 
         {/* Services grid */}
         <View>

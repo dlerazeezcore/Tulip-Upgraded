@@ -1,16 +1,18 @@
 import React, { useState } from 'react';
-import { ScrollView, View, Text, Pressable, Linking } from 'react-native';
+import { Alert, ScrollView, View, Text, Pressable, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Check, Lock, Landmark, Gift, Globe } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { EsimSupportBanner } from '@/components/EsimSupportBanner';
 import { useIqdMoney, useIqdAmount } from '@/lib/pricing';
 import { useEsimCart } from '@/state/esimCart';
 import { useAuthStore } from '@/state/authStore';
 import { useEsimStore } from '@/state/esimStore';
 import { useOrderStore } from '@/state/orderStore';
+import { useDeviceStore } from '@/state/deviceStore';
 import { useIsWideWeb } from '@/lib/responsive';
 import { PAYMENT_METHODS } from '@/data/esim';
 import { createManagedOrder } from '@/services/esim';
@@ -49,6 +51,7 @@ export default function Checkout() {
   const refreshEsims = useEsimStore((s) => s.refresh);
   const refreshOrders = useOrderStore((s) => s.refresh);
   const isWide = useIsWideWeb();
+  const esimSupport = useDeviceStore((s) => s.esimSupport);
   const [method, setMethod] = useState<'fib' | 'loyalty'>('loyalty');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -138,13 +141,7 @@ export default function Checkout() {
     router.replace('/manage/esim');
   };
 
-  const onPay = async () => {
-    if (busy) return;
-    setError(null);
-    if (!bundle.packageCode) {
-      setError("This plan can't be purchased right now. Please pick a country plan.");
-      return;
-    }
+  const performPay = async () => {
     setBusy(true);
     try {
       if (method === 'loyalty') {
@@ -176,10 +173,39 @@ export default function Checkout() {
     }
   };
 
+  const onPay = () => {
+    if (busy) return;
+    setError(null);
+    if (!bundle.packageCode) {
+      setError("This plan can't be purchased right now. Please pick a country plan.");
+      return;
+    }
+    // If the OS told us this device has no eSIM hardware, make the user
+    // acknowledge that the eSIM won't install on this phone before they pay.
+    // The Share QR feature from the install screen makes "buying for another
+    // person's phone" a real use case, so we don't hard-block — confirm.
+    if (esimSupport === 'unsupported') {
+      Alert.alert(
+        "This device doesn't support eSIM",
+        "Your plan will be saved to your account, but you won't be able to install it on this phone. You can share the QR code with someone whose device supports eSIM after purchase.",
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Continue anyway', style: 'destructive', onPress: performPay },
+        ],
+      );
+      return;
+    }
+    performPay();
+  };
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       {header}
       <ScrollView contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, maxWidth: isWide ? 1000 : 720, width: '100%', alignSelf: 'center' }}>
+        {/* eSIM hardware advisory — only shown when the OS definitively says no. */}
+        <View style={{ marginBottom: 16 }}>
+          <EsimSupportBanner message="This device doesn't support eSIM. You can still buy and share the QR with someone else after checkout." />
+        </View>
         <View style={{ flexDirection: isWide ? 'row' : 'column', gap: isWide ? 24 : 16, alignItems: 'flex-start' }}>
           {/* Left: item + payment */}
           <View style={{ flex: 1, gap: 16, width: '100%' }}>

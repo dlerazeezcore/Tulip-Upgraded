@@ -24,6 +24,7 @@ import { useEsimStore } from '@/state/esimStore';
 import { useOrderStore } from '@/state/orderStore';
 import { useTravelersStore } from '@/state/travelersStore';
 import { useLocaleStore } from '@/state/localeStore';
+import { useDeviceStore } from '@/state/deviceStore';
 import { configureForegroundPushHandler, configureNotificationHandler, registerDevice } from '@/services/push';
 import { UpdateAvailableModal } from '@/components/UpdateAvailableModal';
 import '@/i18n';
@@ -87,6 +88,7 @@ export default function RootLayout() {
   const hydrateAuth = useAuthStore((s) => s.hydrate);
   const hydrateLocale = useLocaleStore((s) => s.hydrate);
   const localeHydrated = useLocaleStore((s) => s.hydrated);
+  const hydrateDevice = useDeviceStore((s) => s.hydrate);
   const authUser = useAuthStore((s) => s.user);
   const refreshEsims = useEsimStore((s) => s.refresh);
   const refreshOrders = useOrderStore((s) => s.refresh);
@@ -104,7 +106,8 @@ export default function RootLayout() {
     hydrateCurrency();
     hydrateAuth();
     hydrateLocale();
-  }, [hydrate, hydrateCurrency, hydrateAuth, hydrateLocale]);
+    hydrateDevice();
+  }, [hydrate, hydrateCurrency, hydrateAuth, hydrateLocale, hydrateDevice]);
 
   // Trigger the iOS / Android notification permission prompt as early as
   // possible — on the FIRST screen, before login. The backend's register
