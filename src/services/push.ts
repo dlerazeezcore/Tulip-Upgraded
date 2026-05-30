@@ -57,7 +57,7 @@ function platformName(): 'ios' | 'android' | 'web' {
 
 async function resolveDeviceId(): Promise<string | null> {
   try {
-    if (Platform.OS === 'android') return Application.androidId ?? null;
+    if (Platform.OS === 'android') return Application.getAndroidId() ?? null;
     if (Platform.OS === 'ios') return (await Application.getIosIdForVendorAsync()) ?? null;
   } catch {}
   return null;

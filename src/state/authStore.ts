@@ -107,6 +107,18 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           const user = userFromMe(me);
           set({ user });
           persist(user, token);
+          // Re-register the device on every successful hydration. This catches
+          // the upgrade case where a user was already signed in on an older build
+          // (so setSession never fires this time) and means we'll surface iOS'
+          // push-permission prompt on first launch of a build that has the
+          // notifications module — even if the user never signs out + back in.
+          // Idempotent: registerDevice silently no-ops if permission was denied.
+          try {
+            const lang = useLocaleStore.getState().language;
+            registerDevice({ locale: lang }).catch(() => {});
+          } catch {
+            // ignore
+          }
         } catch {
           // token invalid/expired → clear session
           setAuthToken(null);
