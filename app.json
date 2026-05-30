@@ -61,6 +61,16 @@
           "color": "#1967D2",
           "defaultChannel": "general"
         }
+      ],
+      "@react-native-firebase/app",
+      "@react-native-firebase/messaging",
+      [
+        "expo-build-properties",
+        {
+          "ios": {
+            "useFrameworks": "static"
+          }
+        }
       ]
     ]
   }

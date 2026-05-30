@@ -1,14 +1,20 @@
 // Push notification wiring: permission, FCM device token, register/unregister with backend.
 //
-// The backend uses Firebase Admin SDK directly (NOT Expo's push service), so we use
-// `Notifications.getDevicePushTokenAsync()` to get the native FCM (Android) / APNs (iOS)
-// token. The backend's firebase-admin handles both. Do NOT swap to
-// `getExpoPushTokenAsync()` — the backend won't deliver to Expo tokens.
+// The backend uses Firebase Admin SDK directly (NOT Expo's push service), so the
+// device must hand it a Firebase FCM **registration token**. We use
+// `@react-native-firebase/messaging` for token retrieval because:
+//   - Android: messaging().getToken() returns an FCM token natively.
+//   - iOS: messaging().getToken() asks Firebase iOS SDK to register with APNs and
+//     return an FCM token. (Plain expo-notifications gives the raw APNs token on
+//     iOS, which firebase-admin's send_each_for_multicast refuses.)
+// expo-notifications still owns the foreground notification handler and permission
+// prompt; rn-firebase owns the token retrieval. The two coexist cleanly.
 import { Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import * as Device from 'expo-device';
 import * as Application from 'expo-application';
 import Constants from 'expo-constants';
+import messaging from '@react-native-firebase/messaging';
 import { apiFetch } from '@/lib/api';
 
 type RegisterPayload = {
@@ -37,13 +43,17 @@ export async function ensurePushPermission(): Promise<boolean> {
   }
 }
 
-/** Get the FCM (Android) / APNs (iOS) device token, or null on failure / web. */
+/** Get an FCM registration token (both platforms), or null on failure / web. */
 export async function getFcmDeviceToken(): Promise<string | null> {
   if (Platform.OS === 'web') return null;
   try {
-    const result = await Notifications.getDevicePushTokenAsync();
-    const value = String(result?.data || '').trim();
-    return value || null;
+    // iOS must register for remote messages before the FCM token is available.
+    // No-op on Android. Safe to call repeatedly.
+    if (Platform.OS === 'ios') {
+      await messaging().registerDeviceForRemoteMessages();
+    }
+    const token = await messaging().getToken();
+    return (token || '').trim() || null;
   } catch {
     return null;
   }
