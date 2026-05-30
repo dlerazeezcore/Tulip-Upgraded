@@ -68,7 +68,10 @@ export function EsimInstallCard(props: Props) {
         Install eSIM
       </Text>
 
-      {/* Two buttons side-by-side: Activate (iOS deeplink) + QR (toggle reveal). */}
+      {/* Two buttons side-by-side: Activate (iOS deeplink) + QR (toggle reveal).
+          Activate is always rendered when we have an LPA — when disabled (web,
+          Android), it's greyed with a small "iPhone only" caption beneath so
+          the user sees the option without being misled into thinking it works. */}
       <View style={{ flexDirection: 'row', gap: 10 }}>
         {vm.showActivateButton && (
           <Pressable
@@ -79,15 +82,15 @@ export function EsimInstallCard(props: Props) {
               alignItems: 'center',
               justifyContent: 'center',
               gap: 8,
-              backgroundColor: t.primary,
+              backgroundColor: vm.activateEnabled ? t.primary : t.bgSunken,
               borderRadius: t.radius.pill,
               paddingVertical: 12,
-              opacity: pressed ? 0.85 : 1,
-              ...t.shadowGlow,
+              opacity: pressed ? 0.85 : vm.activateEnabled ? 1 : 0.6,
+              ...(vm.activateEnabled ? t.shadowGlow : {}),
             })}
           >
-            <Smartphone size={16} color={t.onPrimary} strokeWidth={2.2} />
-            <Text style={{ color: t.onPrimary, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14 }}>
+            <Smartphone size={16} color={vm.activateEnabled ? t.onPrimary : t.fgMuted} strokeWidth={2.2} />
+            <Text style={{ color: vm.activateEnabled ? t.onPrimary : t.fgMuted, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14 }}>
               Activate
             </Text>
           </Pressable>
@@ -116,6 +119,11 @@ export function EsimInstallCard(props: Props) {
           </Pressable>
         )}
       </View>
+      {vm.showActivateButton && !vm.activateEnabled && vm.activateDisabledReason && (
+        <Text style={{ fontSize: 11, color: t.fgMuted, textAlign: 'center', marginTop: -6 }}>
+          {vm.activateDisabledReason}
+        </Text>
+      )}
 
       {/* QR panel — only when user taps the QR button. */}
       {vm.qrRevealed && (

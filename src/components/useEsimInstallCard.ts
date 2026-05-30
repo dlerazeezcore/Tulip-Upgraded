@@ -12,24 +12,28 @@ import {
 } from '@/lib/esimActivation';
 
 export type EsimInstallCardViewModel = {
-  // Render gates
+  // Render gates — always rendered when we have activation data, but the
+  // Activate button is disabled on non-iOS so the user clearly sees the
+  // option exists and where it would go.
   hasActivationData: boolean;
-  showActivateButton: boolean; // iOS only + LPA available — opens iOS install sheet
-  showQrButton: boolean;       // we have an LPA → can render a QR
-  qrRevealed: boolean;         // user tapped QR button; show the image + share button
-  showShare: boolean;          // sharing is available on this platform (always with QR)
+  showActivateButton: boolean;  // true whenever we have an LPA
+  activateEnabled: boolean;     // false on web / Android — Activate is iPhone-only
+  activateDisabledReason: string | null; // shown under disabled Activate
+  showQrButton: boolean;        // true whenever we have an LPA → QR can render
+  qrRevealed: boolean;          // user tapped QR; show image + Share button
+  showShare: boolean;           // sharing is available on this platform
 
   // Display
-  qrDataUrl: string | null;    // PNG data URL for <Image source={{ uri }} />
+  qrDataUrl: string | null;     // PNG data URL for <Image source={{ uri }} />
   qrLoading: boolean;
   smdp: string | null;
   activationCodeManual: string | null;
 
   // Actions
   busy: boolean;
-  activate: () => void;         // tap → iOS one-tap install sheet
-  toggleQr: () => void;         // tap → reveal/hide the QR
-  share: () => Promise<void>;   // tap → native share sheet for QR PNG
+  activate: () => void;          // tap → iOS install sheet (no-op when disabled)
+  toggleQr: () => void;          // tap → reveal/hide the QR
+  share: () => Promise<void>;    // tap → native share sheet for QR PNG
 };
 
 type Input = {
@@ -74,8 +78,21 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
   }, [lpa, qrRevealed, qrDataUrl]);
 
   const appleUrl = useMemo(() => (lpa ? buildAppleUniversalUrl(lpa) : null), [lpa]);
+  const activateEnabled = isAppleUniversalSupported();
+  const activateDisabledReason = activateEnabled
+    ? null
+    : Platform.OS === 'web'
+    ? 'iPhone only — open the app on your iPhone or scan the QR'
+    : 'iPhone only — use the QR to install on this device';
 
   const activate = () => {
+    if (!activateEnabled) {
+      Alert.alert(
+        'Activate works on iPhone only',
+        'Open Tulip on your iPhone to install this eSIM, or tap the QR button to scan it from another iPhone.',
+      );
+      return;
+    }
     if (!appleUrl) return;
     // Opens iOS Settings → Cellular → Add eSIM with the SM-DP+ prefilled.
     // iOS takes over the screen; the user finishes the install there. We
@@ -115,7 +132,9 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
 
   return {
     hasActivationData: !!lpa,
-    showActivateButton: !!appleUrl && isAppleUniversalSupported(),
+    showActivateButton: !!appleUrl,
+    activateEnabled,
+    activateDisabledReason,
     showQrButton: !!lpa,
     qrRevealed,
     showShare: Platform.OS !== 'web' && !!lpa,
