@@ -135,11 +135,16 @@ export async function unregisterDevice(): Promise<void> {
 
 /** Module-load: set how foreground notifications appear (banner + sound, no badge). */
 export function configureNotificationHandler(): void {
-  Notifications.setNotificationHandler({
-    handleNotification: async () => ({
-      shouldShowAlert: true,
-      shouldPlaySound: true,
-      shouldSetBadge: false,
-    }),
-  });
+  if (Platform.OS === 'web') return; // no notification surface on web; expo-notifications shim varies
+  try {
+    Notifications.setNotificationHandler({
+      handleNotification: async () => ({
+        shouldShowAlert: true,
+        shouldPlaySound: true,
+        shouldSetBadge: false,
+      }),
+    });
+  } catch {
+    // Defensive: never let notification setup blank-screen the app
+  }
 }

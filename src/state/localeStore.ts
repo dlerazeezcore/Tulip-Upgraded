@@ -2,9 +2,9 @@ import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { I18nManager, Platform } from 'react-native';
 import i18n, { Lang, RTL_LANGS } from '@/i18n';
-import { useAuthStore } from '@/state/authStore';
 import * as authApi from '@/services/auth';
 import * as push from '@/services/push';
+import { getAuthState, registerLocaleAccessor } from '@/state/storeAccess';
 
 function applyDirection(lang: Lang) {
   const rtl = RTL_LANGS.includes(lang);
@@ -48,7 +48,8 @@ export const useLocaleStore = create<LocaleState>((set) => ({
     //   2. Re-register the device so push_devices.locale matches (per-device truth).
     // Both calls are fire-and-forget — UI must not block on the network.
     try {
-      if (useAuthStore.getState().isAuthed()) {
+      const auth = getAuthState();
+      if (auth?.isAuthed?.()) {
         Promise.allSettled([
           authApi.updateMe({ preferredLanguage: language }),
           push.registerDevice({ locale: language }),
@@ -78,3 +79,7 @@ export const useLocaleStore = create<LocaleState>((set) => ({
     set({ hydrated: true });
   },
 }));
+
+// Publish this store to the cycle-breaking accessor so authStore can read it
+// without a static import (and the corresponding require cycle).
+registerLocaleAccessor(useLocaleStore);

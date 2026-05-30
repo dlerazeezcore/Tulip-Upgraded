@@ -3,7 +3,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { setAuthToken } from '@/lib/api';
 import * as authApi from '@/services/auth';
 import { registerDevice, unregisterDevice } from '@/services/push';
-import { useLocaleStore } from '@/state/localeStore';
+import { getLocaleLanguage, registerAuthAccessor } from '@/state/storeAccess';
 import type { AuthSession, AuthMe, OtpChannel } from '@/services/types';
 
 export type AuthUser = {
@@ -114,8 +114,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           // notifications module — even if the user never signs out + back in.
           // Idempotent: registerDevice silently no-ops if permission was denied.
           try {
-            const lang = useLocaleStore.getState().language;
-            registerDevice({ locale: lang }).catch(() => {});
+            registerDevice({ locale: getLocaleLanguage() }).catch(() => {});
           } catch {
             // ignore
           }
@@ -138,11 +137,9 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     set({ user, token: session.accessToken, pendingPhone: null });
     persist(user, session.accessToken);
     // Fire-and-forget: register this device's push token + locale with the backend.
-    // We read the language at call time (not at module load) so the latest value wins
-    // — the imported store reference is stable; .getState() is what we care about.
+    // Locale is read lazily via storeAccess to avoid a require cycle.
     try {
-      const lang = useLocaleStore.getState().language;
-      registerDevice({ locale: lang }).catch(() => {});
+      registerDevice({ locale: getLocaleLanguage() }).catch(() => {});
     } catch {
       // ignore — push registration must not block login UX
     }
@@ -187,3 +184,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     persist(null, null);
   },
 }));
+
+// Publish this store to the cycle-breaking accessor so localeStore can read it
+// without a static import (and the corresponding require cycle).
+registerAuthAccessor(useAuthStore);
