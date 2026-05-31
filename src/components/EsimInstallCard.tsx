@@ -13,17 +13,26 @@
 //     SM-DP+ address: …
 //     Activation code: …
 import React from 'react';
-import { View, Text, Pressable, ActivityIndicator } from 'react-native';
-import { Image } from 'expo-image';
+import { View, Text, Pressable } from 'react-native';
+import QRCode from 'react-native-qrcode-svg';
 import { Smartphone, Share2, Download, AlertCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimInstallCard } from './useEsimInstallCard';
+
+// react-native-qrcode-svg renders SVG primitives via react-native-svg — works
+// on iOS, Android, AND web. The previous approach used qrcode.toDataURL which
+// relies on canvas (browser-only). That's why the QR was blank on iOS even
+// though it worked in our dev preview.
 
 type Props = {
   smdp: string | null | undefined;
   activationCode: string | null | undefined;
   country: string;
   dataLabel?: string;
+  /** Fires the moment the user taps Activate, before the iOS install sheet
+   *  opens. Parent screen uses this to arm an AppState listener for
+   *  refresh-on-return. */
+  onActivateTapped?: () => void;
 };
 
 function Row({ label, value }: { label: string; value: string }) {
@@ -45,6 +54,7 @@ export function EsimInstallCard(props: Props) {
     activationCode: props.activationCode,
     country: props.country,
     dataLabel: props.dataLabel,
+    onActivateTapped: props.onActivateTapped,
   });
 
   if (!vm.hasActivationData) {
@@ -99,29 +109,22 @@ export function EsimInstallCard(props: Props) {
         </>
       )}
 
-      {/* QR — always visible when we have activation data. */}
+      {/* QR — rendered via SVG, works on iOS / Android / web. */}
       <View style={{ alignItems: 'center', gap: 10, paddingVertical: 8 }}>
-        {vm.qrLoading || !vm.qrDataUrl ? (
-          <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff', borderRadius: 16 }}>
-            <ActivityIndicator color={t.primary} />
-          </View>
-        ) : (
-          <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 16 }}>
-            <Image
-              source={{ uri: vm.qrDataUrl }}
-              style={{ width: 220, height: 220 }}
-              contentFit="contain"
-              transition={120}
-            />
-          </View>
-        )}
+        <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 16 }}>
+          {vm.lpa ? (
+            <QRCode value={vm.lpa} size={220} backgroundColor="#fff" color="#000" />
+          ) : (
+            <View style={{ width: 220, height: 220 }} />
+          )}
+        </View>
         <Text style={{ fontSize: 11, color: t.fgMuted, textAlign: 'center', paddingHorizontal: 12 }}>
           Scan with another phone's camera, or send to someone to install on their device.
         </Text>
         {(vm.showShareButton || vm.showDownloadButton) && (
           <Pressable
             onPress={vm.showShareButton ? vm.share : vm.download}
-            disabled={vm.busy || !vm.qrDataUrl}
+            disabled={vm.busy || !vm.lpa}
             style={({ pressed }) => ({
               flexDirection: 'row',
               alignItems: 'center',
@@ -131,7 +134,7 @@ export function EsimInstallCard(props: Props) {
               borderRadius: 999,
               borderWidth: 1.5,
               borderColor: t.primary,
-              opacity: pressed || vm.busy || !vm.qrDataUrl ? 0.6 : 1,
+              opacity: pressed || vm.busy || !vm.lpa ? 0.6 : 1,
             })}
           >
             {vm.showShareButton ? (
@@ -140,7 +143,7 @@ export function EsimInstallCard(props: Props) {
               <Download size={14} color={t.primary} strokeWidth={2.2} />
             )}
             <Text style={{ color: t.primary, fontWeight: '700', fontSize: 13 }}>
-              {vm.busy ? 'Sharing…' : vm.showShareButton ? 'Share QR' : 'Download QR'}
+              {vm.busy ? 'Working…' : vm.showShareButton ? 'Share QR' : 'Download QR'}
             </Text>
           </Pressable>
         )}

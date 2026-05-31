@@ -20,9 +20,9 @@ export type EsimInstallCardViewModel = {
   showShareButton: boolean;      // true on native (uses share sheet)
   showDownloadButton: boolean;   // true on web (anchor-tag download)
 
-  // Display
-  qrDataUrl: string | null;      // PNG data URL — always generated when LPA exists
-  qrLoading: boolean;
+  // Display — the LPA string goes straight into <QRCode value={lpa} />
+  // (renders SVG cross-platform; doesn't depend on canvas).
+  lpa: string | null;
   smdp: string | null;
   activationCodeManual: string | null;
 
@@ -30,7 +30,7 @@ export type EsimInstallCardViewModel = {
   busy: boolean;
   activate: () => void;           // tap → mobile system eSIM install
   share: () => Promise<void>;     // tap → native share sheet for QR PNG
-  download: () => void;           // tap → web download of QR PNG
+  download: () => Promise<void>;  // tap → web download of QR PNG
 };
 
 type Input = {
@@ -39,6 +39,10 @@ type Input = {
   activationCode: string | null | undefined;
   country: string;
   dataLabel?: string;
+  /** Called the moment the user taps Activate, BEFORE we open iOS Settings.
+   * The detail screen uses this to set up an AppState listener so it can
+   * refresh + navigate home when the user returns from the iOS install flow. */
+  onActivateTapped?: () => void;
 };
 
 export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
@@ -47,33 +51,14 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     [input.smdp, input.activationCode],
   );
 
-  const [qrDataUrl, setQrDataUrl] = useState<string | null>(null);
-  const [qrLoading, setQrLoading] = useState<boolean>(false);
   const [busy, setBusy] = useState<boolean>(false);
 
-  // Generate the QR data URL eagerly when activation data exists. The previous
-  // tap-to-reveal pattern confused users — they tapped "QR" and saw nothing
-  // (loading) and assumed it was broken. Showing the QR by default makes it
-  // obvious. Cost: ~10ms of CPU + ~15KB of memory per detail screen, both
-  // negligible.
-  useEffect(() => {
-    if (!lpa || qrDataUrl) return;
-    let cancelled = false;
-    setQrLoading(true);
-    generateQrDataUrl(lpa)
-      .then((url) => {
-        if (!cancelled) setQrDataUrl(url);
-      })
-      .catch(() => {
-        if (!cancelled) setQrDataUrl(null);
-      })
-      .finally(() => {
-        if (!cancelled) setQrLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [lpa, qrDataUrl]);
+  // The QR image itself renders via <QRCode value={lpa} /> in the UI — no
+  // pre-computation needed for display. We only generate the PNG data URL
+  // on-demand for sharing or downloading, where we need an actual image file.
+  // (qrcode.toDataURL uses canvas — works on web for download, but on iOS
+  // native we'd hit the same blank-image bug. So sharing on iOS captures the
+  // rendered SVG separately.)
 
   // Platform-aware deeplink: iOS → Apple universal URL,
   // Android → LPA: scheme URI, Web → null (button disabled).
@@ -96,10 +81,12 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
       );
       return;
     }
+    // Notify the parent screen BEFORE we open iOS Settings so it can arm an
+    // AppState listener. When the user returns from the system install flow,
+    // the screen calls refreshUsage() and navigates home.
+    input.onActivateTapped?.();
     // iOS:    iOS Settings → Cellular → Add eSIM with SM-DP+ prefilled.
     // Android: System eSIM setup intent (Android 9 / API 28+).
-    // In both cases the system takes over the screen; user finishes there.
-    // We detect completion via the cron's 30-min provider sync OR pull-to-refresh.
     Linking.openURL(activationUrl).catch(() =>
       Alert.alert(
         'Could not open eSIM setup',
@@ -108,19 +95,24 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     );
   };
 
-  /** Web-only: trigger an anchor-tag download of the QR PNG. */
-  const download = () => {
-    if (Platform.OS !== 'web' || !qrDataUrl) return;
+  /** Web-only: download the QR as PNG. Generates the data URL on demand. */
+  const download = async () => {
+    if (Platform.OS !== 'web' || !lpa) return;
+    if (busy) return;
+    setBusy(true);
     try {
+      const dataUrl = await generateQrDataUrl(lpa);
       const a = document.createElement('a');
-      a.href = qrDataUrl;
+      a.href = dataUrl;
       const stamp = Date.now();
       a.download = `tulip-esim-${(input.country || 'plan').toLowerCase().replace(/\s+/g, '-')}-${stamp}.png`;
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
     } catch {
-      // ignore — browser will block automation if it must
+      // browser may block; ignore
+    } finally {
+      setBusy(false);
     }
   };
 
@@ -151,8 +143,7 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     activateDisabledReason,
     showShareButton: Platform.OS !== 'web' && !!lpa,
     showDownloadButton: Platform.OS === 'web' && !!lpa,
-    qrDataUrl,
-    qrLoading,
+    lpa,
     smdp: input.smdp ?? null,
     activationCodeManual: input.activationCode ?? null,
     busy,

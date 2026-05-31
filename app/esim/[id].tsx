@@ -1,5 +1,5 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, View, Text, Pressable, Alert, ActivityIndicator } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { ScrollView, View, Text, Pressable, Alert, ActivityIndicator, AppState } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Plus, Signal, Clock, RefreshCw, AlertTriangle } from 'lucide-react-native';
@@ -47,6 +47,15 @@ export default function EsimDetail() {
 
   const [support, setSupport] = useState<EsimSupportResult | null>(null);
   const [busy, setBusy] = useState(false);
+  // Timestamp of last Activate tap. We use it inside the AppState listener
+  // below to decide whether a "foreground" event was a return from the iOS /
+  // Android system eSIM install sheet (vs. a casual tab switch). null means
+  // "no install pending".
+  const pendingActivateAt = useRef<number | null>(null);
+  // True while we're syncing immediately after the user returned from system
+  // settings — drives a small "Detecting install..." banner so they know what
+  // we're doing.
+  const [detectingInstall, setDetectingInstall] = useState(false);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -57,6 +66,34 @@ export default function EsimDetail() {
     refresh();
     checkEsimSupport().then(setSupport).catch(() => {});
   }, [refresh]);
+
+  // AppState listener for instant install detection. When the user taps
+  // Activate, EsimInstallCard calls onActivateTapped which arms pendingActivateAt.
+  // The system install sheet takes over; when the user returns to our app,
+  // AppState fires 'active'. If that happens within 5 minutes of the tap we
+  // call refreshUsage() to pull the latest status from the provider and, if
+  // the eSIM is now active, navigate to the home tab.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', async (next) => {
+      if (next !== 'active') return;
+      const at = pendingActivateAt.current;
+      if (!at || Date.now() - at > 5 * 60 * 1000) return;
+      pendingActivateAt.current = null;
+      setDetectingInstall(true);
+      try {
+        await refreshUsage();
+      } catch {}
+      // Re-read the latest state from the store; the closure captured the
+      // pre-refresh `esim` variable.
+      const latest = useEsimStore.getState().esims.find((e) => e.id === id);
+      setDetectingInstall(false);
+      if (latest && latest.status === 'active') {
+        // Successful install detected — get them back to the home tab.
+        router.replace('/(tabs)');
+      }
+    });
+    return () => sub.remove();
+  }, [id, refreshUsage, router]);
 
   const esim = esims.find((e) => e.id === id) ?? esims[0];
   const profile = esim ? byId(esim.id) : undefined;
@@ -179,19 +216,30 @@ export default function EsimDetail() {
           )}
         </View>
 
-        {/* Install panel: two-button layout (Activate / QR). Tapping Activate
-            opens iOS Settings → Add eSIM; tapping QR reveals the local QR with
-            a Share QR button. We DON'T need a separate "Mark as activated"
-            backend marker — when the user finishes the iOS install flow, the
-            provider sees the eSIM go to IN_USE within seconds, and the 30-min
-            cron picks it up next pass (or the user can pull-to-refresh sooner). */}
+        {/* Install panel: Activate (iOS/Android system install sheet) + QR.
+            We pass onActivateTapped so we can arm an AppState listener — the
+            moment the user returns from the system install flow, we refresh
+            from the provider, and if the eSIM is now active we route them
+            to the home tab automatically. */}
         {showInstall && (
           <EsimInstallCard
             smdp={smdp}
             activationCode={activationCode}
             country={esim.country}
             dataLabel={dataLabel}
+            onActivateTapped={() => {
+              pendingActivateAt.current = Date.now();
+            }}
           />
+        )}
+
+        {detectingInstall && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: 'rgba(25,103,210,0.12)', borderWidth: 1, borderColor: 'rgba(25,103,210,0.35)' }}>
+            <ActivityIndicator size="small" color={t.primary} />
+            <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>
+              Detecting install — syncing with the provider…
+            </Text>
+          </View>
         )}
         {(esim.status === 'active' || esim.status === 'expired') && (
           <PrimaryButton
