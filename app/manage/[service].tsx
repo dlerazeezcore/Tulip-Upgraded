@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft } from 'lucide-react-native';
@@ -33,17 +33,12 @@ function Card({ children, onPress }: { children: React.ReactNode; onPress?: () =
 function EsimList() {
   const t = useTheme();
   const router = useRouter();
-  // Show all profiles — user policy: "the plan stays there if used or not".
-  // Cancelled / expired profiles get the EXPIRED pill and the detail screen
-  // hides the install card for them.
+  // The backend filters out terminal (cancelled/refunded/expired) profiles by
+  // default — this list shows only live bundles. The detail screen and
+  // /orders history surface terminal ones for audit/refund follow-up.
   const esims = useEsimStore((s) => s.esims);
-  const refresh = useEsimStore((s) => s.refresh);
   const refreshing = useEsimStore((s) => s.refreshing);
   const loaded = useEsimStore((s) => s.loaded);
-
-  React.useEffect(() => {
-    refresh();
-  }, [refresh]);
 
   if (!loaded && refreshing) {
     return (
@@ -57,7 +52,7 @@ function EsimList() {
     return (
       <View style={{ paddingVertical: 30, alignItems: 'center', gap: 6 }}>
         <Text style={{ color: t.fgMuted }}>No eSIMs yet.</Text>
-        <Text style={{ color: t.fgFaint, fontSize: 12 }}>Buy one from the eSIM store to get started.</Text>
+        <Text style={{ color: t.fgFaint, fontSize: 12 }}>Pull down to refresh, or buy one from the eSIM store.</Text>
       </View>
     );
   }
@@ -65,11 +60,16 @@ function EsimList() {
   return (
     <View style={{ gap: 10 }}>
       {esims.map((e) => {
+        // Show remaining GB on EVERY card the backend gave us data for, not
+        // just active. A PROVIDER_WAITING bundle already has total/remaining
+        // populated (the user paid for it), so showing it reassures them
+        // that the plan exists even before the carrier reports IN_USE.
         const remaining = e.remainingGb;
         const frac = e.planGb > 0 ? remaining / e.planGb : 0;
         const barColor = e.status === 'active' ? t.success : e.status === 'expired' ? t.danger : t.warning;
         const pillKind = e.status === 'provider_waiting' ? 'inactive' : e.status;
         const pillLabel = e.status === 'provider_waiting' ? 'Provider waiting' : undefined;
+        const hasUsageRow = e.planGb > 0 && (e.status === 'active' || e.status === 'provider_waiting');
         return (
           <Card key={e.id} onPress={() => router.push(`/esim/${e.id}`)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -85,16 +85,18 @@ function EsimList() {
               <StatusPill kind={pillKind} label={pillLabel} />
             </View>
 
-            {e.status === 'active' && (
+            {hasUsageRow && (
               <View style={{ marginTop: 12 }}>
                 <View style={{ height: 6, borderRadius: 3, backgroundColor: t.bgSunken, overflow: 'hidden' }}>
-                  <View style={{ width: e.unlimited ? '100%' : `${frac * 100}%`, height: 6, borderRadius: 3, backgroundColor: barColor }} />
+                  <View style={{ width: e.unlimited ? '100%' : `${Math.max(0, Math.min(frac, 1)) * 100}%`, height: 6, borderRadius: 3, backgroundColor: barColor }} />
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
                   <Text style={{ fontSize: 11, color: t.fg, fontWeight: '600' }}>
                     {e.unlimited ? 'Unlimited' : `${remaining.toFixed(1)} GB left`}
                   </Text>
-                  <Text style={{ fontSize: 11, color: t.fgMuted }}>{e.daysLeft} days left</Text>
+                  <Text style={{ fontSize: 11, color: t.fgMuted }}>
+                    {e.status === 'active' ? `${e.daysLeft} days left` : 'Waiting for first connection'}
+                  </Text>
                 </View>
               </View>
             )}
@@ -108,14 +110,6 @@ function EsimList() {
               <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>
                   Tap to install →
-                </Text>
-              </View>
-            )}
-
-            {e.status === 'provider_waiting' && (
-              <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-                <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                  Waiting for provider confirmation
                 </Text>
               </View>
             )}
@@ -152,6 +146,27 @@ export default function ManageService() {
     : service === 'cars' ? 'My Cars'
     : 'My Bookings';
 
+  // For the eSIM tab we own a single refresh affordance (pull-to-refresh +
+  // initial load) so the user can force-resync status/usage from the
+  // provider on demand. This is what catches: a bundle that's been
+  // refunded/cancelled provider-side, latest GB usage, and ONBOARDING ->
+  // IN_USE transitions that beat the recover-poll on the detail screen.
+  const refreshList = useEsimStore((s) => s.refresh);
+  const refreshUsage = useEsimStore((s) => s.refreshUsage);
+  const refreshing = useEsimStore((s) => s.refreshing);
+
+  React.useEffect(() => {
+    if (service === 'esim') refreshList();
+  }, [service, refreshList]);
+
+  const onPullToRefresh = React.useCallback(async () => {
+    if (service !== 'esim') return;
+    // refreshUsage hits /usage/sync/my which forces a provider round-trip,
+    // then returns the latest list. That's strictly more authoritative than
+    // refreshList (which only reads our DB), so use it for explicit refreshes.
+    await refreshUsage();
+  }, [service, refreshUsage]);
+
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
@@ -179,7 +194,14 @@ export default function ManageService() {
         )}
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 10, maxWidth: 900, width: '100%', alignSelf: 'center' }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 10, maxWidth: 900, width: '100%', alignSelf: 'center' }}
+        refreshControl={
+          service === 'esim' ? (
+            <RefreshControl refreshing={refreshing} onRefresh={onPullToRefresh} tintColor={t.primary} colors={[t.primary]} />
+          ) : undefined
+        }
+      >
         {service === 'esim' ? <EsimList /> : <ComingSoon label={svc?.label ?? 'This'} />}
       </ScrollView>
     </SafeAreaView>

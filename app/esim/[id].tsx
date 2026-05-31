@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { ScrollView, View, Text, Pressable, Alert, ActivityIndicator, AppState } from 'react-native';
+import { ScrollView, View, Text, Pressable, Alert, ActivityIndicator, AppState, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Plus, Signal, Clock, RefreshCw, AlertTriangle } from 'lucide-react-native';
@@ -281,7 +281,24 @@ export default function EsimDetail() {
         </Pressable>
       </View>
 
-      <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 18, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 18, maxWidth: 720, width: '100%', alignSelf: 'center' }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            onRefresh={async () => {
+              // Pull-to-refresh: also force a per-profile provider recover so
+              // status, GB usage, and days remaining catch up to whatever the
+              // provider currently knows (covers refunds, suspensions, and the
+              // ONBOARDING -> IN_USE transition we might have missed).
+              try { await recoverProfile(id); } catch {}
+              await refreshUsage();
+            }}
+            tintColor={t.primary}
+            colors={[t.primary]}
+          />
+        }
+      >
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
           <Flag iso={esim.iso} size={44} />
           <View style={{ flex: 1 }}>
