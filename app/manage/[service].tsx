@@ -2,7 +2,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft } from 'lucide-react-native';
+import { ChevronLeft, Archive, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, serviceRoute } from '@/data/services';
 import { formatEsimDataLabel, useEsimStore } from '@/state/esimStore';
@@ -30,12 +30,56 @@ function Card({ children, onPress }: { children: React.ReactNode; onPress?: () =
   );
 }
 
+function HistoryCard() {
+  const t = useTheme();
+  const router = useRouter();
+  const history = useEsimStore((s) => s.history);
+  // Refresh the history count silently so the card always shows accurate
+  // numbers without forcing the user onto the History screen.
+  const refreshHistory = useEsimStore((s) => s.refreshHistory);
+  React.useEffect(() => {
+    refreshHistory();
+  }, [refreshHistory]);
+  const count = history.length;
+  if (count === 0) return null;
+  return (
+    <PressableScale
+      onPress={() => router.push('/manage/esim-history')}
+      scaleTo={0.98}
+      style={{
+        backgroundColor: t.bgElev,
+        borderColor: t.border,
+        borderWidth: 1,
+        borderRadius: 16,
+        padding: 14,
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 12,
+        ...t.shadow1,
+      }}
+    >
+      <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <Archive size={20} color={t.fgMuted} strokeWidth={2} />
+      </View>
+      <View style={{ flex: 1 }}>
+        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
+          History
+        </Text>
+        <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
+          {count} past {count === 1 ? 'bundle' : 'bundles'} (cancelled, refunded, or expired)
+        </Text>
+      </View>
+      <ChevronRight size={18} color={t.fgFaint} />
+    </PressableScale>
+  );
+}
+
 function EsimList() {
   const t = useTheme();
   const router = useRouter();
   // The backend filters out terminal (cancelled/refunded/expired) profiles by
-  // default — this list shows only live bundles. The detail screen and
-  // /orders history surface terminal ones for audit/refund follow-up.
+  // default — this list shows only live bundles. Terminal ones live behind
+  // the HistoryCard rendered alongside the list.
   const esims = useEsimStore((s) => s.esims);
   const refreshing = useEsimStore((s) => s.refreshing);
   const loaded = useEsimStore((s) => s.loaded);
@@ -50,9 +94,12 @@ function EsimList() {
 
   if (loaded && esims.length === 0) {
     return (
-      <View style={{ paddingVertical: 30, alignItems: 'center', gap: 6 }}>
-        <Text style={{ color: t.fgMuted }}>No eSIMs yet.</Text>
-        <Text style={{ color: t.fgFaint, fontSize: 12 }}>Pull down to refresh, or buy one from the eSIM store.</Text>
+      <View style={{ gap: 10 }}>
+        <View style={{ paddingVertical: 30, alignItems: 'center', gap: 6 }}>
+          <Text style={{ color: t.fgMuted }}>No eSIMs yet.</Text>
+          <Text style={{ color: t.fgFaint, fontSize: 12 }}>Pull down to refresh, or buy one from the eSIM store.</Text>
+        </View>
+        <HistoryCard />
       </View>
     );
   }
@@ -116,6 +163,7 @@ function EsimList() {
           </Card>
         );
       })}
+      <HistoryCard />
     </View>
   );
 }

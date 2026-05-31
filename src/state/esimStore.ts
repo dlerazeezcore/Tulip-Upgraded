@@ -110,12 +110,18 @@ function identifierFor(p: EsimProfile): { iccid?: string; esimTranNo?: string; p
 type EsimState = {
   esims: Esim[];
   raw: Record<string, EsimProfile>;
+  // Terminal-state bundles (cancelled / expired / refunded / revoked).
+  // Hidden from the main eSIM list and surfaced via the "History" card.
+  history: Esim[];
+  historyRaw: Record<string, EsimProfile>;
+  historyLoading: boolean;
   refreshing: boolean;
   loaded: boolean;
   error: string | null;
   byId: (id: string) => EsimProfile | undefined;
   refresh: () => Promise<void>;
   refreshUsage: () => Promise<void>;
+  refreshHistory: () => Promise<void>;
   activate: (id: string) => Promise<void>;
   install: (id: string) => Promise<void>;
   topUp: (id: string) => Promise<{ ok: boolean; message?: string }>;
@@ -133,19 +139,24 @@ function ingest(profiles: EsimProfile[]) {
 export const useEsimStore = create<EsimState>((set, get) => ({
   esims: [],
   raw: {},
+  history: [],
+  historyRaw: {},
+  historyLoading: false,
   refreshing: false,
   loaded: false,
   error: null,
 
-  byId: (id) => get().raw[id],
+  byId: (id) => get().raw[id] ?? get().historyRaw[id],
 
   refresh: async () => {
     if (!useAuthStore.getState().isAuthed()) {
-      set({ esims: [], raw: {}, loaded: true, error: null });
+      set({ esims: [], raw: {}, history: [], historyRaw: {}, loaded: true, error: null });
       return;
     }
     set({ refreshing: true, error: null });
     try {
+      // Main list: backend hides terminal bundles by default. The History
+      // screen calls listMyProfiles with status=expired to surface them.
       const res = await listMyProfiles({ limit: 200 });
       set({ ...ingest(res.profiles), loaded: true });
     } catch (e: any) {
@@ -165,6 +176,26 @@ export const useEsimStore = create<EsimState>((set, get) => ({
       set({ error: e?.message || 'Failed to refresh usage' });
     } finally {
       set({ refreshing: false });
+    }
+  },
+
+  refreshHistory: async () => {
+    if (!useAuthStore.getState().isAuthed()) {
+      set({ history: [], historyRaw: {} });
+      return;
+    }
+    set({ historyLoading: true });
+    try {
+      // status=expired captures every terminal lifecycle (cancelled, revoked,
+      // refunded, voided, closed, expired) — the backend collapses them all
+      // into the "expired" bucket for filtering purposes.
+      const res = await listMyProfiles({ limit: 500, status: 'expired' });
+      const { esims, raw } = ingest(res.profiles);
+      set({ history: esims, historyRaw: raw });
+    } catch (e: any) {
+      set({ error: e?.message || 'Failed to load history' });
+    } finally {
+      set({ historyLoading: false });
     }
   },
 
