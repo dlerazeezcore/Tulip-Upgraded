@@ -65,9 +65,11 @@ function EsimList() {
   return (
     <View style={{ gap: 10 }}>
       {esims.map((e) => {
-        const remaining = Math.max(0, e.planGb - e.usedGb);
+        const remaining = e.remainingGb;
         const frac = e.planGb > 0 ? remaining / e.planGb : 0;
         const barColor = e.status === 'active' ? t.success : e.status === 'expired' ? t.danger : t.warning;
+        const pillKind = e.status === 'provider_waiting' ? 'inactive' : e.status;
+        const pillLabel = e.status === 'provider_waiting' ? 'Provider waiting' : undefined;
         return (
           <Card key={e.id} onPress={() => router.push(`/esim/${e.id}`)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -80,7 +82,7 @@ function EsimList() {
                   {formatEsimDataLabel(e.dataLabel)}{e.planDays > 0 ? ` · ${e.planDays} days` : ''}
                 </Text>
               </View>
-              <StatusPill kind={e.status} />
+              <StatusPill kind={pillKind} label={pillLabel} />
             </View>
 
             {e.status === 'active' && (
@@ -106,6 +108,14 @@ function EsimList() {
               <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>
                   Tap to install →
+                </Text>
+              </View>
+            )}
+
+            {e.status === 'provider_waiting' && (
+              <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ fontSize: 11, color: t.fgMuted }}>
+                  Waiting for provider confirmation
                 </Text>
               </View>
             )}

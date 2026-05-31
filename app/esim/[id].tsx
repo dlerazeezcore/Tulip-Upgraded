@@ -44,6 +44,7 @@ export default function EsimDetail() {
   const refresh = useEsimStore((s) => s.refresh);
   const refreshUsage = useEsimStore((s) => s.refreshUsage);
   const refreshing = useEsimStore((s) => s.refreshing);
+  const install = useEsimStore((s) => s.install);
   const topUp = useEsimStore((s) => s.topUp);
 
   const [support, setSupport] = useState<EsimSupportResult | null>(null);
@@ -148,22 +149,30 @@ export default function EsimDetail() {
       pollCancelled = false;
       setDetectingInstall(true);
       let attempts = 0;
+      let installRecorded = false;
       const MAX_ATTEMPTS = 45; // 45 * 4s = 3 minutes
       const tick = async () => {
         if (pollCancelled) return;
         attempts += 1;
+        if (!installRecorded) {
+          installRecorded = true;
+          try { await useEsimStore.getState().install(id); } catch {}
+        }
         // recoverProfile syncs THIS one profile from provider (faster than
-        // refreshUsage which tries to sync everything). The backend now flips
-        // app_status to ACTIVE the moment the provider reports ONBOARDING or
-        // IN_USE (first connection), AND sets installed/activated_at, so the
-        // recover response directly tells us when to stop polling — no need
-        // for a second usage-sync round trip.
+        // refreshUsage which tries to sync everything). The backend only
+        // returns ACTIVE after install is recorded and the provider confirms
+        // usable service, so provider catch-up stays in provider_waiting.
         let recovered: Awaited<ReturnType<typeof recoverProfile>> | null = null;
         try {
           recovered = await recoverProfile(id);
         } catch {}
         if (pollCancelled) return;
-        if (recovered && (recovered.appStatus || '').toUpperCase() === 'ACTIVE') {
+        if (
+          recovered &&
+          (recovered.appStatus || '').toUpperCase() === 'ACTIVE' &&
+          recovered.installed === true &&
+          !!recovered.activatedAt
+        ) {
           // Pull fresh store state so the home tab paints with real usage/days.
           try { await refreshUsage(); } catch {}
           stopPolling();
@@ -209,7 +218,7 @@ export default function EsimDetail() {
       stopPolling();
       pollStarterRef.current = null;
     };
-  }, [id, refreshUsage, router]);
+  }, [id, install, refreshUsage, router]);
 
   if (!esim) {
     return (
@@ -220,9 +229,11 @@ export default function EsimDetail() {
     );
   }
 
-  const remainingGb = profile?.remainingDataGb ?? Math.max(0, esim.planGb - esim.usedGb);
+  const remainingGb = profile?.remainingDataGb ?? esim.remainingGb;
   const fraction = esim.planGb > 0 ? remainingGb / esim.planGb : 0;
   const ringColor = esim.status === 'active' ? t.success : esim.status === 'expired' ? t.danger : t.warning;
+  const pillKind = esim.status === 'provider_waiting' ? 'inactive' : esim.status;
+  const pillLabel = esim.status === 'provider_waiting' ? 'Provider waiting' : undefined;
 
   const smdp = profile?.manualEntry?.smdpAddress ?? profile?.smdpAddress ?? null;
   const dataLabel = esim.unlimited
@@ -265,7 +276,7 @@ export default function EsimDetail() {
               {esim.unlimited ? 'Unlimited data' : `${esim.planGb} GB`}{esim.planDays ? ` · ${esim.planDays} days` : ''}
             </Text>
           </View>
-          <StatusPill kind={esim.status} />
+          <StatusPill kind={pillKind} label={pillLabel} />
         </View>
 
         {/* Device compatibility advisory */}
@@ -296,6 +307,20 @@ export default function EsimDetail() {
                 <Stat label="Days left" value={`${esim.daysLeft}`} />
                 <View style={{ width: 1, backgroundColor: t.border }} />
                 <Stat label="Plan" value={esim.unlimited ? 'Unlimited' : `${esim.planGb} GB`} />
+              </View>
+            </>
+          ) : esim.status === 'provider_waiting' ? (
+            <>
+              <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(245,158,11,0.14)', alignItems: 'center', justifyContent: 'center' }}>
+                <Signal size={32} color={t.warning} strokeWidth={2} />
+              </View>
+              <View style={{ alignItems: 'center' }}>
+                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Provider waiting</Text>
+                <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 4, textAlign: 'center' }}>
+                  {profile?.installed
+                    ? 'Installed. Waiting for the provider to confirm active service.'
+                    : 'Install the eSIM below, then we will confirm active service with the provider.'}
+                </Text>
               </View>
             </>
           ) : esim.status === 'inactive' ? (
@@ -366,7 +391,7 @@ export default function EsimDetail() {
         {/* Manual fallback: if the AppState listener didn't kick in (some
             iOS versions don't reliably fire 'active' after Settings), the
             user can tap this to start the same polling loop. */}
-        {showInstall && hasActivationData && esim.status === 'inactive' && !detectingInstall && (
+        {showInstall && hasActivationData && (esim.status === 'inactive' || esim.status === 'provider_waiting') && !detectingInstall && (
           <Pressable
             onPress={() => pollStarterRef.current?.()}
             style={({ pressed }) => ({

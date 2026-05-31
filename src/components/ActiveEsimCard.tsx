@@ -38,7 +38,7 @@ export function ActiveEsimCard() {
       </View>
 
       {active.map((e) => {
-        const remaining = Math.max(0, e.planGb - e.usedGb);
+        const remaining = e.remainingGb;
         const frac = e.unlimited ? 1 : e.planGb > 0 ? remaining / e.planGb : 0;
         const low = !e.unlimited && (frac <= 0.2 || e.daysLeft <= 2);
         const barColor = low ? t.warning : t.success;

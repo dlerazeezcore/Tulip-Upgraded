@@ -100,7 +100,7 @@ export async function getFeaturedLocations(serviceType = 'esim'): Promise<Featur
 }
 
 export async function listMyProfiles(params: {
-  status?: 'inactive' | 'active' | 'expired';
+  status?: 'inactive' | 'provider_waiting' | 'active' | 'expired';
   installed?: boolean;
   limit?: number;
   offset?: number;
@@ -111,7 +111,7 @@ export async function listMyProfiles(params: {
 }
 
 export async function refreshMyUsage(params: {
-  status?: 'inactive' | 'active' | 'expired';
+  status?: 'inactive' | 'provider_waiting' | 'active' | 'expired';
   installed?: boolean;
   limit?: number;
   offset?: number;

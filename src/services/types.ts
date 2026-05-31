@@ -83,7 +83,9 @@ export type EsimProfile = {
   countryName?: string | null;
   packageName?: string | null;
   packageCode?: string | null;
-  status: 'inactive' | 'active' | 'expired';
+  status: 'inactive' | 'provider_waiting' | 'active' | 'expired';
+  appStatus?: string | null;
+  providerStatus?: string | null;
   isExpired?: boolean;
   canActivate?: boolean;
   canTopUp?: boolean;

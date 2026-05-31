@@ -10,7 +10,7 @@ import {
 import type { EsimProfile } from '@/services/types';
 import { useAuthStore } from '@/state/authStore';
 
-export type EsimStatus = 'inactive' | 'active' | 'expired';
+export type EsimStatus = 'inactive' | 'provider_waiting' | 'active' | 'expired';
 
 export type EsimDataLabel =
   | { kind: 'gb'; gb: number }       // "1.0 GB"
@@ -26,6 +26,7 @@ export type Esim = {
   planDays: number;
   status: EsimStatus;
   usedGb: number;
+  remainingGb: number;
   daysLeft: number;
   iccid: string;
   unlimited?: boolean;
@@ -66,15 +67,22 @@ function buildDataLabel(p: EsimProfile): EsimDataLabel {
 function toDisplay(p: EsimProfile): Esim {
   const label = buildDataLabel(p);
   const isUnlimited = label.kind === 'unlimited';
+  const usedGb = round1(p.usedDataGb ?? 0);
+  const planGb = label.kind === 'gb' ? label.gb : 0;
+  const remainingGb = round1(
+    p.remainingDataGb ??
+    (p.remainingDataMb != null ? p.remainingDataMb / 1024 : Math.max(0, planGb - usedGb))
+  );
   return {
     id: String(p.id),
     country: p.countryName || p.countryCode || 'eSIM',
     iso: p.countryCode || 'UN',
-    planGb: label.kind === 'gb' ? label.gb : 0,
+    planGb,
     // The bundle's total validity (e.g. "7 days"), not the live countdown.
     planDays: p.validityDays ?? p.daysLeft ?? 0,
     status: p.status,
-    usedGb: round1(p.usedDataGb ?? 0),
+    usedGb,
+    remainingGb,
     daysLeft: p.daysLeft ?? 0,
     iccid: p.iccid || p.esimTranNo || '',
     unlimited: isUnlimited,
