@@ -57,6 +57,9 @@ export default function EsimDetail() {
   // settings — drives a small "Detecting install..." banner so they know what
   // we're doing.
   const [detectingInstall, setDetectingInstall] = useState(false);
+  // Lets the "I've installed it" button trigger the SAME polling loop the
+  // AppState listener uses. Wired inside the AppState useEffect.
+  const pollStarterRef = useRef<(() => void) | null>(null);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -124,29 +127,78 @@ export default function EsimDetail() {
   // AppState listener for instant install detection. When the user taps
   // Activate, EsimInstallCard calls onActivateTapped which arms pendingActivateAt.
   // The system install sheet takes over; when the user returns to our app,
-  // AppState fires 'active'. If that happens within 5 minutes of the tap we
-  // call refreshUsage() to pull the latest status from the provider and, if
-  // the eSIM is now active, navigate to the home tab.
+  // AppState fires 'active'.
+  //
+  // The provider often doesn't show IN_USE the very second the user installs
+  // — it can take 30-90s as the cellular session starts and the carrier
+  // notifies the provider. So we don't just check once; we poll the
+  // per-profile recover endpoint every 4s for up to 3 minutes. The moment
+  // the status flips to ACTIVE we navigate to the home tab.
   useEffect(() => {
-    const sub = AppState.addEventListener('change', async (next) => {
+    let pollCancelled = false;
+    let pollTimer: ReturnType<typeof setTimeout> | null = null;
+
+    const stopPolling = () => {
+      pollCancelled = true;
+      if (pollTimer) { clearTimeout(pollTimer); pollTimer = null; }
+      setDetectingInstall(false);
+    };
+
+    const startPolling = () => {
+      pollCancelled = false;
+      setDetectingInstall(true);
+      let attempts = 0;
+      const MAX_ATTEMPTS = 45; // 45 * 4s = 3 minutes
+      const tick = async () => {
+        if (pollCancelled) return;
+        attempts += 1;
+        try {
+          // recoverProfile syncs THIS one profile from provider (faster than
+          // refreshUsage which tries to sync everything). It updates DB to
+          // reflect current status.
+          await recoverProfile(id);
+        } catch {}
+        if (pollCancelled) return;
+        // Pull the latest store state and check status.
+        try {
+          await refreshUsage();
+        } catch {}
+        const latest = useEsimStore.getState().esims.find((e) => e.id === id);
+        if (latest && latest.status === 'active') {
+          stopPolling();
+          // Successful install — get them to the home tab to see their eSIM.
+          router.replace('/(tabs)');
+          return;
+        }
+        if (attempts < MAX_ATTEMPTS) {
+          pollTimer = setTimeout(tick, 4000);
+        } else {
+          // 3 min and still not active — likely user cancelled the install
+          // (or the provider is slow). Stop polling silently; the user can
+          // pull-to-refresh manually.
+          stopPolling();
+        }
+      };
+      tick();
+    };
+
+    // Expose startPolling so the manual "I've installed it" button can fire it.
+    pollStarterRef.current = startPolling;
+
+    const sub = AppState.addEventListener('change', (next) => {
       if (next !== 'active') return;
       const at = pendingActivateAt.current;
-      if (!at || Date.now() - at > 5 * 60 * 1000) return;
+      if (!at || Date.now() - at > 10 * 60 * 1000) return;
+      // Reset the arm so a second app-foreground (e.g. they switch tabs)
+      // doesn't kick off another polling loop.
       pendingActivateAt.current = null;
-      setDetectingInstall(true);
-      try {
-        await refreshUsage();
-      } catch {}
-      // Re-read the latest state from the store; the closure captured the
-      // pre-refresh `esim` variable.
-      const latest = useEsimStore.getState().esims.find((e) => e.id === id);
-      setDetectingInstall(false);
-      if (latest && latest.status === 'active') {
-        // Successful install detected — get them back to the home tab.
-        router.replace('/(tabs)');
-      }
+      startPolling();
     });
-    return () => sub.remove();
+    return () => {
+      sub.remove();
+      stopPolling();
+      pollStarterRef.current = null;
+    };
   }, [id, refreshUsage, router]);
 
   if (!esim) {
@@ -296,9 +348,35 @@ export default function EsimDetail() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: 'rgba(25,103,210,0.12)', borderWidth: 1, borderColor: 'rgba(25,103,210,0.35)' }}>
             <ActivityIndicator size="small" color={t.primary} />
             <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>
-              Detecting install — syncing with the provider…
+              Detecting install — checking the provider every 4s for up to 3 min…
             </Text>
           </View>
+        )}
+
+        {/* Manual fallback: if the AppState listener didn't kick in (some
+            iOS versions don't reliably fire 'active' after Settings), the
+            user can tap this to start the same polling loop. */}
+        {showInstall && hasActivationData && esim.status === 'inactive' && !detectingInstall && (
+          <Pressable
+            onPress={() => pollStarterRef.current?.()}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              gap: 8,
+              padding: 14,
+              borderRadius: 14,
+              borderWidth: 1.5,
+              borderColor: t.primary,
+              backgroundColor: 'transparent',
+              opacity: pressed ? 0.7 : 1,
+            })}
+          >
+            <RefreshCw size={16} color={t.primary} strokeWidth={2.2} />
+            <Text style={{ color: t.primary, fontWeight: '700', fontSize: 14 }}>
+              I've installed it — check now
+            </Text>
+          </Pressable>
         )}
         {(esim.status === 'active' || esim.status === 'expired') && (
           <PrimaryButton
