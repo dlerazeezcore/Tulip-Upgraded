@@ -169,6 +169,15 @@ export default function EsimDetail() {
         if (pollCancelled) return;
         if (
           recovered &&
+          recovered.installed === true &&
+          (recovered.appStatus || '').toUpperCase() === 'PROVIDER_WAITING'
+        ) {
+          try { await refresh(); } catch {}
+          stopPolling();
+          return;
+        }
+        if (
+          recovered &&
           (recovered.appStatus || '').toUpperCase() === 'ACTIVE' &&
           recovered.installed === true &&
           !!recovered.activatedAt
@@ -179,15 +188,20 @@ export default function EsimDetail() {
           router.replace('/(tabs)');
           return;
         }
-        // Fallback path: if recover didn't say ACTIVE, do a usage-sync and
-        // check the normalized store status. Covers the case where another
-        // signal (webhook, admin push) already flipped the row.
-        try { await refreshUsage(); } catch {}
-        const latest = useEsimStore.getState().esims.find((e) => e.id === id);
-        if (latest && latest.status === 'active') {
-          stopPolling();
-          router.replace('/(tabs)');
-          return;
+        // Occasional fallback path: usage can be the first provider signal
+        // that service is active, but doing this every 4s can pin the backend.
+        if (attempts % 5 === 0) {
+          try { await refreshUsage(); } catch {}
+          const latest = useEsimStore.getState().esims.find((e) => e.id === id);
+          if (latest && latest.status === 'active') {
+            stopPolling();
+            router.replace('/(tabs)');
+            return;
+          }
+          if (latest && latest.status === 'provider_waiting') {
+            stopPolling();
+            return;
+          }
         }
         if (attempts < MAX_ATTEMPTS) {
           pollTimer = setTimeout(tick, 4000);
@@ -218,7 +232,7 @@ export default function EsimDetail() {
       stopPolling();
       pollStarterRef.current = null;
     };
-  }, [id, install, refreshUsage, router]);
+  }, [id, install, refresh, refreshUsage, router]);
 
   if (!esim) {
     return (
