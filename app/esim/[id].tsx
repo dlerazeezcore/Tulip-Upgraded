@@ -152,21 +152,31 @@ export default function EsimDetail() {
       const tick = async () => {
         if (pollCancelled) return;
         attempts += 1;
+        // recoverProfile syncs THIS one profile from provider (faster than
+        // refreshUsage which tries to sync everything). The backend now flips
+        // app_status to ACTIVE the moment the provider reports ONBOARDING or
+        // IN_USE (first connection), AND sets installed/activated_at, so the
+        // recover response directly tells us when to stop polling — no need
+        // for a second usage-sync round trip.
+        let recovered: Awaited<ReturnType<typeof recoverProfile>> | null = null;
         try {
-          // recoverProfile syncs THIS one profile from provider (faster than
-          // refreshUsage which tries to sync everything). It updates DB to
-          // reflect current status.
-          await recoverProfile(id);
+          recovered = await recoverProfile(id);
         } catch {}
         if (pollCancelled) return;
-        // Pull the latest store state and check status.
-        try {
-          await refreshUsage();
-        } catch {}
+        if (recovered && (recovered.appStatus || '').toUpperCase() === 'ACTIVE') {
+          // Pull fresh store state so the home tab paints with real usage/days.
+          try { await refreshUsage(); } catch {}
+          stopPolling();
+          router.replace('/(tabs)');
+          return;
+        }
+        // Fallback path: if recover didn't say ACTIVE, do a usage-sync and
+        // check the normalized store status. Covers the case where another
+        // signal (webhook, admin push) already flipped the row.
+        try { await refreshUsage(); } catch {}
         const latest = useEsimStore.getState().esims.find((e) => e.id === id);
         if (latest && latest.status === 'active') {
           stopPolling();
-          // Successful install — get them to the home tab to see their eSIM.
           router.replace('/(tabs)');
           return;
         }

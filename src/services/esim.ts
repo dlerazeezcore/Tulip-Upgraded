@@ -216,12 +216,20 @@ export async function getMyOrders(params: { limit?: number; offset?: number } = 
  * this one profile and writes the result back to our DB. The detail screen
  * polls this after checkout so activation_code lands the moment the provider
  * materializes it — no waiting for the 30-min cron.
+ *
+ * Returns enough state for the detail screen's "Detecting install" loop to
+ * short-circuit the moment the backend flips the profile to ACTIVE — no
+ * second round-trip through /usage/sync/my needed.
  */
 export async function recoverProfile(profileId: number | string): Promise<{
   ok: boolean;
   hasActivationCode: boolean;
   hasIccid: boolean;
   appStatus: string | null;
+  providerStatus?: string | null;
+  installed?: boolean;
+  activatedAt?: string | null;
+  expiresAt?: string | null;
 }> {
   return apiFetch(`/api/v1/esim-access/profiles/${profileId}/recover`, {
     method: 'POST',
