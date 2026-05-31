@@ -11,6 +11,7 @@ import { StatusPill } from '@/components/StatusPill';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { EsimInstallCard } from '@/components/EsimInstallCard';
 import { checkEsimSupport, isDefinitelyUnsupported, type EsimSupportResult } from '@/services/device';
+import { recoverProfile } from '@/services/esim';
 
 function Stat({ label, value }: { label: string; value: string }) {
   const t = useTheme();
@@ -67,6 +68,59 @@ export default function EsimDetail() {
     checkEsimSupport().then(setSupport).catch(() => {});
   }, [refresh]);
 
+  // Compute derived values UP FRONT — used by the polling effect below
+  // (effects can't reference variables declared further down the function).
+  const esim = esims.find((e) => e.id === id) ?? esims[0];
+  const profile = esim ? byId(esim.id) : undefined;
+  const activationCode =
+    profile?.manualEntry?.activationCode ??
+    profile?.activationCode ??
+    null;
+  const hasActivationData = !!activationCode;
+  const showInstall = !!esim && esim.status !== 'expired';
+
+  // Auto-poll the provider when this profile has no activation data yet.
+  // The provider sometimes takes 30-90s past order_profiles for the eSIM
+  // details to materialize; the 86s backend retry covers most cases, but
+  // when it doesn't, the user lands on this screen with an empty install
+  // card. Instead of asking them to "pull to refresh", we poll silently
+  // every 5s for up to 3 min, and they see "Preparing your eSIM…" until
+  // the activation code lands.
+  const [preparingTick, setPreparingTick] = useState(0); // forces re-render
+  useEffect(() => {
+    // Only poll when: profile loaded, install would be shown, and we don't
+    // have activation data yet.
+    if (!esim || !showInstall || hasActivationData) return;
+    const profileId = esim.id;
+    let cancelled = false;
+    let attempts = 0;
+    const MAX_ATTEMPTS = 36; // ~3 minutes at 5s interval
+    const tick = async () => {
+      if (cancelled) return;
+      attempts += 1;
+      try {
+        const result = await recoverProfile(profileId);
+        if (cancelled) return;
+        if (result.hasActivationCode) {
+          // Refresh the local store so the install card renders.
+          await refresh();
+          return; // stop polling
+        }
+      } catch {
+        // ignore — keep polling
+      }
+      setPreparingTick((n) => n + 1);
+      if (!cancelled && attempts < MAX_ATTEMPTS) {
+        setTimeout(tick, 5000);
+      }
+    };
+    // Kick off the first attempt immediately so the user doesn't wait 5s.
+    tick();
+    return () => {
+      cancelled = true;
+    };
+  }, [esim?.id, showInstall, hasActivationData, refresh]);
+
   // AppState listener for instant install detection. When the user taps
   // Activate, EsimInstallCard calls onActivateTapped which arms pendingActivateAt.
   // The system install sheet takes over; when the user returns to our app,
@@ -95,9 +149,6 @@ export default function EsimDetail() {
     return () => sub.remove();
   }, [id, refreshUsage, router]);
 
-  const esim = esims.find((e) => e.id === id) ?? esims[0];
-  const profile = esim ? byId(esim.id) : undefined;
-
   if (!esim) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
@@ -112,10 +163,6 @@ export default function EsimDetail() {
   const ringColor = esim.status === 'active' ? t.success : esim.status === 'expired' ? t.danger : t.warning;
 
   const smdp = profile?.manualEntry?.smdpAddress ?? profile?.smdpAddress ?? null;
-  const activationCode = profile?.manualEntry?.activationCode ?? profile?.activationCode ?? null;
-  // Show install card whenever the plan isn't expired — the card itself handles
-  // the empty-activation-data case (shows an explanatory empty state).
-  const showInstall = esim.status !== 'expired';
   const dataLabel = esim.unlimited
     ? `Unlimited · ${esim.planDays} days`
     : `${esim.planGb} GB · ${esim.planDays} days`;
@@ -216,12 +263,13 @@ export default function EsimDetail() {
           )}
         </View>
 
-        {/* Install panel: Activate (iOS/Android system install sheet) + QR.
-            We pass onActivateTapped so we can arm an AppState listener — the
-            moment the user returns from the system install flow, we refresh
-            from the provider, and if the eSIM is now active we route them
-            to the home tab automatically. */}
-        {showInstall && (
+        {/* Install panel:
+            - When we have activation data: full install card (Activate + QR).
+            - When we don't: friendly "Preparing your eSIM…" spinner. The
+              useEffect above is polling /profiles/{id}/recover every 5s for
+              up to 3 minutes; once activation_code lands, this section
+              automatically flips to the full install card. */}
+        {showInstall && hasActivationData && (
           <EsimInstallCard
             smdp={smdp}
             activationCode={activationCode}
@@ -231,6 +279,17 @@ export default function EsimDetail() {
               pendingActivateAt.current = Date.now();
             }}
           />
+        )}
+        {showInstall && !hasActivationData && (
+          <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 18, gap: 12, alignItems: 'center', ...t.shadow1 }}>
+            <ActivityIndicator color={t.primary} size="large" />
+            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg, textAlign: 'center' }}>
+              Preparing your eSIM…
+            </Text>
+            <Text style={{ fontSize: 12, color: t.fgMuted, textAlign: 'center', lineHeight: 18 }}>
+              The provider is finalising your install code. This usually takes 10–60 seconds — we'll show the Activate button + QR as soon as it's ready.
+            </Text>
+          </View>
         )}
 
         {detectingInstall && (

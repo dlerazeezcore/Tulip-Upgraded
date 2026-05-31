@@ -211,6 +211,23 @@ export async function getMyOrders(params: { limit?: number; offset?: number } = 
   return unwrap<{ orders: OrderSummary[] }>(res).orders;
 }
 
+/**
+ * User-facing per-profile recover. Calls the provider's query_profiles for
+ * this one profile and writes the result back to our DB. The detail screen
+ * polls this after checkout so activation_code lands the moment the provider
+ * materializes it — no waiting for the 30-min cron.
+ */
+export async function recoverProfile(profileId: number | string): Promise<{
+  ok: boolean;
+  hasActivationCode: boolean;
+  hasIccid: boolean;
+  appStatus: string | null;
+}> {
+  return apiFetch(`/api/v1/esim-access/profiles/${profileId}/recover`, {
+    method: 'POST',
+  });
+}
+
 export function findTopUpPackages(iccid: string): Promise<ProviderPackage[]> {
   return queryPackages({ type: 'TOPUP', iccid });
 }
