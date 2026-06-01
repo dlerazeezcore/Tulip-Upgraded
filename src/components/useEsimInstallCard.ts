@@ -86,11 +86,15 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     // the screen calls refreshUsage() and navigates home.
     input.onActivateTapped?.();
     // iOS:    iOS Settings → Cellular → Add eSIM with SM-DP+ prefilled.
-    // Android: System eSIM setup intent (Android 9 / API 28+).
+    // Android: System eSIM setup intent (Android 9 / API 28+). Older Android
+    // or devices without an eSIM handler will reject the LPA: deeplink — fall
+    // back to the always-visible QR + manual-entry panel below.
     Linking.openURL(activationUrl).catch(() =>
       Alert.alert(
         'Could not open eSIM setup',
-        "Tap QR instead — scan it with another phone or share to install elsewhere.",
+        Platform.OS === 'android'
+          ? "Your device couldn't open the eSIM installer automatically. Add it manually in Settings → Network & Internet → SIMs → Add eSIM, using the SM-DP+ address and activation code shown below — or scan the QR with another phone."
+          : "Scan the QR below with another phone, or use the SM-DP+ address and activation code to add it manually in Settings → Cellular.",
       ),
     );
   };

@@ -26,6 +26,8 @@ export type Esim = {
   planDays: number;
   status: EsimStatus;
   usedGb: number;
+  /** Raw used in MB — used for the < 1 GB display ("50 MB used"). */
+  usedMb: number;
   remainingGb: number;
   /** Raw remaining in MB — used for the < 1 GB display ("974 MB left"). */
   remainingMb: number;
@@ -79,6 +81,13 @@ function toDisplay(p: EsimProfile): Esim {
   const label = buildDataLabel(p);
   const isUnlimited = label.kind === 'unlimited';
   const usedGb = round1(p.usedDataGb ?? 0);
+  // Raw used MB straight from the provider (50 MB), preferring the precise
+  // field; only fall back to GB→MB when usedDataMb is absent. This keeps
+  // sub-GB usage visible instead of rounding it to "0.0 GB".
+  const usedMb = Math.max(
+    0,
+    Math.floor(p.usedDataMb ?? (p.usedDataGb != null ? p.usedDataGb * 1024 : 0)),
+  );
   const planGb = label.kind === 'gb' ? label.gb : 0;
   const rawRemainingMb =
     p.remainingDataMb ??
@@ -107,6 +116,7 @@ function toDisplay(p: EsimProfile): Esim {
     planDays: p.validityDays ?? p.daysLeft ?? 0,
     status: p.status,
     usedGb,
+    usedMb,
     remainingGb,
     remainingMb: Math.max(0, Math.floor(rawRemainingMb ?? 0)),
     daysLeft: p.daysLeft ?? 0,

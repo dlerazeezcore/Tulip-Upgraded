@@ -4,7 +4,7 @@ import { useRouter } from 'expo-router';
 import { Signal, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimStore } from '@/state/esimStore';
-import { formatRemainingData, formatTimeRemaining } from '@/lib/esimUsage';
+import { formatRemainingData, formatTimeRemaining, formatUsedData } from '@/lib/esimUsage';
 import { Flag } from './Flag';
 import { PressableScale } from './PressableScale';
 
@@ -84,7 +84,7 @@ export function ActiveEsimCard() {
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                  {e.usedGb.toFixed(1)} GB used
+                  {e.unlimited ? '—' : `${formatUsedData(e.usedMb)} used`}
                 </Text>
                 <Text style={{ fontSize: 11, fontWeight: '700', color: low ? t.warning : t.fgMuted }}>
                   {formatTimeRemaining(e.hoursLeft)}

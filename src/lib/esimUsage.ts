@@ -19,6 +19,17 @@ export function formatRemainingData(remainingMb: number, unlimited?: boolean): s
   return `${gb.toFixed(1)} GB left`;
 }
 
+/** Bare data magnitude: "50 MB" / "1.5 GB" / "0 MB". Callers append context
+ *  (e.g. " used"). Shows MB under 1 GB so small usage like 50 MB never
+ *  collapses to "0.0 GB" the way round1(usedGb) did. */
+export function formatUsedData(usedMb: number): string {
+  const mb = Math.max(0, Math.floor(usedMb));
+  if (mb < 1024) return `${mb} MB`;
+  // Floor to 1 decimal so usage reads consistently with formatRemainingData.
+  const gb = Math.floor((mb / 1024) * 10) / 10;
+  return `${gb.toFixed(1)} GB`;
+}
+
 /** "6 days 14h left" / "12 hours left" / "27 min left" — matches the
  *  granularity the eSIM Access dashboard shows the provider operator. */
 export function formatTimeRemaining(hoursLeft: number): string {

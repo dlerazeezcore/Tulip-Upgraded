@@ -16,7 +16,7 @@ import { useDeviceStore } from '@/state/deviceStore';
 import { useIsWideWeb } from '@/lib/responsive';
 import { PAYMENT_METHODS } from '@/data/esim';
 import { createManagedOrder } from '@/services/esim';
-import { createFibPayment, pollFibPayment, isPaid } from '@/services/payments';
+import { createFibPayment, pollFibPayment, isPaid, fibOutcome, fibOutcomeMessage } from '@/services/payments';
 
 // Representative flag for region eSIMs (mock).
 const REGION_FLAG: Record<string, string> = {
@@ -52,7 +52,13 @@ export default function Checkout() {
   const refreshOrders = useOrderStore((s) => s.refresh);
   const isWide = useIsWideWeb();
   const esimSupport = useDeviceStore((s) => s.esimSupport);
-  const [method, setMethod] = useState<'fib' | 'loyalty'>('loyalty');
+  // Loyalty is a comped method reserved for loyalty (VIP/staff) accounts. Real
+  // customers only see FIB, and FIB is the default for everyone so a normal
+  // user can never accidentally check out for free. The backend independently
+  // rejects paymentMethod=loyalty from a non-loyalty token.
+  const isLoyalty = !!user?.isLoyalty;
+  const availableMethods = PAYMENT_METHODS.filter((p) => p.id !== 'loyalty' || isLoyalty);
+  const [method, setMethod] = useState<'fib' | 'loyalty'>('fib');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -164,7 +170,9 @@ export default function Checkout() {
       if (isPaid(final)) {
         await placeOrder({ method: 'fib', status: 'paid', transactionId: payment.paymentId });
       } else {
-        setError('We could not confirm your FIB payment. Please try again.');
+        // Distinguish cancel / decline / expiry / timeout so the user knows
+        // whether to retry or just wait for the eSIM to appear.
+        setError(fibOutcomeMessage(fibOutcome(final)));
       }
     } catch (e: any) {
       setError(e?.message || 'Checkout failed. Please try again.');
@@ -223,7 +231,7 @@ export default function Checkout() {
                 Payment method
               </Text>
               <View style={{ gap: 10 }}>
-                {PAYMENT_METHODS.map((p) => {
+                {availableMethods.map((p) => {
                   const on = p.id === method;
                   const Icon = p.id === 'fib' ? Landmark : Gift;
                   return (

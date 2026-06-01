@@ -61,3 +61,33 @@ export async function pollFibPayment(
 export function isPaid(p: FibPayment): boolean {
   return p.status.toLowerCase() === 'paid';
 }
+
+export type FibOutcome = 'paid' | 'cancelled' | 'failed' | 'expired' | 'timeout';
+
+/** Classify a finished FIB poll so the UI can show the right message instead
+ *  of a generic failure. A poll that ends without a terminal status (returns
+ *  'pending') means we ran out of time — not that the user was declined. */
+export function fibOutcome(p: FibPayment): FibOutcome {
+  const s = p.status.toLowerCase();
+  if (s === 'paid') return 'paid';
+  if (s === 'canceled' || s === 'cancelled') return 'cancelled';
+  if (s === 'failed' || s === 'refunded') return 'failed';
+  if (s === 'expired') return 'expired';
+  return 'timeout';
+}
+
+/** User-facing copy for a non-paid FIB outcome. */
+export function fibOutcomeMessage(outcome: FibOutcome): string {
+  switch (outcome) {
+    case 'cancelled':
+      return 'Payment was cancelled in the FIB app. Tap Pay to try again.';
+    case 'failed':
+      return 'FIB declined the payment. Check your FIB balance and tap Pay to try again.';
+    case 'expired':
+      return 'The payment request expired before it was approved. Tap Pay to start a new one.';
+    case 'timeout':
+      return "We couldn't confirm your payment in time. If you approved it in the FIB app, it'll appear shortly — pull down to refresh on the next screen. Otherwise tap Pay to try again.";
+    case 'paid':
+      return '';
+  }
+}

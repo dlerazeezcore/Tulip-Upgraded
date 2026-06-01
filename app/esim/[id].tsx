@@ -12,7 +12,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { EsimInstallCard } from '@/components/EsimInstallCard';
 import { checkEsimSupport, isDefinitelyUnsupported, type EsimSupportResult } from '@/services/device';
 import { recoverProfile } from '@/services/esim';
-import { formatRemainingData, formatTimeRemaining } from '@/lib/esimUsage';
+import { formatRemainingData, formatTimeRemaining, formatUsedData } from '@/lib/esimUsage';
 
 function Stat({ label, value }: { label: string; value: string }) {
   const t = useTheme();
@@ -59,6 +59,10 @@ export default function EsimDetail() {
   // settings — drives a small "Detecting install..." banner so they know what
   // we're doing.
   const [detectingInstall, setDetectingInstall] = useState(false);
+  // Set true when the detect-install poll runs its full ~3 min budget without
+  // the provider confirming service. Drives an inline "taking longer than
+  // usual" message instead of the old silent stop (no dead-end).
+  const [detectTimedOut, setDetectTimedOut] = useState(false);
   // Lets the "I've installed it" button trigger the SAME polling loop the
   // AppState listener uses. Wired inside the AppState useEffect.
   const pollStarterRef = useRef<(() => void) | null>(null);
@@ -149,6 +153,7 @@ export default function EsimDetail() {
     const startPolling = () => {
       pollCancelled = false;
       setDetectingInstall(true);
+      setDetectTimedOut(false);
       let attempts = 0;
       let installRecorded = false;
       const MAX_ATTEMPTS = 45; // 45 * 4s = 3 minutes
@@ -207,9 +212,11 @@ export default function EsimDetail() {
         if (attempts < MAX_ATTEMPTS) {
           pollTimer = setTimeout(tick, 4000);
         } else {
-          // 3 min and still not active — likely user cancelled the install
-          // (or the provider is slow). Stop polling silently; the user can
-          // pull-to-refresh manually.
+          // 3 min and still not active — likely the user hasn't finished the
+          // install yet, or the provider/carrier is slow to report the first
+          // connection. Surface a clear "taking longer" message + keep the
+          // manual recheck button prominent (no silent dead-end).
+          setDetectTimedOut(true);
           stopPolling();
         }
       };
@@ -336,7 +343,7 @@ export default function EsimDetail() {
                 centerSub={esim.unlimited ? 'unlimited' : 'remaining'}
               />
               <View style={{ flexDirection: 'row', width: '100%' }}>
-                <Stat label="Used" value={esim.unlimited ? '—' : `${esim.usedGb.toFixed(1)} GB`} />
+                <Stat label="Used" value={esim.unlimited ? '—' : formatUsedData(esim.usedMb)} />
                 <View style={{ width: 1, backgroundColor: t.border }} />
                 <Stat label="Time left" value={formatTimeRemaining(esim.hoursLeft).replace(' left', '')} />
                 <View style={{ width: 1, backgroundColor: t.border }} />
@@ -418,6 +425,17 @@ export default function EsimDetail() {
             <ActivityIndicator size="small" color={t.primary} />
             <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>
               Detecting install — checking the provider every 4s for up to 3 min…
+            </Text>
+          </View>
+        )}
+
+        {/* Took longer than the ~3 min poll budget — tell the user what to do
+            instead of leaving them on a silent screen. */}
+        {detectTimedOut && !detectingInstall && esim.status !== 'active' && (
+          <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.35)' }}>
+            <AlertTriangle size={18} color={t.warning} />
+            <Text style={{ flex: 1, fontSize: 12, color: t.fg, lineHeight: 18 }}>
+              This is taking longer than usual. Make sure you finished adding the eSIM in your phone's settings and have signal in {esim.country}. Your plan is safe — tap “I've installed it” to check again, or pull down to refresh.
             </Text>
           </View>
         )}
