@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, View, Text, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Archive } from 'lucide-react-native';
@@ -8,6 +8,8 @@ import { formatEsimDataLabel, useEsimStore } from '@/state/esimStore';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
+import { EsimListSkeleton } from '@/components/Skeleton';
+import { EmptyState } from '@/components/EmptyState';
 
 /**
  * History view for terminal eSIM bundles (expired / cancelled / refunded /
@@ -50,17 +52,13 @@ export default function EsimHistoryScreen() {
         }
       >
         {loading && history.length === 0 ? (
-          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-            <ActivityIndicator color={t.primary} />
-          </View>
+          <EsimListSkeleton count={2} />
         ) : history.length === 0 ? (
-          <View style={{ paddingVertical: 40, alignItems: 'center', gap: 6 }}>
-            <Archive size={32} color={t.fgFaint} strokeWidth={1.8} />
-            <Text style={{ color: t.fgMuted }}>No past eSIMs yet.</Text>
-            <Text style={{ color: t.fgFaint, fontSize: 12, textAlign: 'center' }}>
-              Cancelled, refunded, and expired bundles will appear here for your records.
-            </Text>
-          </View>
+          <EmptyState
+            icon={Archive}
+            title="No past eSIMs yet"
+            subtitle="Cancelled, refunded, and expired bundles will appear here for your records."
+          />
         ) : (
           history.map((e) => (
             <PressableScale

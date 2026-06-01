@@ -1,8 +1,8 @@
 import React from 'react';
-import { ScrollView, View, Text, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
+import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { ChevronLeft, Archive, ChevronRight } from 'lucide-react-native';
+import { ChevronLeft, Archive, ChevronRight, Smartphone } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, serviceRoute } from '@/data/services';
 import { formatEsimDataLabel, useEsimStore } from '@/state/esimStore';
@@ -10,6 +10,8 @@ import { formatRemainingData, formatTimeRemaining } from '@/lib/esimUsage';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
+import { EsimListSkeleton } from '@/components/Skeleton';
+import { EmptyState } from '@/components/EmptyState';
 
 function Card({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) {
   const t = useTheme();
@@ -86,20 +88,17 @@ function EsimList() {
   const loaded = useEsimStore((s) => s.loaded);
 
   if (!loaded && refreshing) {
-    return (
-      <View style={{ paddingVertical: 30, alignItems: 'center' }}>
-        <ActivityIndicator color={t.primary} />
-      </View>
-    );
+    return <EsimListSkeleton count={3} />;
   }
 
   if (loaded && esims.length === 0) {
     return (
       <View style={{ gap: 10 }}>
-        <View style={{ paddingVertical: 30, alignItems: 'center', gap: 6 }}>
-          <Text style={{ color: t.fgMuted }}>No eSIMs yet.</Text>
-          <Text style={{ color: t.fgFaint, fontSize: 12 }}>Pull down to refresh, or buy one from the eSIM store.</Text>
-        </View>
+        <EmptyState
+          icon={Smartphone}
+          title="No eSIMs yet"
+          subtitle="Pull down to refresh, or buy a data plan from the eSIM store to get connected."
+        />
         <HistoryCard />
       </View>
     );
