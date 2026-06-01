@@ -4,6 +4,7 @@ import { useRouter } from 'expo-router';
 import { Signal, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimStore } from '@/state/esimStore';
+import { formatRemainingData, formatTimeRemaining } from '@/lib/esimUsage';
 import { Flag } from './Flag';
 import { PressableScale } from './PressableScale';
 
@@ -38,9 +39,11 @@ export function ActiveEsimCard() {
       </View>
 
       {active.map((e) => {
-        const remaining = e.remainingGb;
-        const frac = e.unlimited ? 1 : e.planGb > 0 ? remaining / e.planGb : 0;
-        const low = !e.unlimited && (frac <= 0.2 || e.daysLeft <= 2);
+        // Use raw MB for the fraction so the bar reflects byte-level usage,
+        // not the floored display-GB (974 MB must not read as a full 1 GB).
+        const planMb = e.planGb * 1024;
+        const frac = e.unlimited ? 1 : planMb > 0 ? e.remainingMb / planMb : 0;
+        const low = !e.unlimited && (frac <= 0.2 || e.hoursLeft <= 48);
         const barColor = low ? t.warning : t.success;
         return (
           <PressableScale
@@ -68,7 +71,7 @@ export function ActiveEsimCard() {
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
-                  {e.unlimited ? '∞' : `${remaining.toFixed(1)} GB`}
+                  {e.unlimited ? '∞' : formatRemainingData(e.remainingMb).replace(' left', '')}
                 </Text>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>{e.unlimited ? 'unlimited' : 'left'}</Text>
               </View>
@@ -77,14 +80,14 @@ export function ActiveEsimCard() {
 
             <View style={{ marginTop: 12 }}>
               <View style={{ height: 6, borderRadius: 3, backgroundColor: t.bgSunken, overflow: 'hidden' }}>
-                <View style={{ width: `${frac * 100}%`, height: 6, borderRadius: 3, backgroundColor: barColor }} />
+                <View style={{ width: `${Math.max(0, Math.min(frac, 1)) * 100}%`, height: 6, borderRadius: 3, backgroundColor: barColor }} />
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>
                   {e.usedGb.toFixed(1)} GB used
                 </Text>
                 <Text style={{ fontSize: 11, fontWeight: '700', color: low ? t.warning : t.fgMuted }}>
-                  {e.daysLeft} days left
+                  {formatTimeRemaining(e.hoursLeft)}
                 </Text>
               </View>
             </View>
