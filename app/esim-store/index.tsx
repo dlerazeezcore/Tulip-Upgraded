@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator, FlatList } from 'react-native';
+import { ScrollView, View, Text, Pressable, TextInput, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, ChevronRight, Search, Globe } from 'lucide-react-native';
@@ -7,6 +7,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
+import { Skeleton } from '@/components/Skeleton';
 
 // Distinct, vibrant gradients so the Regions grid looks polished without
 // needing a photo per region (the provider gives no region imagery).
@@ -162,7 +163,14 @@ export default function EsimStore() {
         {loadingCountries ? (
           <>
             {listHeader}
-            <View style={{ paddingVertical: 30, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
+            <View style={{ paddingHorizontal: 20, gap: 12, paddingTop: 8 }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+                  <Skeleton width={32} height={32} radius={16} />
+                  <Skeleton width={`${50 + ((i * 7) % 30)}%`} height={14} />
+                </View>
+              ))}
+            </View>
           </>
         ) : (
           <FlatList
@@ -230,7 +238,13 @@ export default function EsimStore() {
 
         {tab === 'regions' && (
           regions.length === 0 ? (
-            <View style={{ paddingVertical: 30, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
+              {Array.from({ length: 6 }).map((_, i) => (
+                <View key={i} style={{ width: isWide ? '33.333%' : '50%', padding: 5 }}>
+                  <Skeleton width="100%" height={110} radius={t.radius.lg} />
+                </View>
+              ))}
+            </View>
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
               {regions.map((r, idx) => {

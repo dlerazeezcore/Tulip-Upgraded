@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View, Text, Pressable, Modal, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, Pressable, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Globe, Check, Infinity as InfinityIcon, X, ArrowRight, Clock } from 'lucide-react-native';
@@ -13,6 +13,8 @@ import { packagesToBundles } from '@/lib/catalog';
 import { queryPackages, getCountries, cachedCountries } from '@/services/esim';
 import type { Bundle } from '@/data/esim';
 import { useEsimCart } from '@/state/esimCart';
+import { Skeleton } from '@/components/Skeleton';
+import { EmptyState } from '@/components/EmptyState';
 
 export default function PlaceDetail() {
   const { place, region, name: nameParam } = useLocalSearchParams<{ place: string; region?: string; name?: string }>();
@@ -144,13 +146,24 @@ export default function PlaceDetail() {
         )}
 
         {loading ? (
-          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-            <ActivityIndicator color={t.primary} />
+          <View style={{ gap: 14 }}>
+            {[0, 1].map((s) => (
+              <View key={s} style={{ gap: 10 }}>
+                <Skeleton width={96} height={26} radius={t.radius.pill} />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+                  {[0, 1, 2, 3].map((c) => (
+                    <Skeleton key={c} width={isWide ? 220 : '47%'} height={120} radius={t.radius.md} />
+                  ))}
+                </View>
+              </View>
+            ))}
           </View>
         ) : groups.length === 0 ? (
-          <View style={{ paddingVertical: 40, alignItems: 'center' }}>
-            <Text style={{ color: t.fgMuted }}>No plans available for {name}.</Text>
-          </View>
+          <EmptyState
+            icon={Globe}
+            title={`No plans available for ${name}`}
+            subtitle="Try another country or region — we're adding new data plans all the time."
+          />
         ) : (
           groups.map((g) => (
             <View key={g.days} style={{ gap: 10 }}>
