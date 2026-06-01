@@ -6,6 +6,7 @@ import { ChevronLeft, Archive, ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, serviceRoute } from '@/data/services';
 import { formatEsimDataLabel, useEsimStore } from '@/state/esimStore';
+import { formatRemainingData, formatTimeRemaining } from '@/lib/esimUsage';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
@@ -111,8 +112,10 @@ function EsimList() {
         // just active. A PROVIDER_WAITING bundle already has total/remaining
         // populated (the user paid for it), so showing it reassures them
         // that the plan exists even before the carrier reports IN_USE.
-        const remaining = e.remainingGb;
-        const frac = e.planGb > 0 ? remaining / e.planGb : 0;
+        // Use raw MB for the fraction so the bar reflects byte-level usage,
+        // not the floored display-GB.
+        const planMb = e.planGb * 1024;
+        const frac = planMb > 0 ? e.remainingMb / planMb : 0;
         const barColor = e.status === 'active' ? t.success : e.status === 'expired' ? t.danger : t.warning;
         const pillKind = e.status === 'provider_waiting' ? 'inactive' : e.status;
         const pillLabel = e.status === 'provider_waiting' ? 'Provider waiting' : undefined;
@@ -139,10 +142,10 @@ function EsimList() {
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
                   <Text style={{ fontSize: 11, color: t.fg, fontWeight: '600' }}>
-                    {e.unlimited ? 'Unlimited' : `${remaining.toFixed(1)} GB left`}
+                    {formatRemainingData(e.remainingMb, e.unlimited)}
                   </Text>
                   <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                    {e.status === 'active' ? `${e.daysLeft} days left` : 'Waiting for first connection'}
+                    {e.status === 'active' ? formatTimeRemaining(e.hoursLeft) : 'Waiting for first connection'}
                   </Text>
                 </View>
               </View>

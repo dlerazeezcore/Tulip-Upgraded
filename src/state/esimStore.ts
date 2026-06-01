@@ -27,7 +27,12 @@ export type Esim = {
   status: EsimStatus;
   usedGb: number;
   remainingGb: number;
+  /** Raw remaining in MB — used for the < 1 GB display ("974 MB left"). */
+  remainingMb: number;
   daysLeft: number;
+  /** Hours-precision time remaining for sub-day accuracy when bundleExpiresAt
+   *  is known. Falls back to daysLeft * 24 when unknown. */
+  hoursLeft: number;
   iccid: string;
   unlimited?: boolean;
   /** Pre-resolved label for the data plan — use this for display instead of
@@ -37,6 +42,12 @@ export type Esim = {
 
 function round1(n: number): number {
   return Math.round(n * 10) / 10;
+}
+
+/** Floor to 1 decimal — used for *remaining* values so we never round 974 MB
+ *  up to "1.0 GB" (which makes the bundle look untouched). */
+function floor1(n: number): number {
+  return Math.floor(n * 10) / 10;
 }
 
 /**
@@ -69,10 +80,24 @@ function toDisplay(p: EsimProfile): Esim {
   const isUnlimited = label.kind === 'unlimited';
   const usedGb = round1(p.usedDataGb ?? 0);
   const planGb = label.kind === 'gb' ? label.gb : 0;
-  const remainingGb = round1(
-    p.remainingDataGb ??
-    (p.remainingDataMb != null ? p.remainingDataMb / 1024 : Math.max(0, planGb - usedGb))
-  );
+  const rawRemainingMb =
+    p.remainingDataMb ??
+    (p.remainingDataGb != null ? p.remainingDataGb * 1024 : Math.max(0, (planGb - usedGb) * 1024));
+  // Floor instead of round so 974 MB never displays as "1.0 GB left" — that
+  // confused users into thinking the bundle was untouched.
+  const remainingGb = floor1((rawRemainingMb ?? 0) / 1024);
+  // Sub-day precision for the countdown. The backend's `daysLeft` is a
+  // ceil(days), which rounds 6 days 14 hours up to 7. Compute hours from
+  // bundleExpiresAt (preferred — bundle validity) or expiresAt (fallback),
+  // then derive a more accurate days count for display.
+  const expiryIso = p.bundleExpiresAt ?? p.expiresAt ?? null;
+  let hoursLeft = (p.daysLeft ?? 0) * 24;
+  if (expiryIso) {
+    const expMs = Date.parse(expiryIso);
+    if (Number.isFinite(expMs)) {
+      hoursLeft = Math.max(0, Math.floor((expMs - Date.now()) / 3_600_000));
+    }
+  }
   return {
     id: String(p.id),
     country: p.countryName || p.countryCode || 'eSIM',
@@ -83,7 +108,9 @@ function toDisplay(p: EsimProfile): Esim {
     status: p.status,
     usedGb,
     remainingGb,
+    remainingMb: Math.max(0, Math.floor(rawRemainingMb ?? 0)),
     daysLeft: p.daysLeft ?? 0,
+    hoursLeft,
     iccid: p.iccid || p.esimTranNo || '',
     unlimited: isUnlimited,
     dataLabel: label,

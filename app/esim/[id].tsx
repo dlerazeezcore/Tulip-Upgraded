@@ -12,6 +12,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { EsimInstallCard } from '@/components/EsimInstallCard';
 import { checkEsimSupport, isDefinitelyUnsupported, type EsimSupportResult } from '@/services/device';
 import { recoverProfile } from '@/services/esim';
+import { formatRemainingData, formatTimeRemaining } from '@/lib/esimUsage';
 
 function Stat({ label, value }: { label: string; value: string }) {
   const t = useTheme();
@@ -243,8 +244,10 @@ export default function EsimDetail() {
     );
   }
 
-  const remainingGb = profile?.remainingDataGb ?? esim.remainingGb;
-  const fraction = esim.planGb > 0 ? remainingGb / esim.planGb : 0;
+  // Use raw MB for the fraction so the ring reflects byte-level usage.
+  // Display string uses the same floored value the store already computed.
+  const planMb = esim.planGb * 1024;
+  const fraction = planMb > 0 ? esim.remainingMb / planMb : 0;
   const ringColor = esim.status === 'active' ? t.success : esim.status === 'expired' ? t.danger : t.warning;
   const pillKind = esim.status === 'provider_waiting' ? 'inactive' : esim.status;
   const pillLabel = esim.status === 'provider_waiting' ? 'Provider waiting' : undefined;
@@ -329,13 +332,13 @@ export default function EsimDetail() {
               <UsageRing
                 fraction={esim.unlimited ? 1 : fraction}
                 color={ringColor}
-                centerTop={esim.unlimited ? '∞' : `${remainingGb.toFixed(1)} GB`}
+                centerTop={esim.unlimited ? '∞' : formatRemainingData(esim.remainingMb).replace(' left', '')}
                 centerSub={esim.unlimited ? 'unlimited' : 'remaining'}
               />
               <View style={{ flexDirection: 'row', width: '100%' }}>
                 <Stat label="Used" value={esim.unlimited ? '—' : `${esim.usedGb.toFixed(1)} GB`} />
                 <View style={{ width: 1, backgroundColor: t.border }} />
-                <Stat label="Days left" value={`${esim.daysLeft}`} />
+                <Stat label="Time left" value={formatTimeRemaining(esim.hoursLeft).replace(' left', '')} />
                 <View style={{ width: 1, backgroundColor: t.border }} />
                 <Stat label="Plan" value={esim.unlimited ? 'Unlimited' : `${esim.planGb} GB`} />
               </View>
