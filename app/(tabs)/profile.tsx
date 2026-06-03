@@ -290,9 +290,19 @@ export default function Profile() {
   ) : null;
 
   const footer = (
-    <View style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 4, gap: 2 }}>
-      <Text style={{ fontSize: 11, color: t.fgFaint }}>Brought to you by</Text>
-      <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 14, color: t.fgMuted, letterSpacing: -0.2 }}>Corevia Network</Text>
+    <View style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 4, gap: 8 }}>
+      <Pressable
+        onPress={() => Linking.openURL('https://tulipbookings.com/privacy-policy.html')}
+        hitSlop={8}
+      >
+        <Text style={{ fontSize: 12, color: t.fgMuted, textDecorationLine: 'underline' }}>
+          Privacy Policy
+        </Text>
+      </Pressable>
+      <View style={{ alignItems: 'center', gap: 2 }}>
+        <Text style={{ fontSize: 11, color: t.fgFaint }}>Brought to you by</Text>
+        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 14, color: t.fgMuted, letterSpacing: -0.2 }}>Corevia Network</Text>
+      </View>
     </View>
   );
 
