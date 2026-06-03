@@ -2,6 +2,7 @@ import React, { useEffect, useRef, useState } from 'react';
 import { ScrollView, View, Text, Pressable, Alert, ActivityIndicator, AppState, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Plus, Signal, Clock, RefreshCw, AlertTriangle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimStore } from '@/state/esimStore';
@@ -39,6 +40,7 @@ function Row({ label, value }: { label: string; value: string }) {
 export default function EsimDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const esims = useEsimStore((s) => s.esims);
   const byId = useEsimStore((s) => s.byId);
@@ -245,8 +247,8 @@ export default function EsimDetail() {
   if (!esim) {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-        {refreshing ? <ActivityIndicator color={t.primary} /> : <Text style={{ color: t.fgMuted }}>eSIM not found.</Text>}
-        <PrimaryButton label="Back" onPress={goBack} />
+        {refreshing ? <ActivityIndicator color={t.primary} /> : <Text style={{ color: t.fgMuted }}>{tr('esim.notFound')}</Text>}
+        <PrimaryButton label={tr('common.back')} onPress={goBack} />
       </SafeAreaView>
     );
   }
@@ -257,12 +259,12 @@ export default function EsimDetail() {
   const fraction = planMb > 0 ? esim.remainingMb / planMb : 0;
   const ringColor = esim.status === 'active' ? t.success : esim.status === 'expired' ? t.danger : t.warning;
   const pillKind = esim.status === 'provider_waiting' ? 'inactive' : esim.status;
-  const pillLabel = esim.status === 'provider_waiting' ? 'Provider waiting' : undefined;
+  const pillLabel = esim.status === 'provider_waiting' ? tr('status.provider_waiting') : undefined;
 
   const smdp = profile?.manualEntry?.smdpAddress ?? profile?.smdpAddress ?? null;
   const dataLabel = esim.unlimited
-    ? `Unlimited · ${esim.planDays} days`
-    : `${esim.planGb} GB · ${esim.planDays} days`;
+    ? `${tr('esim.unlimited')} · ${esim.planDays} ${tr('esim.days')}`
+    : `${esim.planGb} GB · ${esim.planDays} ${tr('esim.days')}`;
 
   const run = async (fn: () => Promise<void>) => {
     if (busy) return;
@@ -270,7 +272,7 @@ export default function EsimDetail() {
     try {
       await fn();
     } catch (e: any) {
-      Alert.alert('Something went wrong', e?.message || 'Please try again.');
+      Alert.alert(tr('common.error'), e?.message || tr('common.pleaseTryAgain'));
     } finally {
       setBusy(false);
     }
@@ -285,7 +287,7 @@ export default function EsimDetail() {
         >
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
-        <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>eSIM details</Text>
+        <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>{tr('esim.details')}</Text>
         <Pressable onPress={() => refreshUsage()} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <RefreshCw size={16} color={t.fg} />
         </Pressable>
@@ -314,7 +316,7 @@ export default function EsimDetail() {
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: t.fg, letterSpacing: -0.4 }}>{esim.country}</Text>
             <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 2 }}>
-              {esim.unlimited ? 'Unlimited data' : `${esim.planGb} GB`}{esim.planDays ? ` · ${esim.planDays} days` : ''}
+              {esim.unlimited ? tr('esim.unlimitedData') : `${esim.planGb} GB`}{esim.planDays ? ` · ${esim.planDays} ${tr('esim.days')}` : ''}
             </Text>
           </View>
           <StatusPill kind={pillKind} label={pillLabel} />
@@ -326,8 +328,8 @@ export default function EsimDetail() {
             <AlertTriangle size={18} color={t.warning} />
             <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>
               {isDefinitelyUnsupported(support)
-                ? "This device does not support eSIM. You can still manage this plan, but install it on an eSIM-capable device."
-                : 'Make sure your device supports eSIM before installing.'}
+                ? tr('esim.deviceUnsupported')
+                : tr('esim.deviceCheck')}
             </Text>
           </View>
         )}
@@ -340,14 +342,14 @@ export default function EsimDetail() {
                 fraction={esim.unlimited ? 1 : fraction}
                 color={ringColor}
                 centerTop={esim.unlimited ? '∞' : formatRemainingData(esim.remainingMb).replace(' left', '')}
-                centerSub={esim.unlimited ? 'unlimited' : 'remaining'}
+                centerSub={esim.unlimited ? tr('esim.unlimitedShort') : tr('esim.remaining')}
               />
               <View style={{ flexDirection: 'row', width: '100%' }}>
-                <Stat label="Used" value={esim.unlimited ? '—' : formatUsedData(esim.usedMb)} />
+                <Stat label={tr('esim.statUsed')} value={esim.unlimited ? '—' : formatUsedData(esim.usedMb)} />
                 <View style={{ width: 1, backgroundColor: t.border }} />
-                <Stat label="Time left" value={formatTimeRemaining(esim.hoursLeft).replace(' left', '')} />
+                <Stat label={tr('esim.statTimeLeft')} value={formatTimeRemaining(esim.hoursLeft).replace(' left', '')} />
                 <View style={{ width: 1, backgroundColor: t.border }} />
-                <Stat label="Plan" value={esim.unlimited ? 'Unlimited' : `${esim.planGb} GB`} />
+                <Stat label={tr('esim.statPlan')} value={esim.unlimited ? tr('esim.unlimited') : `${esim.planGb} GB`} />
               </View>
             </>
           ) : esim.status === 'provider_waiting' ? (
@@ -356,11 +358,11 @@ export default function EsimDetail() {
                 <Signal size={32} color={t.warning} strokeWidth={2} />
               </View>
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Provider waiting</Text>
+                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('status.provider_waiting')}</Text>
                 <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 4, textAlign: 'center' }}>
                   {profile?.installed
-                    ? 'Installed. Waiting for the provider to confirm active service.'
-                    : 'Install the eSIM below, then we will confirm active service with the provider.'}
+                    ? tr('esim.providerWaitingInstalled')
+                    : tr('esim.providerWaitingNotInstalled')}
                 </Text>
               </View>
             </>
@@ -370,9 +372,9 @@ export default function EsimDetail() {
                 <Signal size={32} color={t.warning} strokeWidth={2} />
               </View>
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Ready to install</Text>
+                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('esim.readyToInstall')}</Text>
                 <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 4, textAlign: 'center' }}>
-                  Install the eSIM below, then activate it when you arrive in {esim.country}.
+                  {tr('esim.readyToInstallSub', { country: esim.country })}
                 </Text>
               </View>
             </>
@@ -382,9 +384,9 @@ export default function EsimDetail() {
                 <Clock size={32} color={t.danger} strokeWidth={2} />
               </View>
               <View style={{ alignItems: 'center' }}>
-                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Plan expired</Text>
+                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('esim.planExpired')}</Text>
                 <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 4, textAlign: 'center' }}>
-                  This eSIM reached the end of its window. Top up to keep this number.
+                  {tr('esim.planExpiredSub')}
                 </Text>
               </View>
             </>
@@ -412,10 +414,10 @@ export default function EsimDetail() {
           <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 18, gap: 12, alignItems: 'center', ...t.shadow1 }}>
             <ActivityIndicator color={t.primary} size="large" />
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg, textAlign: 'center' }}>
-              Preparing your eSIM…
+              {tr('esim.preparing')}
             </Text>
             <Text style={{ fontSize: 12, color: t.fgMuted, textAlign: 'center', lineHeight: 18 }}>
-              The provider is finalising your install code. This usually takes 10–60 seconds — we'll show the Activate button + QR as soon as it's ready.
+              {tr('esim.preparingSub')}
             </Text>
           </View>
         )}
@@ -424,7 +426,7 @@ export default function EsimDetail() {
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: 'rgba(25,103,210,0.12)', borderWidth: 1, borderColor: 'rgba(25,103,210,0.35)' }}>
             <ActivityIndicator size="small" color={t.primary} />
             <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>
-              Detecting install — checking the provider every 4s for up to 3 min…
+              {tr('esim.detecting')}
             </Text>
           </View>
         )}
@@ -435,7 +437,7 @@ export default function EsimDetail() {
           <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.35)' }}>
             <AlertTriangle size={18} color={t.warning} />
             <Text style={{ flex: 1, fontSize: 12, color: t.fg, lineHeight: 18 }}>
-              This is taking longer than usual. Make sure you finished adding the eSIM in your phone's settings and have signal in {esim.country}. Your plan is safe — tap “I've installed it” to check again, or pull down to refresh.
+              {tr('esim.takingLonger', { country: esim.country })}
             </Text>
           </View>
         )}
@@ -461,18 +463,18 @@ export default function EsimDetail() {
           >
             <RefreshCw size={16} color={t.primary} strokeWidth={2.2} />
             <Text style={{ color: t.primary, fontWeight: '700', fontSize: 14 }}>
-              I've installed it — check now
+              {tr('esim.installedCheckNow')}
             </Text>
           </Pressable>
         )}
         {(esim.status === 'active' || esim.status === 'expired') && (
           <PrimaryButton
-            label={busy ? 'Working…' : 'Top up'}
+            label={busy ? tr('esim.working') : tr('esim.topUp')}
             icon={<Plus size={16} color="#fff" strokeWidth={2.4} />}
             onPress={() =>
               run(async () => {
                 const res = await topUp(esim.id);
-                if (!res.ok) Alert.alert('Top-up unavailable', res.message || 'No top-up plans available.');
+                if (!res.ok) Alert.alert(tr('esim.topUpUnavailable'), res.message || tr('esim.noTopUp'));
               })
             }
           />
@@ -480,9 +482,9 @@ export default function EsimDetail() {
 
         {/* Technical details */}
         <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, overflow: 'hidden' }}>
-          {esim.iccid ? <Row label="ICCID" value={esim.iccid} /> : null}
-          <Row label="Plan" value={`${esim.unlimited ? 'Unlimited' : `${esim.planGb} GB`}`} />
-          <Row label="Network" value="Auto-select best partner" />
+          {esim.iccid ? <Row label={tr('esim.iccid')} value={esim.iccid} /> : null}
+          <Row label={tr('esim.plan')} value={`${esim.unlimited ? tr('esim.unlimited') : `${esim.planGb} GB`}`} />
+          <Row label={tr('esim.network')} value={tr('esim.networkValue')} />
         </View>
       </ScrollView>
     </SafeAreaView>

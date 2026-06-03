@@ -15,6 +15,7 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
+import { useTranslation } from 'react-i18next';
 import { Smartphone, Share2, Download, AlertCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimInstallCard } from './useEsimInstallCard';
@@ -49,6 +50,7 @@ function Row({ label, value }: { label: string; value: string }) {
 
 export function EsimInstallCard(props: Props) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const vm = useEsimInstallCard({
     smdp: props.smdp,
     activationCode: props.activationCode,
@@ -63,11 +65,11 @@ export function EsimInstallCard(props: Props) {
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <AlertCircle size={18} color={t.warning} />
           <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 15, color: t.fg }}>
-            Activation data unavailable
+            {tr('install.unavailableTitle')}
           </Text>
         </View>
         <Text style={{ fontSize: 12, color: t.fgMuted, lineHeight: 18 }}>
-          The provider hasn't returned the install code for this eSIM yet. Pull down to refresh, or contact support if it persists.
+          {tr('install.unavailableBody')}
         </Text>
       </View>
     );
@@ -76,7 +78,7 @@ export function EsimInstallCard(props: Props) {
   return (
     <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 18, gap: 14, ...t.shadow1 }}>
       <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
-        Install eSIM
+        {tr('install.installEsim')}
       </Text>
 
       {/* Activate — primary CTA. Always rendered; greyed on web. */}
@@ -98,7 +100,7 @@ export function EsimInstallCard(props: Props) {
           >
             <Smartphone size={16} color={vm.activateEnabled ? t.onPrimary : t.fgMuted} strokeWidth={2.2} />
             <Text style={{ color: vm.activateEnabled ? t.onPrimary : t.fgMuted, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14 }}>
-              Activate
+              {tr('install.activate')}
             </Text>
           </Pressable>
           {!vm.activateEnabled && vm.activateDisabledReason && (
@@ -119,7 +121,7 @@ export function EsimInstallCard(props: Props) {
           )}
         </View>
         <Text style={{ fontSize: 11, color: t.fgMuted, textAlign: 'center', paddingHorizontal: 12 }}>
-          Scan with another phone's camera, or send to someone to install on their device.
+          {tr('install.scanHint')}
         </Text>
         {(vm.showShareButton || vm.showDownloadButton) && (
           <Pressable
@@ -143,7 +145,7 @@ export function EsimInstallCard(props: Props) {
               <Download size={14} color={t.primary} strokeWidth={2.2} />
             )}
             <Text style={{ color: t.primary, fontWeight: '700', fontSize: 13 }}>
-              {vm.busy ? 'Working…' : vm.showShareButton ? 'Share QR' : 'Download QR'}
+              {vm.busy ? tr('install.working') : vm.showShareButton ? tr('install.shareQr') : tr('install.downloadQr')}
             </Text>
           </Pressable>
         )}
@@ -153,10 +155,10 @@ export function EsimInstallCard(props: Props) {
       {(vm.smdp || vm.activationCodeManual) && (
         <View style={{ borderWidth: 1, borderColor: t.border, borderRadius: 12, overflow: 'hidden' }}>
           <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, padding: 12, paddingBottom: 0 }}>
-            Manual entry
+            {tr('install.manualEntry')}
           </Text>
-          {vm.smdp && <Row label="SM-DP+ address" value={vm.smdp} />}
-          {vm.activationCodeManual && <Row label="Activation code" value={vm.activationCodeManual} />}
+          {vm.smdp && <Row label={tr('install.smdp')} value={vm.smdp} />}
+          {vm.activationCodeManual && <Row label={tr('install.activationCode')} value={vm.activationCodeManual} />}
         </View>
       )}
     </View>

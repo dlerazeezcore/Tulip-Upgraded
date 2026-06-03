@@ -3,6 +3,7 @@
 // on the backend filling appleInstallUrl / qrCodeUrl.
 import { useEffect, useMemo, useState } from 'react';
 import { Alert, Linking, Platform } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import {
   buildActivationDeeplink,
   buildLpaString,
@@ -46,6 +47,7 @@ type Input = {
 };
 
 export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
+  const { t: tr } = useTranslation();
   const lpa = useMemo(
     () => buildLpaString(input.smdp, input.activationCode),
     [input.smdp, input.activationCode],
@@ -70,15 +72,12 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
   const activateDisabledReason = activateEnabled
     ? null
     : Platform.OS === 'web'
-    ? 'Open the app on your phone to install — or scan the QR'
-    : 'Use the QR to install on this device';
+    ? tr('install.webReason')
+    : tr('install.deviceReason');
 
   const activate = () => {
     if (!activateEnabled || !activationUrl) {
-      Alert.alert(
-        'Open Tulip on your phone',
-        'Activate works on iPhone or Android. Open this eSIM from the app on your phone — or tap QR and scan it from another phone.',
-      );
+      Alert.alert(tr('install.openOnPhoneTitle'), tr('install.openOnPhoneBody'));
       return;
     }
     // Notify the parent screen BEFORE we open iOS Settings so it can arm an
@@ -91,10 +90,8 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     // back to the always-visible QR + manual-entry panel below.
     Linking.openURL(activationUrl).catch(() =>
       Alert.alert(
-        'Could not open eSIM setup',
-        Platform.OS === 'android'
-          ? "Your device couldn't open the eSIM installer automatically. Add it manually in Settings → Network & Internet → SIMs → Add eSIM, using the SM-DP+ address and activation code shown below — or scan the QR with another phone."
-          : "Scan the QR below with another phone, or use the SM-DP+ address and activation code to add it manually in Settings → Cellular.",
+        tr('install.couldNotOpenTitle'),
+        Platform.OS === 'android' ? tr('install.couldNotOpenAndroid') : tr('install.couldNotOpenIos'),
       ),
     );
   };
@@ -131,10 +128,10 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
         dataLabel: input.dataLabel,
       });
       if (!ok && Platform.OS !== 'web') {
-        Alert.alert('Sharing unavailable', 'Could not open the share sheet on this device.');
+        Alert.alert(tr('install.sharingUnavailableTitle'), tr('install.sharingUnavailable'));
       }
     } catch (e: any) {
-      Alert.alert('Could not share', e?.message || 'Try again in a moment.');
+      Alert.alert(tr('install.couldNotShare'), e?.message || tr('common.tryAgain'));
     } finally {
       setBusy(false);
     }
