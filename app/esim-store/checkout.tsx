@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Alert, ScrollView, View, Text, Pressable, Linking } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Check, Lock, Landmark, Gift, Globe } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
@@ -16,7 +17,7 @@ import { useDeviceStore } from '@/state/deviceStore';
 import { useIsWideWeb } from '@/lib/responsive';
 import { PAYMENT_METHODS } from '@/data/esim';
 import { createManagedOrder } from '@/services/esim';
-import { createFibPayment, pollFibPayment, isPaid, fibOutcome, fibOutcomeMessage } from '@/services/payments';
+import { createFibPayment, pollFibPayment, isPaid, fibOutcome } from '@/services/payments';
 
 // Representative flag for region eSIMs (mock).
 const REGION_FLAG: Record<string, string> = {
@@ -43,6 +44,7 @@ function SummaryRow({ label, value, strong }: { label: string; value: string; st
 
 export default function Checkout() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const money = useIqdMoney();
   const iqdAmount = useIqdAmount();
@@ -76,7 +78,7 @@ export default function Checkout() {
         <ChevronLeft size={18} color={t.fg} />
       </Pressable>
       <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-        Checkout
+        {tr('checkout.title')}
       </Text>
     </View>
   );
@@ -87,15 +89,15 @@ export default function Checkout() {
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
         {header}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
-          <Text style={{ color: t.fgMuted }}>Nothing selected yet.</Text>
-          <PrimaryButton label="Browse eSIMs" onPress={() => router.replace('/esim-store')} />
+          <Text style={{ color: t.fgMuted }}>{tr('checkout.nothingSelected')}</Text>
+          <PrimaryButton label={tr('checkout.browseEsims')} onPress={() => router.replace('/esim-store')} />
         </View>
       </SafeAreaView>
     );
   }
 
   const flagIso = place.iso ?? REGION_FLAG[place.id];
-  const planLabel = bundle.type === 'unlimited' ? 'Unlimited data' : `${bundle.gb} GB`;
+  const planLabel = bundle.type === 'unlimited' ? tr('checkout.unlimitedData') : `${bundle.gb} GB`;
 
   // Login gate.
   if (!user) {
@@ -108,15 +110,15 @@ export default function Checkout() {
           </View>
           <View style={{ alignItems: 'center', gap: 4 }}>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.fg }}>
-              Sign in to continue
+              {tr('checkout.signInToContinue')}
             </Text>
             <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center' }}>
-              Log in or create an account to complete your purchase.
+              {tr('checkout.signInSub')}
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 10, width: '100%', maxWidth: 360 }}>
-            <PrimaryButton label="Sign in" onPress={() => router.push('/auth/sign-in?returnTo=checkout')} style={{ flex: 1 }} />
-            <PrimaryButton label="Sign up" variant="ghost" onPress={() => router.push('/auth/sign-up?returnTo=checkout')} style={{ flex: 1 }} />
+            <PrimaryButton label={tr('common.signIn')} onPress={() => router.push('/auth/sign-in?returnTo=checkout')} style={{ flex: 1 }} />
+            <PrimaryButton label={tr('common.signUp')} variant="ghost" onPress={() => router.push('/auth/sign-up?returnTo=checkout')} style={{ flex: 1 }} />
           </View>
         </View>
       </SafeAreaView>
@@ -172,10 +174,11 @@ export default function Checkout() {
       } else {
         // Distinguish cancel / decline / expiry / timeout so the user knows
         // whether to retry or just wait for the eSIM to appear.
-        setError(fibOutcomeMessage(fibOutcome(final)));
+        const oc = fibOutcome(final);
+        setError(tr(`checkout.fib${oc.charAt(0).toUpperCase()}${oc.slice(1)}`));
       }
     } catch (e: any) {
-      setError(e?.message || 'Checkout failed. Please try again.');
+      setError(e?.message || tr('checkout.failed'));
     } finally {
       setBusy(false);
     }
@@ -185,7 +188,7 @@ export default function Checkout() {
     if (busy) return;
     setError(null);
     if (!bundle.packageCode) {
-      setError("This plan can't be purchased right now. Please pick a country plan.");
+      setError(tr('checkout.noPackage'));
       return;
     }
     // If the OS told us this device has no eSIM hardware, make the user
@@ -194,11 +197,11 @@ export default function Checkout() {
     // person's phone" a real use case, so we don't hard-block — confirm.
     if (esimSupport === 'unsupported') {
       Alert.alert(
-        "This device doesn't support eSIM",
-        "Your plan will be saved to your account, but you won't be able to install it on this phone. You can share the QR code with someone whose device supports eSIM after purchase.",
+        tr('checkout.unsupportedTitle'),
+        tr('checkout.unsupportedBody'),
         [
-          { text: 'Cancel', style: 'cancel' },
-          { text: 'Continue anyway', style: 'destructive', onPress: performPay },
+          { text: tr('common.cancel'), style: 'cancel' },
+          { text: tr('checkout.continueAnyway'), style: 'destructive', onPress: performPay },
         ],
       );
       return;
@@ -212,7 +215,7 @@ export default function Checkout() {
       <ScrollView contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, maxWidth: isWide ? 1000 : 720, width: '100%', alignSelf: 'center' }}>
         {/* eSIM hardware advisory — only shown when the OS definitively says no. */}
         <View style={{ marginBottom: 16 }}>
-          <EsimSupportBanner message="This device doesn't support eSIM. You can still buy and share the QR with someone else after checkout." />
+          <EsimSupportBanner message={tr('checkout.bannerUnsupported')} />
         </View>
         <View style={{ flexDirection: isWide ? 'row' : 'column', gap: isWide ? 24 : 16, alignItems: 'flex-start' }}>
           {/* Left: item + payment */}
@@ -221,14 +224,14 @@ export default function Checkout() {
               {flagIso ? <Flag iso={flagIso} size={40} /> : <Globe size={32} color={t.primary} />}
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>{place.name}</Text>
-                <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{planLabel} · {bundle.days} days</Text>
+                <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{planLabel} · {bundle.days} {tr('checkout.days')}</Text>
               </View>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(bundle.usd)}</Text>
             </View>
 
             <View>
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8, paddingHorizontal: 4 }}>
-                Payment method
+                {tr('checkout.paymentMethod')}
               </Text>
               <View style={{ gap: 10 }}>
                 {availableMethods.map((p) => {
@@ -244,8 +247,8 @@ export default function Checkout() {
                         <Icon size={20} color={on ? t.primary : t.fgMuted} strokeWidth={2} />
                       </View>
                       <View style={{ flex: 1 }}>
-                        <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>{p.name}</Text>
-                        <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{p.desc}</Text>
+                        <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>{tr(`checkout.method.${p.id}`)}</Text>
+                        <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{tr(`checkout.methodDesc.${p.id}`)}</Text>
                       </View>
                       <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: on ? t.primary : t.borderStrong, backgroundColor: on ? t.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                         {on && <Check size={13} color="#fff" strokeWidth={3} />}
@@ -261,26 +264,24 @@ export default function Checkout() {
           <View style={{ width: isWide ? 360 : '100%', gap: 16 }}>
             <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>
-                Order summary
+                {tr('checkout.orderSummary')}
               </Text>
-              <SummaryRow label="Subtotal" value={money(bundle.usd)} />
-              <SummaryRow label="Taxes & fees" value={money(0)} />
+              <SummaryRow label={tr('checkout.subtotal')} value={money(bundle.usd)} />
+              <SummaryRow label={tr('checkout.taxesFees')} value={money(0)} />
               <View style={{ height: 1, backgroundColor: t.border, marginVertical: 4 }} />
-              <SummaryRow label="Total" value={money(bundle.usd)} strong />
+              <SummaryRow label={tr('checkout.total')} value={money(bundle.usd)} strong />
             </View>
 
             {error && (
               <Text style={{ fontSize: 12, color: t.danger, textAlign: 'center' }}>{error}</Text>
             )}
             <PrimaryButton
-              label={busy ? 'Processing…' : `Pay ${money(bundle.usd)}`}
+              label={busy ? tr('checkout.processing') : tr('checkout.pay', { amount: money(bundle.usd) })}
               icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}
               onPress={onPay}
             />
             <Text style={{ fontSize: 11, color: t.fgFaint, textAlign: 'center' }}>
-              {method === 'fib'
-                ? 'You\'ll confirm payment in the FIB app, then your eSIM is issued.'
-                : 'Your eSIM is issued instantly after checkout.'}
+              {method === 'fib' ? tr('checkout.fibHint') : tr('checkout.loyaltyHint')}
             </Text>
           </View>
         </View>

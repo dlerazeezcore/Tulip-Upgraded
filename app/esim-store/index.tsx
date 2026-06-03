@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Search, Globe } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/theme/ThemeContext';
@@ -29,6 +30,7 @@ const TABS: { id: Tab; label: string }[] = [
 
 export default function EsimStore() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const isWide = useIsWideWeb();
   const [tab, setTab] = useState<Tab>('popular');
@@ -112,7 +114,7 @@ export default function EsimStore() {
       </Pressable>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Globe size={20} color="#10B981" strokeWidth={2} />
-        <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>eSIM Store</Text>
+        <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>{tr('esimStore.title')}</Text>
       </View>
     </View>
   );
@@ -129,7 +131,7 @@ export default function EsimStore() {
             style={{ flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: on ? t.bgElev : 'transparent', ...(on ? t.shadow1 : {}) }}
           >
             <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 13, color: on ? t.fg : t.fgMuted }}>
-              {tb.label}
+              {tr(`esimStore.tab${tb.id.charAt(0).toUpperCase()}${tb.id.slice(1)}`)}
             </Text>
           </Pressable>
         );
@@ -149,7 +151,7 @@ export default function EsimStore() {
           <TextInput
             value={q}
             onChangeText={setQ}
-            placeholder="Search any country"
+            placeholder={tr('esimStore.searchCountry')}
             placeholderTextColor={t.fgFaint}
             autoCapitalize="none"
             style={{ flex: 1, fontSize: 14, color: t.fg, fontFamily: t.font.bodyMedium, paddingVertical: 2 }}
@@ -180,7 +182,7 @@ export default function EsimStore() {
             ListHeaderComponent={listHeader}
             ListEmptyComponent={
               <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20 }}>
-                {query ? `No countries match "${q}"` : 'No countries available.'}
+                {query ? tr('esimStore.noMatch', { q }) : tr('esimStore.noCountries')}
               </Text>
             }
             getItemLayout={getCountryItemLayout}
@@ -211,7 +213,7 @@ export default function EsimStore() {
         {tab === 'popular' && (
           <View style={{ gap: 10 }}>
             {popular.length === 0 ? (
-              <Text style={{ fontSize: 13, color: t.fgMuted }}>No popular destinations set. Use the Countries tab.</Text>
+              <Text style={{ fontSize: 13, color: t.fgMuted }}>{tr('esimStore.noPopular')}</Text>
             ) : (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
                 {popular.map((c) => {
@@ -266,7 +268,7 @@ export default function EsimStore() {
                         </View>
                         <View style={{ marginTop: 10 }}>
                           <Text numberOfLines={2} style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: '#fff' }}>{r.name}</Text>
-                          <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>Multi-country eSIM</Text>
+                          <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>{tr('esimStore.multiCountry')}</Text>
                         </View>
                       </LinearGradient>
                     </PressableScale>
