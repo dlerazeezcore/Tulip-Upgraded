@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, SERVICE_SLOT, Service, serviceRoute } from '@/data/services';
 import { useSearchStore } from '@/state/searchStore';
@@ -13,6 +14,7 @@ type TileProps = {
 
 export function ServiceTile({ svc, size = 'md' }: TileProps) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const setActive = useSearchStore((s) => s.setActive);
   const big = size === 'lg';
@@ -54,10 +56,10 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
             letterSpacing: -0.2,
           }}
         >
-          {svc.label}
+          {placeholder ? svc.label : tr(`serviceNames.${svc.id}`)}
         </Text>
         <Text numberOfLines={2} style={{ fontSize: 11, color: t.fgMuted, marginTop: 2 }}>
-          {placeholder ? 'New services soon' : svc.verb}
+          {placeholder ? tr('servicesScreen.moreComing') : tr(`serviceVerbs.${svc.id}`)}
         </Text>
       </View>
     </>

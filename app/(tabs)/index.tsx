@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Search, ArrowRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { ServiceTile } from '@/components/ServiceTile';
@@ -18,22 +19,23 @@ import { EsimSupportBanner } from '@/components/EsimSupportBanner';
 import { useSearchStore } from '@/state/searchStore';
 import { useAuthStore } from '@/state/authStore';
 
-function greetingForHour(h: number): string {
-  if (h < 12) return 'Good morning';
-  if (h < 18) return 'Good afternoon';
-  return 'Good evening';
+function greetingKeyForHour(h: number): string {
+  if (h < 12) return 'home.goodMorning';
+  if (h < 18) return 'home.goodAfternoon';
+  return 'home.goodEvening';
 }
 
 const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 
 export default function Home() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const activeService = useSearchStore((s) => s.activeService);
   const svc = SERVICES.find((s) => s.id === activeService)!;
   const user = useAuthStore((s) => s.user);
   const firstName = user?.name?.trim().split(/\s+/)[0];
-  const greeting = greetingForHour(new Date().getHours());
+  const greeting = tr(greetingKeyForHour(new Date().getHours()));
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -65,7 +67,7 @@ export default function Home() {
                 marginTop: 4,
               }}
             >
-              Where to next?
+              {tr('home.whereToNext')}
             </Text>
           </View>
           <CurrencyPicker />
@@ -111,7 +113,7 @@ export default function Home() {
               }}
             >
               <Search size={18} color={t.fgMuted} />
-              <Text style={{ flex: 1, fontSize: 14, color: t.fgFaint }}>{svc.searchHint}</Text>
+              <Text style={{ flex: 1, fontSize: 14, color: t.fgFaint }}>{tr(`serviceVerbs.${svc.id}`)}</Text>
               <View
                 style={{
                   paddingVertical: 8,
@@ -131,7 +133,7 @@ export default function Home() {
                     fontFamily: t.font.displayMedium,
                   }}
                 >
-                  Search
+                  {tr('common.search')}
                 </Text>
                 <ArrowRight size={12} color="#fff" strokeWidth={2.4} />
               </View>
@@ -164,10 +166,10 @@ export default function Home() {
                 letterSpacing: -0.3,
               }}
             >
-              Services
+              {tr('home.services')}
             </Text>
             <Pressable onPress={() => router.push('/services')}>
-              <Text style={{ fontSize: 12, color: t.primary, fontWeight: '600' }}>See all</Text>
+              <Text style={{ fontSize: 12, color: t.primary, fontWeight: '600' }}>{tr('home.seeAll')}</Text>
             </Pressable>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>

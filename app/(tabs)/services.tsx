@@ -3,6 +3,7 @@ import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ArrowRight, Plus, Star } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, serviceRoute } from '@/data/services';
@@ -12,6 +13,7 @@ import { useIsWideWeb } from '@/lib/responsive';
 
 export default function Services() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const isWide = useIsWideWeb();
   const colPct = isWide ? '33.333%' : '50%';
@@ -23,8 +25,8 @@ export default function Services() {
         showsVerticalScrollIndicator={false}
       >
         <ScreenHeader
-          title="Services"
-          subtitle="Everything you need for your trip — booked in one place"
+          title={tr('home.services')}
+          subtitle={tr('servicesScreen.subtitle')}
         />
 
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -7 }}>
@@ -70,10 +72,10 @@ export default function Services() {
                     <Icon size={26} color={s.color} strokeWidth={2} />
                   </View>
                   <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg, marginTop: 14 }}>
-                    {s.label}
+                    {tr(`serviceNames.${s.id}`)}
                   </Text>
                   <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 4, lineHeight: 18 }}>
-                    {s.verb}
+                    {tr(`serviceVerbs.${s.id}`)}
                   </Text>
                   <View
                     style={{
@@ -89,7 +91,7 @@ export default function Services() {
                     }}
                   >
                     <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
-                      Open
+                      {tr('servicesScreen.open')}
                     </Text>
                     <ArrowRight size={12} color="#fff" strokeWidth={2.4} />
                   </View>
@@ -128,10 +130,10 @@ export default function Services() {
                 <Plus size={24} color={t.fgFaint} strokeWidth={2} />
               </View>
               <Text style={{ fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fgMuted }}>
-                More services coming
+                {tr('servicesScreen.moreComing')}
               </Text>
               <Text style={{ fontSize: 12, color: t.fgMuted, textAlign: 'center' }}>
-                Activities · Insurance · Lounges
+                {tr('servicesScreen.moreComingSub')}
               </Text>
             </View>
           </View>
@@ -164,10 +166,10 @@ export default function Services() {
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: t.font.display, fontSize: 17, fontWeight: '800', color: '#0E3D7E' }}>
-              Bundle and save up to 18%
+              {tr('servicesScreen.bundleTitle')}
             </Text>
             <Text style={{ fontSize: 12, color: '#114A99', marginTop: 3 }}>
-              Combine flight + hotel + transfer in one booking
+              {tr('servicesScreen.bundleSub')}
             </Text>
           </View>
         </LinearGradient>

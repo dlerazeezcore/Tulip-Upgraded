@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { ScrollView, View, Text, Pressable, Linking, useWindowDimensions, Platform, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -18,7 +19,6 @@ import { AnimatedScreen } from '@/components/AnimatedScreen';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Toggle } from '@/components/Toggle';
 import { useCurrencyStore } from '@/state/currencyStore';
-import { CURRENCIES } from '@/data/currency';
 import { useAuthStore } from '@/state/authStore';
 import { useLocaleStore } from '@/state/localeStore';
 import { useTravelersStore } from '@/state/travelersStore';
@@ -81,9 +81,10 @@ export default function Profile() {
   const router = useRouter();
   const { width } = useWindowDimensions();
   const twoCol = Platform.OS === 'web' && width >= 1024;
+  const { t: tr } = useTranslation();
   const mode = useThemeStore((s) => s.mode);
   const toggle = useThemeStore((s) => s.toggle);
-  const currencyName = CURRENCIES[useCurrencyStore((s) => s.code)].name;
+  const currencyCode = useCurrencyStore((s) => s.code);
   const language = useLocaleStore((s) => s.language);
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
@@ -114,7 +115,7 @@ export default function Profile() {
       await updateProfile({ name: editName.trim(), email: editEmail.trim() || null });
       setEditOpen(false);
     } catch (e: any) {
-      setEditError(e?.message || 'Could not save changes');
+      setEditError(e?.message || tr('profile.couldNotSave'));
     } finally {
       setEditBusy(false);
     }
@@ -127,7 +128,7 @@ export default function Profile() {
       setEditOpen(false);
       router.replace('/(tabs)/profile');
     } catch (e: any) {
-      setEditError(e?.message || 'Could not delete account');
+      setEditError(e?.message || tr('profile.couldNotDelete'));
     } finally {
       setEditBusy(false);
     }
@@ -135,7 +136,7 @@ export default function Profile() {
   const memberSince = user?.createdAt
     ? String(new Date(user.createdAt).getFullYear())
     : null;
-  const tierLabel = user?.isLoyalty ? 'Loyalty' : 'Member';
+  const tierLabel = user?.isLoyalty ? tr('profile.loyalty') : tr('profile.member');
 
   // ─── Hero ───
   const hero = (
@@ -165,7 +166,7 @@ export default function Profile() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 999 }}>
                 <Star size={11} color="#fff" fill="#fff" />
                 <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
-                  {tierLabel}{memberSince ? ` · Member since ${memberSince}` : ''}
+                  {tierLabel}{memberSince ? ` · ${tr('profile.memberSince', { year: memberSince })}` : ''}
                 </Text>
               </View>
             </View>
@@ -173,12 +174,12 @@ export default function Profile() {
         ) : (
           <View style={{ gap: 16 }}>
             <View>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: '#fff', letterSpacing: -0.4 }}>Welcome to Tulip</Text>
-              <Text style={{ fontSize: 13, color: '#fff', opacity: 0.88, marginTop: 2 }}>Sign in to manage bookings, eSIMs and more.</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: '#fff', letterSpacing: -0.4 }}>{tr('profile.welcomeTitle')}</Text>
+              <Text style={{ fontSize: 13, color: '#fff', opacity: 0.88, marginTop: 2 }}>{tr('profile.welcomeSub')}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 10, maxWidth: 420 }}>
-              <PrimaryButton label="Sign in" onPress={() => router.push('/auth/sign-in')} style={{ flex: 1 }} />
-              <PrimaryButton label="Sign up" onPress={() => router.push('/auth/sign-up')} style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+              <PrimaryButton label={tr('common.signIn')} onPress={() => router.push('/auth/sign-in')} style={{ flex: 1 }} />
+              <PrimaryButton label={tr('common.signUp')} onPress={() => router.push('/auth/sign-up')} style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.22)' }} />
             </View>
           </View>
         )}
@@ -188,11 +189,11 @@ export default function Profile() {
 
   // ─── Sections ───
   const travelersSection = (
-    <Section label="Travelers">
+    <Section label={tr('profile.travelers')}>
       <Row
         icon={<User size={16} color={t.fgMuted} />}
-        title="Saved travelers"
-        sub={`${travelerCount} ${travelerCount === 1 ? 'person' : 'people'} · add, edit or remove`}
+        title={tr('profile.savedTravelers')}
+        sub={`${travelerCount} ${travelerCount === 1 ? tr('profile.person') : tr('profile.people')} · ${tr('profile.travelersSub')}`}
         onPress={() => router.push('/travelers')}
         last
         right={<ChevronRight size={16} color={t.fgFaint} />}
@@ -201,14 +202,14 @@ export default function Profile() {
   );
 
   const preferencesSection = (
-    <Section label="Preferences">
-      <Row icon={<Moon size={16} color={t.fgMuted} />} title="Dark mode" sub={mode === 'dark' ? 'On' : 'Off'} right={<Toggle value={mode === 'dark'} onChange={toggle} />} />
-      <Row icon={<Coins size={16} color={t.fgMuted} />} title="Currency" sub={currencyName} right={<CurrencyPicker />} />
-      <Row icon={<Globe size={16} color={t.fgMuted} />} title="Language" sub={LANG_LABEL[language]} right={<LanguagePicker />} />
+    <Section label={tr('profile.preferences')}>
+      <Row icon={<Moon size={16} color={t.fgMuted} />} title={tr('profile.darkMode')} sub={mode === 'dark' ? tr('profile.on') : tr('profile.off')} right={<Toggle value={mode === 'dark'} onChange={toggle} />} />
+      <Row icon={<Coins size={16} color={t.fgMuted} />} title={tr('profile.currencyLabel')} sub={tr(`currency.${currencyCode}`)} right={<CurrencyPicker />} />
+      <Row icon={<Globe size={16} color={t.fgMuted} />} title={tr('profile.languageLabel')} sub={LANG_LABEL[language]} right={<LanguagePicker />} />
       <Row
         icon={<Bell size={16} color={t.fgMuted} />}
-        title="Notifications"
-        sub={user ? (notificationsOn ? 'On — trip alerts, deals, updates' : 'Off — you won’t receive pushes') : 'Sign in to manage'}
+        title={tr('profile.notifications')}
+        sub={user ? (notificationsOn ? tr('profile.notifOn') : tr('profile.notifOff')) : tr('profile.notifSignIn')}
         last
         right={
           user ? (
@@ -227,15 +228,15 @@ export default function Profile() {
   );
 
   const accountSection = (
-    <Section label="Account & support">
+    <Section label={tr('profile.accountSupport')}>
       {user && (
-        <Row icon={<UserCog size={16} color={t.fgMuted} />} title="Edit profile" sub="Name, email" onPress={openEdit} right={<ChevronRight size={16} color={t.fgFaint} />} />
+        <Row icon={<UserCog size={16} color={t.fgMuted} />} title={tr('profile.editProfile')} sub={tr('profile.editProfileSub')} onPress={openEdit} right={<ChevronRight size={16} color={t.fgFaint} />} />
       )}
       {isAdmin && (
-        <Row icon={<ShieldCheck size={16} color={t.primary} />} title="Admin panel" sub="Users · orders · currency" onPress={() => router.push('/admin')} right={<ChevronRight size={16} color={t.fgFaint} />} />
+        <Row icon={<ShieldCheck size={16} color={t.primary} />} title={tr('profile.adminPanel')} sub={tr('profile.adminPanelSub')} onPress={() => router.push('/admin')} right={<ChevronRight size={16} color={t.fgFaint} />} />
       )}
-      <Row icon={<Receipt size={16} color={t.fgMuted} />} title="Order history" sub="Your eSIM orders" onPress={() => router.push('/orders')} right={<ChevronRight size={16} color={t.fgFaint} />} />
-      <Row icon={<MessageCircle size={16} color={t.fgMuted} />} title="Support" sub="Chat with us on WhatsApp" onPress={() => Linking.openURL('https://wa.me/9647507201111')} right={<ChevronRight size={16} color={t.fgFaint} />} last />
+      <Row icon={<Receipt size={16} color={t.fgMuted} />} title={tr('profile.orderHistory')} sub={tr('profile.orderHistorySub')} onPress={() => router.push('/orders')} right={<ChevronRight size={16} color={t.fgFaint} />} />
+      <Row icon={<MessageCircle size={16} color={t.fgMuted} />} title={tr('profile.support')} sub={tr('profile.supportSub')} onPress={() => Linking.openURL('https://wa.me/9647507201111')} right={<ChevronRight size={16} color={t.fgFaint} />} last />
     </Section>
   );
 
@@ -244,24 +245,24 @@ export default function Profile() {
       <Pressable onPress={() => setEditOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
         <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Edit profile</Text>
+            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('profile.editProfile')}</Text>
             <Pressable onPress={() => setEditOpen(false)}><X size={20} color={t.fgMuted} /></Pressable>
           </View>
 
           <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Full name</Text>
-            <TextInput value={editName} onChangeText={setEditName} placeholder="Your name" placeholderTextColor={t.fgFaint}
+            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tr('profile.fullName')}</Text>
+            <TextInput value={editName} onChangeText={setEditName} placeholder={tr('profile.yourName')} placeholderTextColor={t.fgFaint}
               style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }} />
           </View>
 
           <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Email (optional)</Text>
-            <TextInput value={editEmail} onChangeText={setEditEmail} placeholder="you@example.com" placeholderTextColor={t.fgFaint} autoCapitalize="none" keyboardType="email-address"
+            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tr('profile.emailOptional')}</Text>
+            <TextInput value={editEmail} onChangeText={setEditEmail} placeholder={tr('auth.emailPlaceholder')} placeholderTextColor={t.fgFaint} autoCapitalize="none" keyboardType="email-address"
               style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }} />
           </View>
 
           <View style={{ gap: 6 }}>
-            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Phone (cannot be changed)</Text>
+            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tr('profile.phoneCannotChange')}</Text>
             <View style={{ backgroundColor: t.bgSunken, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13 }}>
               <Text style={{ fontSize: 15, color: t.fgMuted, fontFamily: t.font.bodyMedium }}>{user?.phone}</Text>
             </View>
@@ -269,11 +270,11 @@ export default function Profile() {
 
           {editError && <Text style={{ fontSize: 12, color: t.danger }}>{editError}</Text>}
 
-          <PrimaryButton label={editBusy ? 'Saving…' : 'Save changes'} onPress={onSaveProfile} />
+          <PrimaryButton label={editBusy ? tr('profile.saving') : tr('profile.saveChanges')} onPress={onSaveProfile} />
 
           <Pressable onPress={onDeleteAccount} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12 }}>
             <Trash2 size={15} color={t.danger} />
-            <Text style={{ color: t.danger, fontWeight: '700', fontSize: 13 }}>Delete my account</Text>
+            <Text style={{ color: t.danger, fontWeight: '700', fontSize: 13 }}>{tr('profile.deleteAccount')}</Text>
           </Pressable>
         </Pressable>
       </Pressable>
@@ -285,7 +286,7 @@ export default function Profile() {
       onPress={signOut}
       style={({ pressed }) => ({ padding: 14, borderRadius: 14, borderColor: t.danger, borderWidth: 1.5, alignItems: 'center', opacity: pressed ? 0.7 : 1 })}
     >
-      <Text style={{ color: t.danger, fontWeight: '700', fontSize: 14 }}>Sign out</Text>
+      <Text style={{ color: t.danger, fontWeight: '700', fontSize: 14 }}>{tr('common.signOut')}</Text>
     </Pressable>
   ) : null;
 
@@ -296,11 +297,11 @@ export default function Profile() {
         hitSlop={8}
       >
         <Text style={{ fontSize: 12, color: t.fgMuted, textDecorationLine: 'underline' }}>
-          Privacy Policy
+          {tr('profile.privacyPolicy')}
         </Text>
       </Pressable>
       <View style={{ alignItems: 'center', gap: 2 }}>
-        <Text style={{ fontSize: 11, color: t.fgFaint }}>Brought to you by</Text>
+        <Text style={{ fontSize: 11, color: t.fgFaint }}>{tr('profile.broughtToYouBy')}</Text>
         <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 14, color: t.fgMuted, letterSpacing: -0.2 }}>Corevia Network</Text>
       </View>
     </View>
@@ -313,7 +314,7 @@ export default function Profile() {
           contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 20, maxWidth: twoCol ? 1080 : 900, width: '100%', alignSelf: 'center' }}
           showsVerticalScrollIndicator={false}
         >
-          <ScreenHeader title="Profile" />
+          <ScreenHeader title={tr('profile.title')} />
           {hero}
 
           {twoCol && user ? (

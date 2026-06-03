@@ -2,6 +2,7 @@ import React, { useMemo } from 'react';
 import { ScrollView, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES } from '@/data/services';
@@ -13,6 +14,7 @@ import { useIsWideWeb } from '@/lib/responsive';
 
 export default function Bookings() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const isWide = useIsWideWeb();
   const esims = useEsimStore((s) => s.esims);
@@ -22,9 +24,9 @@ export default function Bookings() {
     const active = esims.filter((e) => e.status === 'active').length;
     return {
       count: esims.length,
-      sub: active > 0 ? `${active} active` : esims.length ? 'None active' : 'None yet',
+      sub: active > 0 ? tr('bookings.active', { count: active }) : esims.length ? tr('bookings.noneActive') : tr('bookings.noneYet'),
     };
-  }, [esims]);
+  }, [esims, tr]);
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -33,15 +35,19 @@ export default function Bookings() {
           contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 1200, width: '100%', alignSelf: 'center' }}
           showsVerticalScrollIndicator={false}
         >
-          <ScreenHeader title="Bookings" subtitle="Manage your services" />
+          <ScreenHeader title={tr('bookings.title')} subtitle={tr('bookings.subtitle')} />
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
             {SERVICES.map((svc) => {
               const Icon = svc.Icon;
               const isEsim = svc.id === 'esim';
-              const title = isEsim ? 'My eSIMs' : svc.id === 'hotels' ? 'My Stays' : `My ${svc.label}`;
+              const title = isEsim
+                ? tr('bookings.myEsims')
+                : svc.id === 'hotels'
+                  ? tr('bookings.myStays')
+                  : tr('bookings.myService', { label: tr(`serviceNames.${svc.id}`) });
               const sub = isEsim
-                ? `${esimSummary.count} ${esimSummary.count === 1 ? 'item' : 'items'} · ${esimSummary.sub}`
-                : 'Coming soon';
+                ? `${esimSummary.count} ${esimSummary.count === 1 ? tr('bookings.item') : tr('bookings.items')} · ${esimSummary.sub}`
+                : tr('bookings.comingSoon');
               return (
                 <View key={svc.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
                   <PressableScale
