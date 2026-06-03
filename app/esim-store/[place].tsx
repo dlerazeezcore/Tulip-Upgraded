@@ -8,6 +8,7 @@ import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useIqdMoney } from '@/lib/pricing';
+import { useTranslation } from 'react-i18next';
 import { useIsWideWeb } from '@/lib/responsive';
 import { packagesToBundles } from '@/lib/catalog';
 import { queryPackages, getCountries, cachedCountries } from '@/services/esim';
@@ -19,6 +20,7 @@ import { EmptyState } from '@/components/EmptyState';
 export default function PlaceDetail() {
   const { place, region, name: nameParam } = useLocalSearchParams<{ place: string; region?: string; name?: string }>();
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const money = useIqdMoney();
   const select = useEsimCart((s) => s.select);
@@ -137,9 +139,9 @@ export default function PlaceDetail() {
             <Globe size={20} color={t.primary} strokeWidth={2} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.brand.blue800 }}>
-                Coverage in {coverage.length} countries
+                {tr('esimStore.coverageCount', { count: coverage.length })}
               </Text>
-              <Text style={{ fontSize: 12, color: t.brand.blue700, marginTop: 1 }}>Tap to see where this eSIM works</Text>
+              <Text style={{ fontSize: 12, color: t.brand.blue700, marginTop: 1 }}>{tr('esimStore.coverageHint')}</Text>
             </View>
             <Check size={18} color={t.primary} />
           </PressableScale>
@@ -161,8 +163,8 @@ export default function PlaceDetail() {
         ) : groups.length === 0 ? (
           <EmptyState
             icon={Globe}
-            title={`No plans available for ${name}`}
-            subtitle="Try another country or region — we're adding new data plans all the time."
+            title={tr('esimStore.noPlans', { name })}
+            subtitle={tr('esimStore.noPlansSub')}
           />
         ) : (
           groups.map((g) => (
@@ -177,7 +179,7 @@ export default function PlaceDetail() {
                 >
                   <Clock size={13} color={t.primary} strokeWidth={2.4} />
                   <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '800', fontSize: 12, color: t.primary, letterSpacing: 0.3 }}>
-                    {g.days === 1 ? '1 DAY' : `${g.days} DAYS`}
+                    {g.days === 1 ? tr('esimStore.dayOne') : tr('esimStore.daysN', { count: g.days })}
                   </Text>
                 </View>
                 <View style={{ flex: 1, height: 1, backgroundColor: t.border }} />
@@ -204,9 +206,9 @@ export default function PlaceDetail() {
                         </View>
                         <View style={{ flex: 1 }}>
                           <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
-                            {b.type === 'unlimited' ? 'Unlimited' : `${b.gb} GB`}
+                            {b.type === 'unlimited' ? tr('esimStore.unlimited') : `${b.gb} GB`}
                           </Text>
-                          <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>Valid for {b.days} days</Text>
+                          <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{tr('esimStore.validForDays', { count: b.days })}</Text>
                         </View>
                         <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{money(b.usd)}</Text>
                         <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: isSelected ? t.primary : t.borderStrong, backgroundColor: isSelected ? t.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
@@ -227,11 +229,11 @@ export default function PlaceDetail() {
           <View style={{ maxWidth: 780, width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 12, color: t.fgMuted }}>
-                {selected.type === 'unlimited' ? 'Unlimited' : `${selected.gb} GB`} · {selected.days} days
+                {selected.type === 'unlimited' ? tr('esimStore.unlimited') : `${selected.gb} GB`} · {selected.days} {tr('esim.days')}
               </Text>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(selected.usd)}</Text>
             </View>
-            <PrimaryButton label="Continue" icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />} onPress={onContinue} style={{ flex: 1 }} />
+            <PrimaryButton label={tr('common.continue')} icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />} onPress={onContinue} style={{ flex: 1 }} />
           </View>
         </View>
       )}
@@ -240,7 +242,7 @@ export default function PlaceDetail() {
         <Pressable onPress={() => setCoverageOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '76%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Coverage — {name}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('esimStore.coverageTitle', { name })}</Text>
               <Pressable onPress={() => setCoverageOpen(false)}><X size={20} color={t.fgMuted} /></Pressable>
             </View>
             <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
