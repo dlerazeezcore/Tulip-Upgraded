@@ -12,9 +12,15 @@ import { useSearchStore } from '@/state/searchStore';
 export function MultiServiceTabs({
   compact = false,
   onDark = false,
+  onSelect,
 }: {
   compact?: boolean;
   onDark?: boolean;
+  /** If provided, called when a tab is tapped INSTEAD of just setting the
+   *  store. The search screen uses this to update its route param so the
+   *  form reliably matches the selected service. When omitted (e.g. the home
+   *  hero), tapping a tab simply updates the active service in the store. */
+  onSelect?: (id: Service['id']) => void;
 }) {
   const t = useTheme();
   const active = useSearchStore((s) => s.activeService);
@@ -56,7 +62,7 @@ export function MultiServiceTabs({
         return (
           <Pressable
             key={s.id}
-            onPress={() => setActive(s.id as Service['id'])}
+            onPress={() => (onSelect ? onSelect(s.id as Service['id']) : setActive(s.id as Service['id']))}
             style={{
               paddingVertical: compact ? 8 : 9,
               paddingHorizontal: compact ? 12 : 14,

@@ -13,7 +13,7 @@ import { ActiveEsimCard } from '@/components/ActiveEsimCard';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
 import { PressableScale } from '@/components/PressableScale';
-import { SERVICES, SERVICE_SLOT, serviceRoute } from '@/data/services';
+import { SERVICES, serviceRoute } from '@/data/services';
 import { EsimSupportBanner } from '@/components/EsimSupportBanner';
 import { useSearchStore } from '@/state/searchStore';
 import { useAuthStore } from '@/state/authStore';
@@ -171,7 +171,7 @@ export default function Home() {
             </Pressable>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
-            {[...SERVICES, SERVICE_SLOT].map((s) => (
+            {SERVICES.map((s) => (
               <View key={s.id} style={{ width: '33.33%', padding: 5 }}>
                 <ServiceTile svc={s as any} />
               </View>
