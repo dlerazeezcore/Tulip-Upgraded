@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { LogIn, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useAuthStore } from '@/state/authStore';
@@ -14,6 +15,7 @@ type Identifier = 'phone' | 'email';
 
 export default function SignIn() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { signInPassword, signInOtp, requestOtp } = useAuthStore();
@@ -41,7 +43,7 @@ export default function SignIn() {
     try {
       await fn();
     } catch (e: any) {
-      setError(e?.message || 'Something went wrong. Please try again.');
+      setError(e?.message || tr('common.somethingWrong'));
     } finally {
       setBusy(false);
     }
@@ -67,11 +69,11 @@ export default function SignIn() {
     });
 
   return (
-    <AuthShell title="Welcome back" subtitle="Sign in to continue your journey">
+    <AuthShell title={tr('auth.signInTitle')} subtitle={tr('auth.signInSubtitle')}>
       <AuthSegmented
         options={[
-          { id: 'password', label: 'Password' },
-          { id: 'otp', label: 'OTP' },
+          { id: 'password', label: tr('auth.tabPassword') },
+          { id: 'otp', label: tr('auth.tabOtp') },
         ]}
         value={mode}
         onChange={(m) => {
@@ -86,8 +88,8 @@ export default function SignIn() {
         <>
           <AuthSegmented
             options={[
-              { id: 'phone', label: 'Phone' },
-              { id: 'email', label: 'Email' },
+              { id: 'phone', label: tr('auth.tabPhone') },
+              { id: 'email', label: tr('auth.tabEmail') },
             ]}
             value={identifier}
             onChange={(v) => {
@@ -98,32 +100,32 @@ export default function SignIn() {
           {identifier === 'phone' ? (
             <View style={{ gap: 6 }}>
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-                Phone number
+                {tr('auth.phoneNumber')}
               </Text>
               <CountryPhoneField onChange={setPhone} />
             </View>
           ) : (
             <Field
-              label="Email"
+              label={tr('auth.email')}
               value={email}
               onChangeText={setEmail}
-              placeholder="you@example.com"
+              placeholder={tr('auth.emailPlaceholder')}
               autoCapitalize="none"
               keyboardType="email-address"
             />
           )}
           <PasswordField
-            label="Password"
+            label={tr('auth.password')}
             value={password}
             onChangeText={setPassword}
-            placeholder="••••••••"
+            placeholder={tr('auth.passwordPlaceholder')}
           />
           <Pressable onPress={() => router.push('/auth/forgot')} style={{ alignSelf: 'flex-end' }}>
-            <Text style={{ fontSize: 12, color: t.primary, fontWeight: '700' }}>Forgot password?</Text>
+            <Text style={{ fontSize: 12, color: t.primary, fontWeight: '700' }}>{tr('auth.forgotPassword')}</Text>
           </Pressable>
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
           <PrimaryButton
-            label={busy ? 'Signing in…' : 'Sign in'}
+            label={busy ? tr('auth.signingIn') : tr('common.signIn')}
             icon={<LogIn size={16} color="#fff" strokeWidth={2.2} />}
             onPress={onPasswordSignIn}
           />
@@ -136,32 +138,32 @@ export default function SignIn() {
             </Text>
             <CountryPhoneField onChange={setPhone} />
           </View>
-          <Text style={{ fontSize: 12, color: t.fgMuted }}>We'll send a one-time code by SMS.</Text>
+          <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.otpSmsHint')}</Text>
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
           <PrimaryButton
-            label={busy ? 'Sending…' : 'Send code'}
+            label={busy ? tr('auth.sending') : tr('auth.sendCode')}
             icon={<MessageCircle size={16} color="#fff" strokeWidth={2.2} />}
             onPress={onSendCode}
           />
         </>
       ) : (
         <>
-          <Text style={{ fontSize: 13, color: t.fg }}>Enter the code sent to {phone}</Text>
+          <Text style={{ fontSize: 13, color: t.fg }}>{tr('auth.enterCodeSentTo', { phone })}</Text>
           <OtpInput value={code} onChange={setCode} />
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
-          <PrimaryButton label={busy ? 'Verifying…' : 'Verify & sign in'} onPress={onVerify} />
+          <PrimaryButton label={busy ? tr('auth.verifying') : tr('auth.verifyAndSignIn')} onPress={onVerify} />
           <Pressable onPress={() => setOtpSent(false)} style={{ alignSelf: 'center' }}>
-            <Text style={{ fontSize: 12, color: t.fgMuted }}>Change number</Text>
+            <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.changeNumber')}</Text>
           </Pressable>
         </>
       )}
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 4 }}>
-        <Text style={{ fontSize: 13, color: t.fgMuted }}>New to Tulip?</Text>
+        <Text style={{ fontSize: 13, color: t.fgMuted }}>{tr('auth.newToTulip')}</Text>
         <Pressable
           onPress={() => router.replace(returnTo ? `/auth/sign-up?returnTo=${returnTo}` : '/auth/sign-up')}
         >
-          <Text style={{ fontSize: 13, color: t.primary, fontWeight: '700' }}>Create account</Text>
+          <Text style={{ fontSize: 13, color: t.primary, fontWeight: '700' }}>{tr('auth.createAccount')}</Text>
         </Pressable>
       </View>
     </AuthShell>

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { UserPlus, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useAuthStore } from '@/state/authStore';
@@ -13,6 +14,7 @@ type Mode = 'password' | 'otp';
 
 export default function SignUp() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { signUp, requestOtp, verifyOtpAndAuth } = useAuthStore();
@@ -39,7 +41,7 @@ export default function SignUp() {
     try {
       await fn();
     } catch (e: any) {
-      setError(e?.message || 'Something went wrong. Please try again.');
+      setError(e?.message || tr('common.somethingWrong'));
     } finally {
       setBusy(false);
     }
@@ -64,13 +66,13 @@ export default function SignUp() {
     });
 
   return (
-    <AuthShell title="Create account" subtitle="Join Tulip — one app for every trip">
-      <Field label="Full name" value={name} onChangeText={setName} placeholder="Jane Olsen" />
+    <AuthShell title={tr('auth.signUpTitle')} subtitle={tr('auth.signUpSubtitle')}>
+      <Field label={tr('auth.fullName')} value={name} onChangeText={setName} placeholder={tr('auth.namePlaceholder')} />
 
       <AuthSegmented
         options={[
-          { id: 'password', label: 'Password' },
-          { id: 'otp', label: 'OTP' },
+          { id: 'password', label: tr('auth.tabPassword') },
+          { id: 'otp', label: tr('auth.tabOtp') },
         ]}
         value={mode}
         onChange={(m) => {
@@ -83,7 +85,7 @@ export default function SignUp() {
 
       <View style={{ gap: 6 }}>
         <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-          Phone number
+          {tr('auth.phoneNumber')}
         </Text>
         <CountryPhoneField onChange={setPhone} />
       </View>
@@ -91,46 +93,46 @@ export default function SignUp() {
       {mode === 'password' ? (
         <>
           <PasswordField
-            label="Password"
+            label={tr('auth.password')}
             value={password}
             onChangeText={setPassword}
-            placeholder="Create a password (min 8 chars)"
+            placeholder={tr('auth.createPasswordPlaceholder')}
           />
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
           <PrimaryButton
-            label={busy ? 'Creating…' : 'Create account'}
+            label={busy ? tr('auth.creating') : tr('auth.createAccount')}
             icon={<UserPlus size={16} color="#fff" strokeWidth={2.2} />}
             onPress={onPasswordSignUp}
           />
         </>
       ) : !otpSent ? (
         <>
-          <Text style={{ fontSize: 12, color: t.fgMuted }}>We'll verify your number with an SMS code.</Text>
+          <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.verifyNumberHint')}</Text>
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
           <PrimaryButton
-            label={busy ? 'Sending…' : 'Send code'}
+            label={busy ? tr('auth.sending') : tr('auth.sendCode')}
             icon={<MessageCircle size={16} color="#fff" strokeWidth={2.2} />}
             onPress={onSendCode}
           />
         </>
       ) : (
         <>
-          <Text style={{ fontSize: 13, color: t.fg }}>Enter the code sent to {phone}</Text>
+          <Text style={{ fontSize: 13, color: t.fg }}>{tr('auth.enterCodeSentTo', { phone })}</Text>
           <OtpInput value={code} onChange={setCode} />
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
-          <PrimaryButton label={busy ? 'Verifying…' : 'Verify & create'} onPress={onVerify} />
+          <PrimaryButton label={busy ? tr('auth.verifying') : tr('auth.verifyAndCreate')} onPress={onVerify} />
           <Pressable onPress={() => setOtpSent(false)} style={{ alignSelf: 'center' }}>
-            <Text style={{ fontSize: 12, color: t.fgMuted }}>Change number</Text>
+            <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.changeNumber')}</Text>
           </Pressable>
         </>
       )}
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 4 }}>
-        <Text style={{ fontSize: 13, color: t.fgMuted }}>Already have an account?</Text>
+        <Text style={{ fontSize: 13, color: t.fgMuted }}>{tr('auth.alreadyHaveAccount')}</Text>
         <Pressable
           onPress={() => router.replace(returnTo ? `/auth/sign-in?returnTo=${returnTo}` : '/auth/sign-in')}
         >
-          <Text style={{ fontSize: 13, color: t.primary, fontWeight: '700' }}>Sign in</Text>
+          <Text style={{ fontSize: 13, color: t.primary, fontWeight: '700' }}>{tr('common.signIn')}</Text>
         </Pressable>
       </View>
     </AuthShell>

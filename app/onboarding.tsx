@@ -82,7 +82,9 @@ export default function Onboarding() {
               >
                 <View style={{ flex: 1 }}>
                   <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>{l.native}</Text>
-                  <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{l.sub}</Text>
+                  <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
+                    {tr(l.id === 'en' ? 'onboarding.langSubEn' : l.id === 'ar' ? 'onboarding.langSubAr' : 'onboarding.langSubKu')}
+                  </Text>
                 </View>
                 <Selected on={on} />
               </Pressable>
@@ -118,7 +120,7 @@ export default function Onboarding() {
                   <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
                     {c.code} · {c.symbol}
                   </Text>
-                  <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{c.name}</Text>
+                  <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{tr(`currency.${c.code}`)}</Text>
                 </View>
                 <Selected on={on} />
               </Pressable>

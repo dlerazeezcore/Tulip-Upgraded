@@ -1,6 +1,6 @@
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { I18nManager, Platform } from 'react-native';
+import { Alert, I18nManager, Platform } from 'react-native';
 import i18n, { Lang, RTL_LANGS } from '@/i18n';
 import * as authApi from '@/services/auth';
 import * as push from '@/services/push';
@@ -33,15 +33,27 @@ type LocaleState = {
 const LANG_KEY = 'tulip.lang';
 const ONBOARDED_KEY = 'tulip.onboarded';
 
-export const useLocaleStore = create<LocaleState>((set) => ({
+export const useLocaleStore = create<LocaleState>((set, get) => ({
   language: 'en',
   onboarded: false,
   hydrated: false,
   setLanguage: (language) => {
+    const prev = get().language;
+    const directionFlipped = RTL_LANGS.includes(prev) !== RTL_LANGS.includes(language);
     set({ language });
     i18n.changeLanguage(language);
     applyDirection(language);
     AsyncStorage.setItem(LANG_KEY, language).catch(() => {});
+    // Translated text updates immediately, but native LAYOUT mirroring
+    // (I18nManager.forceRTL) only fully applies after an app restart. When the
+    // text direction actually flips (LTR<->RTL) mid-session, let the user know.
+    // First-launch / onboarding selection applies on next launch automatically,
+    // so only prompt when the app is already past onboarding.
+    if (directionFlipped && Platform.OS !== 'web' && get().onboarded) {
+      try {
+        Alert.alert(i18n.t('langNames.' + language), i18n.t('common.restartRequired'));
+      } catch {}
+    }
     // Sync to backend when authed:
     //   1. PATCH /auth/me to persist app_users.preferred_language (used as fallback
     //      and for non-push channels).

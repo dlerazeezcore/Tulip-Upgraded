@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useAuthStore } from '@/state/authStore';
@@ -13,6 +14,7 @@ type Step = 'phone' | 'otp' | 'reset' | 'done';
 
 export default function Forgot() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const { requestOtp, resetPassword } = useAuthStore();
 
@@ -31,7 +33,7 @@ export default function Forgot() {
     try {
       await fn();
     } catch (e: any) {
-      setError(e?.message || 'Something went wrong. Please try again.');
+      setError(e?.message || tr('common.somethingWrong'));
     } finally {
       setBusy(false);
     }
@@ -39,26 +41,26 @@ export default function Forgot() {
 
   const subtitle =
     step === 'phone'
-      ? 'Enter your phone to receive a reset code'
+      ? tr('auth.resetPhoneStep')
       : step === 'otp'
-        ? 'Enter the code we sent'
+        ? tr('auth.resetOtpStep')
         : step === 'reset'
-          ? 'Choose a new password'
-          : 'All set';
+          ? tr('auth.resetResetStep')
+          : tr('auth.resetDoneStep');
 
   return (
-    <AuthShell title="Reset password" subtitle={subtitle}>
+    <AuthShell title={tr('auth.resetTitle')} subtitle={subtitle}>
       {step === 'phone' && (
         <>
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-              Phone number
+              {tr('auth.phoneNumber')}
             </Text>
             <CountryPhoneField onChange={setPhone} autoFocus />
           </View>
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
           <PrimaryButton
-            label={busy ? 'Sending…' : 'Send reset code'}
+            label={busy ? tr('auth.sending') : tr('auth.sendResetCode')}
             onPress={() => run(async () => { await requestOtp(phone, 'sms'); setStep('otp'); })}
           />
         </>
@@ -66,35 +68,35 @@ export default function Forgot() {
 
       {step === 'otp' && (
         <>
-          <Text style={{ fontSize: 13, color: t.fg }}>Enter the code sent to {phone}</Text>
+          <Text style={{ fontSize: 13, color: t.fg }}>{tr('auth.enterCodeSentTo', { phone })}</Text>
           <OtpInput value={code} onChange={setCode} />
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
           <PrimaryButton
-            label="Continue"
+            label={tr('common.continue')}
             onPress={() => {
               if (code.replace(/\D/g, '').length >= 4) setStep('reset');
             }}
           />
           <Pressable onPress={() => setStep('phone')} style={{ alignSelf: 'center' }}>
-            <Text style={{ fontSize: 12, color: t.fgMuted }}>Change number</Text>
+            <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.changeNumber')}</Text>
           </Pressable>
         </>
       )}
 
       {step === 'reset' && (
         <>
-          <PasswordField label="New password" value={pw} onChangeText={setPw} placeholder="New password (min 8 chars)" />
-          <PasswordField label="Confirm password" value={pw2} onChangeText={setPw2} placeholder="Confirm password" />
+          <PasswordField label={tr('auth.newPassword')} value={pw} onChangeText={setPw} placeholder={tr('auth.newPasswordPlaceholder')} />
+          <PasswordField label={tr('auth.confirmPassword')} value={pw2} onChangeText={setPw2} placeholder={tr('auth.confirmPasswordPlaceholder')} />
           {pw.length > 0 && pw !== pw2 && (
-            <Text style={{ fontSize: 12, color: t.danger }}>Passwords don't match</Text>
+            <Text style={{ fontSize: 12, color: t.danger }}>{tr('auth.passwordsDontMatch')}</Text>
           )}
           {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
           <PrimaryButton
-            label={busy ? 'Resetting…' : 'Reset password'}
+            label={busy ? tr('auth.resetting') : tr('auth.resetPassword')}
             onPress={() =>
               run(async () => {
                 if (pw.length < 8 || pw !== pw2) {
-                  setError('Password must be at least 8 characters and match.');
+                  setError(tr('auth.passwordRule'));
                   return;
                 }
                 await resetPassword({ phone, otpCode: code, newPassword: pw, otpChannel: 'sms' });
@@ -121,13 +123,13 @@ export default function Forgot() {
               <Check size={30} color={t.success} strokeWidth={2.5} />
             </View>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
-              Password reset
+              {tr('auth.passwordResetDone')}
             </Text>
             <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center' }}>
-              You're signed in with your new password.
+              {tr('auth.signedInNewPassword')}
             </Text>
           </View>
-          <PrimaryButton label="Continue" onPress={() => router.replace('/(tabs)/profile')} />
+          <PrimaryButton label={tr('common.continue')} onPress={() => router.replace('/(tabs)/profile')} />
         </>
       )}
     </AuthShell>

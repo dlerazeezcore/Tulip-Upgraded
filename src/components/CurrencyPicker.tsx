@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Modal } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { Check, ChevronDown } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useCurrencyStore } from '@/state/currencyStore';
@@ -9,6 +10,7 @@ import { Flag } from './Flag';
 /** Compact header chip that opens a currency picker sheet. */
 export function CurrencyPicker() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const code = useCurrencyStore((s) => s.code);
   const setCode = useCurrencyStore((s) => s.setCode);
   const [open, setOpen] = useState(false);
@@ -63,7 +65,7 @@ export function CurrencyPicker() {
                 paddingBottom: 8,
               }}
             >
-              Currency
+              {tr('onboarding.currency')}
             </Text>
             {CURRENCY_LIST.map((c) => {
               const on = c.code === code;
@@ -88,7 +90,7 @@ export function CurrencyPicker() {
                     <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>
                       {c.code} · {c.symbol}
                     </Text>
-                    <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{c.name}</Text>
+                    <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{tr(`currency.${c.code}`)}</Text>
                   </View>
                   {on && <Check size={18} color={t.primary} strokeWidth={2.4} />}
                 </Pressable>
