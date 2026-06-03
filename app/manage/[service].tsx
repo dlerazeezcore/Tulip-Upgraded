@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Archive, ChevronRight, Smartphone } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, serviceRoute } from '@/data/services';
@@ -35,6 +36,7 @@ function Card({ children, onPress }: { children: React.ReactNode; onPress?: () =
 
 function HistoryCard() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const history = useEsimStore((s) => s.history);
   // Refresh the history count silently so the card always shows accurate
@@ -66,10 +68,10 @@ function HistoryCard() {
       </View>
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
-          History
+          {tr('manage.history')}
         </Text>
         <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-          {count} past {count === 1 ? 'bundle' : 'bundles'} (cancelled, refunded, or expired)
+          {tr('manage.historyDesc', { count, unit: count === 1 ? tr('manage.bundle') : tr('manage.bundles') })}
         </Text>
       </View>
       <ChevronRight size={18} color={t.fgFaint} />
@@ -79,6 +81,7 @@ function HistoryCard() {
 
 function EsimList() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   // The backend filters out terminal (cancelled/refunded/expired) profiles by
   // default — this list shows only live bundles. Terminal ones live behind
@@ -96,8 +99,8 @@ function EsimList() {
       <View style={{ gap: 10 }}>
         <EmptyState
           icon={Smartphone}
-          title="No eSIMs yet"
-          subtitle="Pull down to refresh, or buy a data plan from the eSIM store to get connected."
+          title={tr('manage.noEsimsTitle')}
+          subtitle={tr('manage.noEsimsSub')}
         />
         <HistoryCard />
       </View>
@@ -117,7 +120,7 @@ function EsimList() {
         const frac = planMb > 0 ? e.remainingMb / planMb : 0;
         const barColor = e.status === 'active' ? t.success : e.status === 'expired' ? t.danger : t.warning;
         const pillKind = e.status === 'provider_waiting' ? 'inactive' : e.status;
-        const pillLabel = e.status === 'provider_waiting' ? 'Provider waiting' : undefined;
+        const pillLabel = e.status === 'provider_waiting' ? tr('status.provider_waiting') : undefined;
         const hasUsageRow = e.planGb > 0 && (e.status === 'active' || e.status === 'provider_waiting');
         return (
           <Card key={e.id} onPress={() => router.push(`/esim/${e.id}`)}>
@@ -144,7 +147,7 @@ function EsimList() {
                     {formatRemainingData(e.remainingMb, e.unlimited)}
                   </Text>
                   <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                    {e.status === 'active' ? formatTimeRemaining(e.hoursLeft) : 'Waiting for first connection'}
+                    {e.status === 'active' ? formatTimeRemaining(e.hoursLeft) : tr('manage.waitingFirstConnection')}
                   </Text>
                 </View>
               </View>
@@ -158,7 +161,7 @@ function EsimList() {
               // confuses users about "did I install or not?".
               <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                  Tap to install →
+                  {tr('manage.tapToInstall')}
                 </Text>
               </View>
             )}
@@ -172,11 +175,12 @@ function EsimList() {
 
 function ComingSoon({ label }: { label: string }) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   return (
     <View style={{ paddingVertical: 48, alignItems: 'center', gap: 8 }}>
-      <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Coming soon</Text>
+      <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('manage.comingSoonTitle')}</Text>
       <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center', maxWidth: 320 }}>
-        {label} booking isn't available yet. eSIMs are live today — check the eSIM store.
+        {tr('manage.comingSoonBody', { label })}
       </Text>
     </View>
   );
@@ -185,16 +189,17 @@ function ComingSoon({ label }: { label: string }) {
 export default function ManageService() {
   const { service } = useLocalSearchParams<{ service: string }>();
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const svc = SERVICES.find((s) => s.id === service);
 
   const title =
-    service === 'esim' ? 'My eSIMs'
-    : service === 'hotels' ? 'My Stays'
-    : service === 'flights' ? 'My Flights'
-    : service === 'transfers' ? 'My Transfers'
-    : service === 'cars' ? 'My Cars'
-    : 'My Bookings';
+    service === 'esim' ? tr('bookings.myEsims')
+    : service === 'hotels' ? tr('bookings.myStays')
+    : service === 'flights' ? tr('manage.myFlights')
+    : service === 'transfers' ? tr('manage.myTransfers')
+    : service === 'cars' ? tr('manage.myCars')
+    : tr('manage.myBookings');
 
   // For the eSIM tab we own a single refresh affordance (pull-to-refresh +
   // initial load) so the user can force-resync status/usage from the
@@ -238,7 +243,7 @@ export default function ManageService() {
             style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: svc.color }}
           >
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
-              Book new
+              {tr('manage.bookNew')}
             </Text>
           </Pressable>
         )}

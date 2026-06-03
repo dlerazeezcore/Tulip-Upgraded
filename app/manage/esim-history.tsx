@@ -2,6 +2,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Archive } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { formatEsimDataLabel, useEsimStore } from '@/state/esimStore';
@@ -19,6 +20,7 @@ import { EmptyState } from '@/components/EmptyState';
  */
 export default function EsimHistoryScreen() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const history = useEsimStore((s) => s.history);
   const loading = useEsimStore((s) => s.historyLoading);
@@ -40,7 +42,7 @@ export default function EsimHistoryScreen() {
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Archive size={20} color={t.fgMuted} strokeWidth={2} />
           <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-            History
+            {tr('manage.history')}
           </Text>
         </View>
       </View>
@@ -56,8 +58,8 @@ export default function EsimHistoryScreen() {
         ) : history.length === 0 ? (
           <EmptyState
             icon={Archive}
-            title="No past eSIMs yet"
-            subtitle="Cancelled, refunded, and expired bundles will appear here for your records."
+            title={tr('manage.historyEmptyTitle')}
+            subtitle={tr('manage.historyEmptySub')}
           />
         ) : (
           history.map((e) => (
