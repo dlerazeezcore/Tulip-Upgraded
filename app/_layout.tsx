@@ -27,6 +27,7 @@ import { useLocaleStore } from '@/state/localeStore';
 import { useDeviceStore } from '@/state/deviceStore';
 import { configureForegroundPushHandler, configureNotificationHandler, registerDevice } from '@/services/push';
 import { UpdateAvailableModal } from '@/components/UpdateAvailableModal';
+import { applySystemNavBar } from '@/lib/systemNavBar';
 import '@/i18n';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -39,6 +40,12 @@ configureForegroundPushHandler();
 
 function ThemedStack() {
   const t = useTheme();
+  // Keep the Android system navigation bar opaque + theme-coloured so it
+  // reserves its own space and never overlays the bottom tab bar. Re-applies
+  // on light/dark change. No-op on iOS/web.
+  useEffect(() => {
+    applySystemNavBar(t);
+  }, [t.mode, t.bgElev]);
   return (
     <>
       <StatusBar style={t.mode === 'dark' ? 'light' : 'dark'} />
