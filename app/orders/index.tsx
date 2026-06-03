@@ -2,6 +2,7 @@ import React, { useEffect, useMemo } from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Receipt, Globe } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
@@ -19,13 +20,14 @@ function monthLabel(iso: string) {
 function dayLabel(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
-function orderTitle(o: OrderSummary): string {
-  const it = o.items[0];
-  return it?.countryName ? `${it.countryName} eSIM` : 'eSIM order';
-}
 
 export default function Orders() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
+  const orderTitle = (o: OrderSummary): string => {
+    const it = o.items[0];
+    return it?.countryName ? tr('orders.countryEsim', { country: it.countryName }) : tr('orders.esimOrder');
+  };
   const router = useRouter();
   const orders = useOrderStore((s) => s.orders);
   const loading = useOrderStore((s) => s.loading);
@@ -57,7 +59,7 @@ export default function Orders() {
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-          Order history
+          {tr('orders.title')}
         </Text>
       </View>
 
@@ -69,8 +71,8 @@ export default function Orders() {
             <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
               <Receipt size={30} color={t.fgMuted} strokeWidth={2} />
             </View>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>No orders yet</Text>
-            <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center' }}>Your purchases will appear here.</Text>
+            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{tr('orders.noOrdersTitle')}</Text>
+            <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center' }}>{tr('orders.noOrdersSub')}</Text>
           </View>
         ) : (
           groups.map((g) => (
@@ -107,7 +109,7 @@ export default function Orders() {
                         <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
                           {formatIqd(o.totalMinor ?? 0)}
                         </Text>
-                        <StatusPill kind={completed ? 'completed' : 'upcoming'} label={String(o.status).toLowerCase()} />
+                        <StatusPill kind={completed ? 'completed' : 'upcoming'} label={tr(`status.${String(o.status).toLowerCase()}`, { defaultValue: String(o.status) })} />
                       </View>
                     </Pressable>
                   );

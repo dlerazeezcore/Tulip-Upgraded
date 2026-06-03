@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, Modal, Alert } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Plus, Pencil, Trash2, User, X } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -12,6 +13,7 @@ const RELATIONS = ['Primary', 'Spouse', 'Child', 'Parent', 'Other'];
 
 export default function Travelers() {
   const t = useTheme();
+  const { t: tt } = useTranslation();
   const router = useRouter();
   const isWide = useIsWideWeb();
   const { travelers, add, update, remove, refresh } = useTravelersStore();
@@ -46,15 +48,15 @@ export default function Travelers() {
       else if (editing) await update(editing.id, { name: name.trim(), relation, dob: dob.trim() });
       setEditing(null);
     } catch (e: any) {
-      Alert.alert('Error', e?.message || 'Could not save traveler');
+      Alert.alert(tt('common.error'), e?.message || tt('travelers.couldNotSave'));
     } finally {
       setBusy(false);
     }
   };
   const onRemove = (id: number) => {
-    Alert.alert('Remove traveler', 'Remove this traveler?', [
-      { text: 'Cancel', style: 'cancel' },
-      { text: 'Remove', style: 'destructive', onPress: () => { remove(id).catch((e: any) => Alert.alert('Error', e?.message || 'Failed')); } },
+    Alert.alert(tt('travelers.removeTitle'), tt('travelers.removeBody'), [
+      { text: tt('common.cancel'), style: 'cancel' },
+      { text: tt('travelers.remove'), style: 'destructive', onPress: () => { remove(id).catch((e: any) => Alert.alert(tt('common.error'), e?.message || tt('travelers.failed'))); } },
     ]);
   };
 
@@ -80,14 +82,14 @@ export default function Travelers() {
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-          Saved travelers
+          {tt('travelers.title')}
         </Text>
         <Pressable
           onPress={openNew}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: t.primary }}
         >
           <Plus size={14} color="#fff" strokeWidth={2.6} />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>Add</Text>
+          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>{tt('travelers.add')}</Text>
         </Pressable>
       </View>
 
@@ -98,9 +100,9 @@ export default function Travelers() {
             <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
               <User size={30} color={t.fgMuted} />
             </View>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>No travelers yet</Text>
-            <Text style={{ fontSize: 13, color: t.fgMuted }}>Add travelers to speed up checkout.</Text>
-            <PrimaryButton label="Add traveler" icon={<Plus size={15} color="#fff" strokeWidth={2.4} />} onPress={openNew} />
+            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{tt('travelers.noTravelersTitle')}</Text>
+            <Text style={{ fontSize: 13, color: t.fgMuted }}>{tt('travelers.noTravelersSub')}</Text>
+            <PrimaryButton label={tt('travelers.addTraveler')} icon={<Plus size={15} color="#fff" strokeWidth={2.4} />} onPress={openNew} />
           </View>
         ) : (
           travelers.map((tr) => (
@@ -126,7 +128,7 @@ export default function Travelers() {
               <View style={{ flex: 1 }}>
                 <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 15, color: t.fg }}>{tr.name}</Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                  {tr.relation}{tr.dob ? ` · ${tr.dob}` : ''}
+                  {tt(`travelers.relations.${tr.relation}`, { defaultValue: tr.relation })}{tr.dob ? ` · ${tr.dob}` : ''}
                 </Text>
               </View>
               <Pressable onPress={() => openEdit(tr)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
@@ -148,7 +150,7 @@ export default function Travelers() {
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
-                {editing === 'new' ? 'Add traveler' : 'Edit traveler'}
+                {editing === 'new' ? tt('travelers.addTraveler') : tt('travelers.editTraveler')}
               </Text>
               <Pressable onPress={() => setEditing(null)}>
                 <X size={20} color={t.fgMuted} />
@@ -156,12 +158,12 @@ export default function Travelers() {
             </View>
 
             <View style={{ gap: 6 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Full name</Text>
-              <TextInput value={name} onChangeText={setName} placeholder="e.g. Jane Olsen" placeholderTextColor={t.fgFaint} style={inputStyle} />
+              <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tt('travelers.fullName')}</Text>
+              <TextInput value={name} onChangeText={setName} placeholder={tt('travelers.namePlaceholder')} placeholderTextColor={t.fgFaint} style={inputStyle} />
             </View>
 
             <View style={{ gap: 6 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Relation</Text>
+              <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tt('travelers.relation')}</Text>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
                 {RELATIONS.map((r) => {
                   const on = r === relation;
@@ -171,7 +173,7 @@ export default function Travelers() {
                       onPress={() => setRelation(r)}
                       style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}
                     >
-                      <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? '#fff' : t.fgMuted }}>{r}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? '#fff' : t.fgMuted }}>{tt(`travelers.relations.${r}`, { defaultValue: r })}</Text>
                     </Pressable>
                   );
                 })}
@@ -179,11 +181,11 @@ export default function Travelers() {
             </View>
 
             <View style={{ gap: 6 }}>
-              <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>Date of birth</Text>
-              <TextInput value={dob} onChangeText={setDob} placeholder="YYYY-MM-DD" placeholderTextColor={t.fgFaint} style={inputStyle} />
+              <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tt('travelers.dob')}</Text>
+              <TextInput value={dob} onChangeText={setDob} placeholder={tt('travelers.dobPlaceholder')} placeholderTextColor={t.fgFaint} style={inputStyle} />
             </View>
 
-            <PrimaryButton label={busy ? 'Saving…' : editing === 'new' ? 'Add traveler' : 'Save changes'} onPress={save} style={{ marginTop: 4 }} />
+            <PrimaryButton label={busy ? tt('travelers.saving') : editing === 'new' ? tt('travelers.addTraveler') : tt('travelers.saveChanges')} onPress={save} style={{ marginTop: 4 }} />
           </Pressable>
         </Pressable>
       </Modal>
