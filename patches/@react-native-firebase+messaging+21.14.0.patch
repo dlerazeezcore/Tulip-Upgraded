@@ -1,0 +1,21 @@
+diff --git a/node_modules/@react-native-firebase/messaging/android/src/main/AndroidManifest.xml b/node_modules/@react-native-firebase/messaging/android/src/main/AndroidManifest.xml
+index 60f0208..bd5c55b 100644
+--- a/node_modules/@react-native-firebase/messaging/android/src/main/AndroidManifest.xml
++++ b/node_modules/@react-native-firebase/messaging/android/src/main/AndroidManifest.xml
+@@ -33,11 +33,10 @@
+     <meta-data
+       android:name="firebase_messaging_notification_delegation_enabled"
+       android:value="${firebaseJsonNotificationDelegationEnabled}"/>
+-    <meta-data
+-      android:name="com.google.firebase.messaging.default_notification_channel_id"
+-      android:value="${firebaseJsonNotificationChannelId}" />
+-    <meta-data
+-      android:name="com.google.firebase.messaging.default_notification_color"
+-      android:resource="${firebaseJsonNotificationColor}" />
++    <!-- default_notification_channel_id / default_notification_color removed via
++         patch-package: the app declares these through expo-notifications (brand
++         color + "general" channel). Keeping RNFirebase's empty/white defaults too
++         caused a duplicate-meta-data manifest merge failure
++         (:app:processReleaseMainManifest). The app's values now stand alone. -->
+   </application>
+ </manifest>
