@@ -1,23 +1,14 @@
-import React, { useState } from 'react';
-import { Alert, ScrollView, View, Text, Pressable, Linking } from 'react-native';
+// THIN UI — wiring lives in src/screens/esim-store/useCheckout.ts.
+import React from 'react';
+import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Check, Lock, Landmark, Gift, Globe } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { EsimSupportBanner } from '@/components/EsimSupportBanner';
-import { useIqdMoney, useIqdAmount } from '@/lib/pricing';
-import { useEsimCart } from '@/state/esimCart';
-import { useAuthStore } from '@/state/authStore';
-import { useEsimStore } from '@/state/esimStore';
-import { useOrderStore } from '@/state/orderStore';
-import { useDeviceStore } from '@/state/deviceStore';
-import { useIsWideWeb } from '@/lib/responsive';
-import { PAYMENT_METHODS } from '@/data/esim';
-import { createManagedOrder } from '@/services/esim';
-import { createFibPayment, pollFibPayment, isPaid, fibOutcome } from '@/services/payments';
+import { useCheckout } from '@/screens/esim-store/useCheckout';
 
 // Representative flag for region eSIMs (mock).
 const REGION_FLAG: Record<string, string> = {
@@ -45,34 +36,13 @@ function SummaryRow({ label, value, strong }: { label: string; value: string; st
 export default function Checkout() {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  const money = useIqdMoney();
-  const iqdAmount = useIqdAmount();
-  const { place, bundle, clear } = useEsimCart();
-  const user = useAuthStore((s) => s.user);
-  const refreshEsims = useEsimStore((s) => s.refresh);
-  const refreshOrders = useOrderStore((s) => s.refresh);
-  const isWide = useIsWideWeb();
-  const esimSupport = useDeviceStore((s) => s.esimSupport);
-  // Loyalty is a comped method reserved for loyalty (VIP/staff) accounts. Real
-  // customers only see FIB, and FIB is the default for everyone so a normal
-  // user can never accidentally check out for free. The backend independently
-  // rejects paymentMethod=loyalty from a non-loyalty token.
-  const isLoyalty = !!user?.isLoyalty;
-  const availableMethods = PAYMENT_METHODS.filter((p) => p.id !== 'loyalty' || isLoyalty);
-  const [method, setMethod] = useState<'fib' | 'loyalty'>('fib');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const goBack = () => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/esim-store');
-  };
+  const vm = useCheckout();
+  const { place, bundle, user } = vm;
 
   const header = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
       <Pressable
-        onPress={goBack}
+        onPress={vm.goBack}
         style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
       >
         <ChevronLeft size={18} color={t.fg} />
@@ -90,14 +60,14 @@ export default function Checkout() {
         {header}
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
           <Text style={{ color: t.fgMuted }}>{tr('checkout.nothingSelected')}</Text>
-          <PrimaryButton label={tr('checkout.browseEsims')} onPress={() => router.replace('/esim-store')} />
+          <PrimaryButton label={tr('checkout.browseEsims')} onPress={vm.browseEsims} />
         </View>
       </SafeAreaView>
     );
   }
 
   const flagIso = place.iso ?? REGION_FLAG[place.id];
-  const planLabel = bundle.type === 'unlimited' ? tr('checkout.unlimitedData') : `${bundle.gb} GB`;
+  const planLabel = vm.planLabel;
 
   // Login gate.
   if (!user) {
@@ -117,107 +87,23 @@ export default function Checkout() {
             </Text>
           </View>
           <View style={{ flexDirection: 'row', gap: 10, width: '100%', maxWidth: 360 }}>
-            <PrimaryButton label={tr('common.signIn')} onPress={() => router.push('/auth/sign-in?returnTo=checkout')} style={{ flex: 1 }} />
-            <PrimaryButton label={tr('common.signUp')} variant="ghost" onPress={() => router.push('/auth/sign-up?returnTo=checkout')} style={{ flex: 1 }} />
+            <PrimaryButton label={tr('common.signIn')} onPress={vm.goSignIn} style={{ flex: 1 }} />
+            <PrimaryButton label={tr('common.signUp')} variant="ghost" onPress={vm.goSignUp} style={{ flex: 1 }} />
           </View>
         </View>
       </SafeAreaView>
     );
   }
 
-  const placeOrder = async (payment: { method: 'loyalty' | 'fib'; status?: string; transactionId?: string }) => {
-    const providerPriceMinor = bundle.providerPriceMinor ?? Math.round(bundle.usd * 10000);
-    await createManagedOrder({
-      transactionId: `APP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      packageCode: bundle.packageCode!,
-      periodNum: bundle.periodNum ?? bundle.days,
-      providerPriceMinor,
-      user: { phone: user!.phone, name: user!.name, email: user!.email ?? null },
-      countryCode: place.iso,
-      countryName: place.name,
-      packageName: `${place.name} ${planLabel} · ${bundle.days}d`,
-      currencyCode: 'IQD',
-      providerCurrencyCode: 'USD',
-      paymentMethod: payment.method,
-      paymentStatus: payment.status,
-      paymentTransactionId: payment.transactionId,
-      salePriceMinor: iqdAmount(bundle.usd),
-    });
-    clear();
-    await refreshEsims();
-    await refreshOrders();
-    router.replace('/manage/esim');
-  };
-
-  const performPay = async () => {
-    setBusy(true);
-    try {
-      if (method === 'loyalty') {
-        await placeOrder({ method: 'loyalty', status: 'paid' });
-        return;
-      }
-
-      // FIB: create payment, open the FIB app, poll for confirmation, then book.
-      const amountIqd = iqdAmount(bundle.usd);
-      const payment = await createFibPayment({
-        amount: amountIqd,
-        currency: 'IQD',
-        description: `${place.name} eSIM`,
-        metadata: { packageCode: bundle.packageCode, place: place.name },
-      });
-      if (payment.redirectUrl) {
-        Linking.openURL(payment.redirectUrl).catch(() => {});
-      }
-      const final = await pollFibPayment(payment.paymentId, { timeoutMs: 180000 });
-      if (isPaid(final)) {
-        await placeOrder({ method: 'fib', status: 'paid', transactionId: payment.paymentId });
-      } else {
-        // Distinguish cancel / decline / expiry / timeout so the user knows
-        // whether to retry or just wait for the eSIM to appear.
-        const oc = fibOutcome(final);
-        setError(tr(`checkout.fib${oc.charAt(0).toUpperCase()}${oc.slice(1)}`));
-      }
-    } catch (e: any) {
-      setError(e?.message || tr('checkout.failed'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onPay = () => {
-    if (busy) return;
-    setError(null);
-    if (!bundle.packageCode) {
-      setError(tr('checkout.noPackage'));
-      return;
-    }
-    // If the OS told us this device has no eSIM hardware, make the user
-    // acknowledge that the eSIM won't install on this phone before they pay.
-    // The Share QR feature from the install screen makes "buying for another
-    // person's phone" a real use case, so we don't hard-block — confirm.
-    if (esimSupport === 'unsupported') {
-      Alert.alert(
-        tr('checkout.unsupportedTitle'),
-        tr('checkout.unsupportedBody'),
-        [
-          { text: tr('common.cancel'), style: 'cancel' },
-          { text: tr('checkout.continueAnyway'), style: 'destructive', onPress: performPay },
-        ],
-      );
-      return;
-    }
-    performPay();
-  };
-
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       {header}
-      <ScrollView contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, maxWidth: isWide ? 1000 : 720, width: '100%', alignSelf: 'center' }}>
+      <ScrollView contentContainerStyle={{ padding: vm.isWide ? 28 : 20, paddingBottom: 40, maxWidth: vm.isWide ? 1000 : 720, width: '100%', alignSelf: 'center' }}>
         {/* eSIM hardware advisory — only shown when the OS definitively says no. */}
         <View style={{ marginBottom: 16 }}>
           <EsimSupportBanner message={tr('checkout.bannerUnsupported')} />
         </View>
-        <View style={{ flexDirection: isWide ? 'row' : 'column', gap: isWide ? 24 : 16, alignItems: 'flex-start' }}>
+        <View style={{ flexDirection: vm.isWide ? 'row' : 'column', gap: vm.isWide ? 24 : 16, alignItems: 'flex-start' }}>
           {/* Left: item + payment */}
           <View style={{ flex: 1, gap: 16, width: '100%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
@@ -226,7 +112,7 @@ export default function Checkout() {
                 <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>{place.name}</Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{planLabel} · {bundle.days} {tr('checkout.days')}</Text>
               </View>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(bundle.usd)}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{vm.money(bundle.usd)}</Text>
             </View>
 
             <View>
@@ -234,13 +120,13 @@ export default function Checkout() {
                 {tr('checkout.paymentMethod')}
               </Text>
               <View style={{ gap: 10 }}>
-                {availableMethods.map((p) => {
-                  const on = p.id === method;
+                {vm.availableMethods.map((p) => {
+                  const on = p.id === vm.method;
                   const Icon = p.id === 'fib' ? Landmark : Gift;
                   return (
                     <Pressable
                       key={p.id}
-                      onPress={() => setMethod(p.id)}
+                      onPress={() => vm.setMethod(p.id)}
                       style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.bgElev, borderWidth: 1.5, borderColor: on ? t.primary : t.border }}
                     >
                       <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
@@ -261,27 +147,27 @@ export default function Checkout() {
           </View>
 
           {/* Right: summary + pay */}
-          <View style={{ width: isWide ? 360 : '100%', gap: 16 }}>
+          <View style={{ width: vm.isWide ? 360 : '100%', gap: 16 }}>
             <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>
                 {tr('checkout.orderSummary')}
               </Text>
-              <SummaryRow label={tr('checkout.subtotal')} value={money(bundle.usd)} />
-              <SummaryRow label={tr('checkout.taxesFees')} value={money(0)} />
+              <SummaryRow label={tr('checkout.subtotal')} value={vm.money(bundle.usd)} />
+              <SummaryRow label={tr('checkout.taxesFees')} value={vm.money(0)} />
               <View style={{ height: 1, backgroundColor: t.border, marginVertical: 4 }} />
-              <SummaryRow label={tr('checkout.total')} value={money(bundle.usd)} strong />
+              <SummaryRow label={tr('checkout.total')} value={vm.money(bundle.usd)} strong />
             </View>
 
-            {error && (
-              <Text style={{ fontSize: 12, color: t.danger, textAlign: 'center' }}>{error}</Text>
+            {vm.error && (
+              <Text style={{ fontSize: 12, color: t.danger, textAlign: 'center' }}>{vm.error}</Text>
             )}
             <PrimaryButton
-              label={busy ? tr('checkout.processing') : tr('checkout.pay', { amount: money(bundle.usd) })}
+              label={vm.busy ? tr('checkout.processing') : tr('checkout.pay', { amount: vm.money(bundle.usd) })}
               icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}
-              onPress={onPay}
+              onPress={vm.onPay}
             />
             <Text style={{ fontSize: 11, color: t.fgFaint, textAlign: 'center' }}>
-              {method === 'fib' ? tr('checkout.fibHint') : tr('checkout.loyaltyHint')}
+              {vm.method === 'fib' ? tr('checkout.fibHint') : tr('checkout.loyaltyHint')}
             </Text>
           </View>
         </View>

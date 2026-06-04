@@ -147,7 +147,7 @@ export default function AdminOrders() {
       {refreshSummary && (
         <View style={{ marginHorizontal: 20, marginTop: 4, padding: 10, borderRadius: 12, backgroundColor: refreshSummary.errorCount > 0 ? 'rgba(245,158,11,0.10)' : 'rgba(22,163,74,0.10)', borderWidth: 1, borderColor: refreshSummary.errorCount > 0 ? 'rgba(245,158,11,0.35)' : 'rgba(22,163,74,0.35)', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {refreshSummary.errorCount > 0 ? (
-            <AlertCircle size={14} color={t.warning ?? '#F59E0B'} />
+            <AlertCircle size={14} color={t.warning} />
           ) : (
             <Check size={14} color={t.success} strokeWidth={2.5} />
           )}

@@ -1,7 +1,7 @@
-import React, { useEffect } from 'react';
+// THIN UI — wiring lives in src/screens/search/useServiceSearch.ts.
+import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import {
   ArrowUpDown,
   Calendar,
@@ -13,9 +13,8 @@ import {
 } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { MultiServiceTabs } from '@/components/MultiServiceTabs';
-import { SERVICES, Service } from '@/data/services';
-import { useSearchStore } from '@/state/searchStore';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { useServiceSearch } from '@/screens/search/useServiceSearch';
 
 const TRIP_TYPES = [
   { id: 'roundtrip', label: 'Round trip' },
@@ -82,61 +81,9 @@ function Stepper({
 }
 
 export default function SearchScreen() {
-  const { service } = useLocalSearchParams<{ service: string }>();
   const t = useTheme();
-  const router = useRouter();
-  const {
-    activeService,
-    setActive,
-    from,
-    to,
-    setFrom,
-    setTo,
-    swap,
-    departDate,
-    returnDate,
-    travelers,
-    setTravelers,
-    rooms,
-    setRooms,
-    tripType,
-    setTripType,
-  } = useSearchStore();
-
-  // The ROUTE PARAM is the source of truth for which service this screen
-  // shows. Previously we rendered from the global store, which could be stale
-  // when Expo Router reused this dynamic [service] screen — so opening Hotels
-  // (or any service) from the Services tab showed the Flights form. Deriving
-  // `svc` from the param fixes that regardless of store/effect timing.
-  const routeServiceId = SERVICES.some((s) => s.id === service)
-    ? (service as Service['id'])
-    : null;
-  const svc = SERVICES.find((s) => s.id === (routeServiceId ?? activeService)) ?? SERVICES[0];
-
-  // Keep the store in sync so MultiServiceTabs highlights the right tab.
-  useEffect(() => {
-    if (routeServiceId && routeServiceId !== activeService) {
-      setActive(routeServiceId);
-    }
-  }, [routeServiceId, activeService, setActive]);
-
-  // Switching tabs updates the URL param so the screen re-derives `svc`
-  // reliably (esim jumps to its dedicated store).
-  const onSelectService = (id: Service['id']) => {
-    setActive(id);
-    if (id === 'esim') {
-      router.replace('/esim-store');
-      return;
-    }
-    router.setParams({ service: id });
-  };
-
-  const onSearch = () => {
-    if (svc.id === 'esim') router.replace('/esim-store');
-    else if (svc.id === 'hotels') router.push('/results/hotels');
-    else if (svc.id === 'flights') router.push('/results/flights');
-    else router.push('/results/flights'); // transfers/cars demo → flights
-  };
+  const vm = useServiceSearch();
+  const svc = vm.svc;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -150,7 +97,7 @@ export default function SearchScreen() {
         }}
       >
         <Pressable
-          onPress={() => router.back()}
+          onPress={vm.goBack}
           style={{
             width: 36,
             height: 36,
@@ -177,16 +124,16 @@ export default function SearchScreen() {
           alignSelf: 'center',
         }}
       >
-        <MultiServiceTabs onSelect={onSelectService} />
+        <MultiServiceTabs onSelect={vm.onSelectService} />
 
         {svc.id === 'flights' && (
           <View style={{ flexDirection: 'row', gap: 6 }}>
             {TRIP_TYPES.map((tt) => {
-              const on = tt.id === tripType;
+              const on = tt.id === vm.tripType;
               return (
                 <Pressable
                   key={tt.id}
-                  onPress={() => setTripType(tt.id)}
+                  onPress={() => vm.setTripType(tt.id)}
                   style={{
                     paddingVertical: 8,
                     paddingHorizontal: 14,
@@ -226,8 +173,8 @@ export default function SearchScreen() {
                 {svc.id === 'hotels' ? 'Destination' : 'From'}
               </Text>
               <TextInput
-                value={from}
-                onChangeText={setFrom}
+                value={vm.from}
+                onChangeText={vm.setFrom}
                 placeholder={svc.searchHint}
                 placeholderTextColor={t.fgFaint}
                 style={{ fontSize: 15, fontFamily: t.font.bodyMedium, color: t.fg, marginTop: 4, paddingVertical: 2 }}
@@ -235,7 +182,7 @@ export default function SearchScreen() {
             </View>
             {svc.id !== 'hotels' && (
               <Pressable
-                onPress={swap}
+                onPress={vm.swap}
                 style={{
                   width: 38,
                   height: 38,
@@ -256,8 +203,8 @@ export default function SearchScreen() {
                 To
               </Text>
               <TextInput
-                value={to}
-                onChangeText={setTo}
+                value={vm.to}
+                onChangeText={vm.setTo}
                 placeholder="Destination"
                 placeholderTextColor={t.fgFaint}
                 style={{ fontSize: 15, fontFamily: t.font.bodyMedium, color: t.fg, marginTop: 4, paddingVertical: 2 }}
@@ -284,11 +231,11 @@ export default function SearchScreen() {
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
               <Calendar size={14} color={t.fgMuted} />
               <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 15, color: t.fg }}>
-                {departDate}
+                {vm.departDate}
               </Text>
             </View>
           </View>
-          {(svc.id !== 'flights' || tripType === 'roundtrip') && (
+          {(svc.id !== 'flights' || vm.tripType === 'roundtrip') && (
             <View
               style={{
                 flex: 1,
@@ -305,7 +252,7 @@ export default function SearchScreen() {
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                 <Calendar size={14} color={t.fgMuted} />
                 <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 15, color: t.fg }}>
-                  {returnDate}
+                  {vm.returnDate}
                 </Text>
               </View>
             </View>
@@ -316,29 +263,29 @@ export default function SearchScreen() {
         {svc.id === 'hotels' && (
           <Stepper
             label="Rooms"
-            value={rooms}
-            unit={rooms === 1 ? 'room' : 'rooms'}
-            onDec={() => setRooms(rooms - 1)}
-            onInc={() => setRooms(rooms + 1)}
+            value={vm.rooms}
+            unit={vm.rooms === 1 ? 'room' : 'rooms'}
+            onDec={vm.decRooms}
+            onInc={vm.incRooms}
           />
         )}
 
         {/* Guests / Travelers */}
         <Stepper
           label={svc.id === 'hotels' ? 'Guests' : 'Travelers'}
-          value={travelers}
+          value={vm.travelers}
           unit={
             svc.id === 'hotels'
-              ? travelers === 1 ? 'guest' : 'guests'
-              : travelers === 1 ? 'adult' : 'adults'
+              ? vm.travelers === 1 ? 'guest' : 'guests'
+              : vm.travelers === 1 ? 'adult' : 'adults'
           }
-          onDec={() => setTravelers(travelers - 1)}
-          onInc={() => setTravelers(travelers + 1)}
+          onDec={vm.decTravelers}
+          onInc={vm.incTravelers}
         />
 
         <PrimaryButton
           label="Search"
-          onPress={onSearch}
+          onPress={vm.onSearch}
           icon={<SearchIcon size={16} color="#fff" strokeWidth={2.2} />}
           style={{ marginTop: 6 }}
         />

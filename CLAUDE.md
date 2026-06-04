@@ -1,74 +1,53 @@
-# Tulip Booking — codebase conventions
+# Tulip Booking — Project Conventions
 
-## Thin UI, separate wiring (mandatory for new code)
+Workspace with two independently-versioned apps:
+- `tulip-booking/` — Expo / React Native (+ Web), TypeScript, expo-router, zustand, i18n.
+- `Backend/` — FastAPI + SQLAlchemy + Alembic, Supabase/Postgres, eSIM / FIB / Twilio / Firebase / WINGS integrations.
 
-Every screen and component is split into two files:
+> This file is duplicated in both repos so the conventions travel with whichever repo you clone.
 
-- **Thin UI file** — JSX only. No `useState` for business data, no API calls, no router pushes, no derived computation. It pulls a single hook for everything it needs and renders. Target: ~50 lines.
-- **Sibling wiring file** — a hook that owns state, API calls, navigation, validation, error handling, toasts. Returns a typed view-model the UI destructures.
-
-### Where each lives
+## Frontend — thin UI + separate wiring (mandatory)
+Every screen and component is TWO files:
+- **Thin UI** (`.tsx`) — JSX only. No business `useState`, no API calls, no router pushes, no derived computation. Pulls ONE hook and renders. Target ~50 lines.
+- **Wiring hook** — owns state, API calls, navigation, validation, errors, toasts. Returns a typed view-model the UI destructures.
 
 | Kind | Thin UI | Wiring |
 |---|---|---|
-| Expo Router screen | `app/<route>/<screen>.tsx` | `src/screens/<area>/use<Screen>.ts` |
+| Screen | `app/<route>/<screen>.tsx` | `src/screens/<area>/use<Screen>.ts` |
 | Component | `src/components/<Foo>.tsx` | `src/components/use<Foo>.ts` (sibling) |
 | Cross-screen state | — | `src/state/<thing>Store.ts` (zustand) |
 | Network | — | `src/services/<domain>.ts` |
 | Pure transforms | — | `src/lib/<thing>.ts` |
-| Static data | — | `src/data/<thing>.ts` |
+| Static/mock data | — | `src/data/<thing>.ts` |
 
-### Example — screen
+Example: `app/(tabs)/profile.tsx` is JSX-only and pulls `src/screens/profile/useProfile.ts`, which owns all state/API/navigation.
 
-```tsx
-// app/admin/notifications/update.tsx — THIN UI ONLY
-import { View, Text, Pressable } from 'react-native';
-import { useUpdateNotification } from '@/screens/admin/notifications/useUpdateNotification';
+## Backend — one file per domain (mandatory)
+Each domain is a SINGLE self-contained module (`auth.py`, `admin.py`, `users.py`, `esim_access_api.py`, `fib_payment_api.py`, `push_notification.py`, `supabase_store.py`, `wings_api.py`, …). Do NOT split a domain across files. Each exposes `register_<domain>_routes(app)` and is wired in `app.py`. Large files are expected — keep them navigable with clear section headers/comments.
 
-export default function UpdateNotificationScreen() {
-  const vm = useUpdateNotification();
-  return (
-    <View>
-      <Text>{vm.previewEn}</Text>
-      <Pressable onPress={vm.send} disabled={vm.sending}>
-        <Text>{vm.sending ? 'Sending…' : 'Send to all users'}</Text>
-      </Pressable>
-    </View>
-  );
-}
-```
+## Folder structure
+- **Frontend**: `app/` (expo-router routes) · `src/{components,screens,services,state,lib,data,theme,i18n}` · `assets/`.
+- **Backend**: flat domain modules at root · `alembic/` (migrations) · `tests/` (pytest) · `scripts/` · `docs/`.
 
-```ts
-// src/screens/admin/notifications/useUpdateNotification.ts — WIRING
-import { useState } from 'react';
-import { Alert } from 'react-native';
-import { sendAppUpdate } from '@/services/admin';
-import { APP_UPDATE_TEMPLATES } from '@/data/notificationTemplates';
+## Conventions we follow
+- **Secrets**: env-only via `Backend/config.py` (pydantic-settings, `.env`). NEVER hardcode tokens/keys/URLs in source.
+- **API (FE)**: always `apiFetch` (`src/lib/api.ts`). Never raw `fetch`.
+- **Theme**: use design tokens from `src/theme/tokens.ts` (`t.*`). No hardcoded hex. Support light/dark.
+- **i18n**: locales `en` / `ar` / `ku`; `ar` + `ku` are RTL. Use `useTranslation()` / `useLocaleStore`. No hardcoded user-facing strings.
+- **Auth-gated routes**: `useAuthStore((s) => s.user)`; admin via `s.user?.isAdmin`.
+- **State**: zustand stores live in `src/state/`.
+- **Push**: Firebase FCM directly (native token via `getDevicePushTokenAsync()`, not Expo push). `push_devices.locale` is the source of truth; re-register the device on every language change.
+- **Tests**: backend `pytest` under `Backend/tests/`; keep green before merge.
 
-export function useUpdateNotification() {
-  const [sending, setSending] = useState(false);
-  const send = async () => {
-    setSending(true);
-    try { await sendAppUpdate({}); Alert.alert('Sent'); }
-    catch (e: any) { Alert.alert('Failed', e?.message); }
-    finally { setSending(false); }
-  };
-  return {
-    previewEn: APP_UPDATE_TEMPLATES.en.body,
-    sending,
-    send,
-  };
-}
-```
+## New pages & UI (mandatory)
+- **Localize everything**: every new page/screen ships in all 3 locales — `en`, `ar`, `ku` — with `ar` + `ku` verified in RTL. No English-only screens.
+- **Follow the established design**: reuse the initial design system — colors, spacing, radius, typography from `src/theme/tokens.ts` and the existing component patterns. No ad-hoc palettes or one-off layouts; new screens must match the existing look.
+- **HD only**: new UI must be high-fidelity — crisp vector/SVG or @2x/@3x raster assets (no blurry/upscaled images), spacing pinned to the token scale, correct light/dark variants. No placeholder-grade visuals in shipped screens.
 
-### Existing files are grandfathered, but…
+## CI/CD actions — do NOT break these
+Three GitHub Actions are the release pipeline. Any change or edit must keep all three green:
+1. **Android Build APK** — `tulip-booking/.github/workflows/android-build.yml`
+2. **Deploy web → GitHub Pages** — `tulip-booking/.github/workflows/deploy.yml`
+3. **iOS App Store Connect** — `tulip-booking/.github/workflows/ios-appstoreconnect.yml`
 
-Some existing screens (e.g. `app/(tabs)/index.tsx`) currently mix UI and wiring. Don't refactor them as part of unrelated work, but when you DO touch one, extract the wiring into a sibling hook.
-
-## Other conventions
-
-- **i18n**: 3 locales — `en`, `ar`, `ku`. `ar` and `ku` are RTL. Use `useTranslation()` or read `useLocaleStore`.
-- **Auth-gated routes**: check `useAuthStore((s) => s.user)`. Admin: `useAuthStore((s) => !!s.user?.isAdmin)`.
-- **API**: always via `apiFetch` in `src/lib/api.ts`. Never raw `fetch`.
-- **Push notifications**: backend uses Firebase Cloud Messaging directly (not Expo's push service). Token comes from `Notifications.getDevicePushTokenAsync()` (native FCM token), not `getExpoPushTokenAsync()`.
-- **Device locale**: source of truth for push language is `push_devices.locale` (per-device), with `app_users.preferred_language` as fallback. Re-register the device on every language change.
+Add any new checks (typecheck / tests) as SEPARATE jobs or workflows. Never modify these three in a way that alters or breaks their build/deploy behavior.

@@ -1,8 +1,10 @@
-# Tulip Booking — Travel Super App
+# Tulip Booking — Travel Super App (mobile + web)
 
-Expo (React Native + Web) prototype implementing the hero slice of the **Tulip Booking** travel super-app design (Flights · Hotels · eSIM · Transfers · Car Rentals — extensible).
+Expo (React Native + Web) app for the **Tulip Booking** travel super-app by Corevia Network:
+Flights · Hotels · eSIM · Transfers · Car Rentals — plus accounts, payments, push, and an admin console.
 
-Source design: `corevia-network-design-system` handoff bundle (Claude Design).
+Backed by the FastAPI service in [`../Backend`](../Backend). Codebase conventions live in the
+root [`CLAUDE.md`](../CLAUDE.md) (thin UI + separate wiring, design tokens, i18n, etc.).
 
 ## Running
 
@@ -11,49 +13,42 @@ npm install
 npm run web        # browser → http://localhost:8081
 npm run ios        # iOS simulator
 npm run android    # Android emulator
+npm run typecheck  # tsc --noEmit
 ```
 
-Press `i`/`a`/`w` from the Expo dev server menu to switch targets.
+The app calls the backend at `EXPO_PUBLIC_API_BASE_URL` (see `src/lib/config.ts`); it defaults
+to the hosted Corevia backend when that env var is unset.
 
-Type-check:
+## What's in the app
 
-```bash
-npm run typecheck
-```
+- **Home / Services / Search / Results** — flights & hotels search and results.
+- **eSIM store** — browse country/region plans, checkout, install (QR + usage), history.
+- **Accounts** — sign up / sign in / forgot password (phone + WhatsApp OTP via the backend).
+- **Payments** — FIB payment flow.
+- **Orders & Trips** — order list/detail; trip detail with status pills.
+- **Admin** — users, orders, currency, featured locations, and push notifications (custom / update / per-user / history).
+- **i18n** — English, Arabic, Kurdish (Arabic & Kurdish are RTL).
+- **Push** — Firebase Cloud Messaging (native device tokens).
+- **Theming** — light/dark via design tokens; toggle in Profile (persists in AsyncStorage).
 
-## Hero slice — 7 screens
+## Architecture
 
-1. **Home** — greeting, hero search with multi-service tabs, upcoming trip card, services grid, popular destinations
-2. **Services hub** — full 5-service grid + extensible "More coming soon" slot + bundle promo
-3. **Search** — service tabs, trip-type chips, from/to with swap, dates, traveler stepper
-4. **Flight results** — sort tabs, expandable fare-family cards (Light / Standard / Flex / Business)
-5. **Hotel results** — filter rail (price, stars, amenities), sortable hotel cards (filters work client-side)
-6. **Trip detail** — bookings across services with status pills
-7. **Profile** — user card, travelers, payment methods, preferences (theme toggle lives here)
+See the root [`CLAUDE.md`](../CLAUDE.md). In short:
 
-Plus a minimal **Inbox** placeholder.
+- `app/` — expo-router screens (thin UI).
+- `src/screens/<area>/use<Screen>.ts` — wiring hooks (state, API, navigation, validation).
+- `src/components/` — shared components · `src/services/` — network · `src/state/` — zustand stores
+  · `src/lib/` — helpers (incl. `api.ts` → `apiFetch`) · `src/data/` — static data
+  · `src/theme/` — design tokens · `src/i18n/` — locales.
 
-## What's interactive
+## CI / release
 
-- **Theme toggle** in Profile flips light ↔ dark across all screens; persists in AsyncStorage.
-- **Service tabs** on Home/Search select an active service; tile taps push to `/search/[service]`.
-- **Search forms** are controlled; submit pushes to `/results/flights` or `/results/hotels`.
-- **Hotel filters** (star rating + amenities) filter the result list immediately.
-- **Flight sort tabs** re-order results; cards expand to show fare families.
-- **Trip card** taps → `/trip/london-summer`.
-- **Bottom tabs** on mobile; **sidebar** on web ≥ 1024px.
+GitHub Actions:
 
-## What's not
+- **Typecheck** — `.github/workflows/check.yml` (`tsc --noEmit` on PRs).
+- **Android Build APK** — `.github/workflows/android-build.yml`.
+- **Deploy web → GitHub Pages** — `.github/workflows/deploy.yml` (serves https://tulipbookings.com).
+- **iOS App Store Connect** — `.github/workflows/ios-appstoreconnect.yml`.
 
-- No real backend, auth, or payments.
-- Date picker is non-interactive in this slice (shows preset dates from `searchStore`).
-- Inbox is a placeholder list.
-
-## Folder layout
-
-- `app/` — expo-router screens
-- `src/theme/` — JS-port of `tokens.css` + `ThemeContext`
-- `src/components/` — shared building blocks
-- `src/data/` — mock data (services, trips, hotels, flights, user)
-- `src/state/` — zustand stores (theme, search, filters)
-- `assets/` — Tulip logo SVG + PNG (from design bundle)
+Firebase client config (`google-services.json`, `GoogleService-Info.plist`) is committed
+intentionally — these are app-embedded client identifiers, not server secrets.

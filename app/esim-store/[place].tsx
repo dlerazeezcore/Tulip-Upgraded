@@ -199,9 +199,9 @@ export default function PlaceDetail() {
                       >
                         <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(16,185,129,0.12)', alignItems: 'center', justifyContent: 'center' }}>
                           {b.type === 'unlimited' ? (
-                            <InfinityIcon size={22} color="#10B981" strokeWidth={2.2} />
+                            <InfinityIcon size={22} color={t.accent.emerald} strokeWidth={2.2} />
                           ) : (
-                            <Text style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: '#10B981' }}>{b.gb}</Text>
+                            <Text style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: t.accent.emerald }}>{b.gb}</Text>
                           )}
                         </View>
                         <View style={{ flex: 1 }}>

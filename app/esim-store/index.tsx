@@ -10,13 +10,8 @@ import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
 import { Skeleton } from '@/components/Skeleton';
 
-// Distinct, vibrant gradients so the Regions grid looks polished without
-// needing a photo per region (the provider gives no region imagery).
-const REGION_GRADIENTS: [string, string][] = [
-  ['#1967D2', '#0B4FB0'], ['#10B981', '#047857'], ['#7C3AED', '#5B21B6'],
-  ['#F59E0B', '#B45309'], ['#EC4899', '#9D174D'], ['#0EA5E9', '#0369A1'],
-  ['#EF4444', '#991B1B'], ['#14B8A6', '#0F766E'],
-];
+// Region card gradients live in the design tokens (theme.gradients) — vibrant
+// by design so the Regions grid looks polished without a photo per region.
 import { useIsWideWeb } from '@/lib/responsive';
 import { getFeaturedLocations, getCountries, getRegions, cachedCountries, type LocationCountry, type ProviderRegion } from '@/services/esim';
 import type { FeaturedLocation } from '@/services/types';
@@ -113,7 +108,7 @@ export default function EsimStore() {
         <ChevronLeft size={18} color={t.fg} />
       </Pressable>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Globe size={20} color="#10B981" strokeWidth={2} />
+        <Globe size={20} color={t.accent.emerald} strokeWidth={2} />
         <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>{tr('esimStore.title')}</Text>
       </View>
     </View>
@@ -250,7 +245,7 @@ export default function EsimStore() {
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
               {regions.map((r, idx) => {
-                const g = REGION_GRADIENTS[idx % REGION_GRADIENTS.length];
+                const g = t.gradients[idx % t.gradients.length];
                 return (
                   <View key={r.code} style={{ width: isWide ? '33.333%' : '50%', padding: 5 }}>
                     <PressableScale
