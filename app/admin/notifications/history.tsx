@@ -10,7 +10,7 @@ import { useNotificationHistory } from '@/screens/admin/notifications/useNotific
 function statusColor(t: any, status: string): string {
   const s = status.toLowerCase();
   if (s === 'sent') return t.success;
-  if (s === 'partial') return t.warning ?? '#F59E0B';
+  if (s === 'partial') return t.warning;
   if (s === 'failed') return t.danger;
   if (s === 'dry_run') return t.fgMuted;
   return t.fgMuted;

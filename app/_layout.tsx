@@ -17,6 +17,7 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
+import { light } from '@/theme/tokens';
 import { useThemeStore } from '@/state/themeStore';
 import { useCurrencyStore } from '@/state/currencyStore';
 import { useAuthStore } from '@/state/authStore';
@@ -145,9 +146,10 @@ export default function RootLayout() {
   }, [ready]);
 
   if (!ready) {
+    // Pre-hydration splash: theme isn't resolved yet, so use light tokens.
     return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F9FAFB' }}>
-        <ActivityIndicator size="large" color="#1967D2" />
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: light.bg }}>
+        <ActivityIndicator size="large" color={light.primary} />
       </View>
     );
   }

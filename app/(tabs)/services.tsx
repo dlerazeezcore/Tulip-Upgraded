@@ -165,10 +165,10 @@ export default function Services() {
             <Star size={26} color="#fff" strokeWidth={2.2} fill="#fff" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: t.font.display, fontSize: 17, fontWeight: '800', color: '#0E3D7E' }}>
+            <Text style={{ fontFamily: t.font.display, fontSize: 17, fontWeight: '800', color: t.brand.blue800 }}>
               {tr('servicesScreen.bundleTitle')}
             </Text>
-            <Text style={{ fontSize: 12, color: '#114A99', marginTop: 3 }}>
+            <Text style={{ fontSize: 12, color: t.brand.blue700, marginTop: 3 }}>
               {tr('servicesScreen.bundleSub')}
             </Text>
           </View>

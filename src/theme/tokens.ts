@@ -23,6 +23,28 @@ const shared = {
     bodyBold: 'PlusJakartaSans_700Bold',
   },
   ease: 'cubic-bezier(0.2, 0.8, 0.2, 1)',
+  // Decorative, theme-independent accent palette + gradient pairs. Vivid by
+  // design (category tiles, region cards); intentionally the same in light/dark.
+  accent: {
+    blue: '#1967D2',
+    sky: '#0EA5E9',
+    amber: '#F59E0B',
+    purple: '#7C3AED',
+    emerald: '#10B981',
+    pink: '#EC4899',
+    red: '#EF4444',
+    teal: '#14B8A6',
+  },
+  gradients: [
+    ['#1967D2', '#0B4FB0'],
+    ['#10B981', '#047857'],
+    ['#7C3AED', '#5B21B6'],
+    ['#F59E0B', '#B45309'],
+    ['#EC4899', '#9D174D'],
+    ['#0EA5E9', '#0369A1'],
+    ['#EF4444', '#991B1B'],
+    ['#14B8A6', '#0F766E'],
+  ] as [string, string][],
 };
 
 type Mode = 'light' | 'dark';

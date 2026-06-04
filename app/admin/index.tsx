@@ -26,11 +26,11 @@ export default function AdminHome() {
   if (!isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   const cards = [
-    { id: 'users', title: 'Users', sub: userCount === null ? 'View signups' : `${userCount} signed up`, Icon: Users, color: '#1967D2', route: '/admin/users' },
-    { id: 'orders', title: 'Order history', sub: 'All users · filter by month', Icon: Receipt, color: '#0EA5E9', route: '/admin/orders' },
-    { id: 'featured', title: 'Popular destinations', sub: featuredCount === null ? 'Add, edit, remove' : `${featuredCount} configured`, Icon: MapPin, color: '#F59E0B', route: '/admin/featured' },
-    { id: 'notif', title: 'Push notifications', sub: 'Compose & send', Icon: Bell, color: '#7C3AED', route: '/admin/notifications' },
-    { id: 'cur', title: 'Exchange rate & markup', sub: 'USD→IQD rate, markup', Icon: Coins, color: '#10B981', route: '/admin/currency' },
+    { id: 'users', title: 'Users', sub: userCount === null ? 'View signups' : `${userCount} signed up`, Icon: Users, color: t.accent.blue, route: '/admin/users' },
+    { id: 'orders', title: 'Order history', sub: 'All users · filter by month', Icon: Receipt, color: t.accent.sky, route: '/admin/orders' },
+    { id: 'featured', title: 'Popular destinations', sub: featuredCount === null ? 'Add, edit, remove' : `${featuredCount} configured`, Icon: MapPin, color: t.accent.amber, route: '/admin/featured' },
+    { id: 'notif', title: 'Push notifications', sub: 'Compose & send', Icon: Bell, color: t.accent.purple, route: '/admin/notifications' },
+    { id: 'cur', title: 'Exchange rate & markup', sub: 'USD→IQD rate, markup', Icon: Coins, color: t.accent.emerald, route: '/admin/currency' },
   ];
 
   return (
