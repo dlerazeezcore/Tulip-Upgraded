@@ -13,3 +13,5 @@ npm-debug.*
 yarn-debug.*
 yarn-error.*
 .DS_Store
+# Claude Code preview dev-server config (recreated locally on demand).
+.claude/launch.json
