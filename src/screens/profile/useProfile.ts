@@ -1,0 +1,119 @@
+import { useState } from 'react';
+import { Linking, Platform, useWindowDimensions } from 'react-native';
+import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useThemeStore } from '@/state/themeStore';
+import { useCurrencyStore } from '@/state/currencyStore';
+import { useAuthStore } from '@/state/authStore';
+import { useLocaleStore } from '@/state/localeStore';
+import { useTravelersStore } from '@/state/travelersStore';
+
+const SUPPORT_WHATSAPP_URL = 'https://wa.me/9647507201111';
+const PRIVACY_URL = 'https://tulipbookings.com/privacy-policy.html';
+
+export function useProfile() {
+  const router = useRouter();
+  const { width } = useWindowDimensions();
+  const twoCol = Platform.OS === 'web' && width >= 1024;
+  const { t: tr } = useTranslation();
+
+  const mode = useThemeStore((s) => s.mode);
+  const toggleTheme = useThemeStore((s) => s.toggle);
+  const currencyCode = useCurrencyStore((s) => s.code);
+  const language = useLocaleStore((s) => s.language);
+  const user = useAuthStore((s) => s.user);
+  const signOut = useAuthStore((s) => s.signOut);
+  const updateProfile = useAuthStore((s) => s.updateProfile);
+  const deleteAccount = useAuthStore((s) => s.deleteAccount);
+  const setNotificationsEnabled = useAuthStore((s) => s.setNotificationsEnabled);
+  const travelerCount = useTravelersStore((s) => s.travelers.length);
+
+  const isAdmin = !!user?.isAdmin;
+  const isLoyalty = !!user?.isLoyalty;
+  const notificationsOn = user?.notificationsEnabled !== false; // default ON
+  const memberSince = user?.createdAt ? String(new Date(user.createdAt).getFullYear()) : null;
+
+  const [editOpen, setEditOpen] = useState(false);
+  const [editName, setEditName] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editBusy, setEditBusy] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+
+  const openEdit = () => {
+    setEditName(user?.name ?? '');
+    setEditEmail(user?.email ?? '');
+    setEditError(null);
+    setEditOpen(true);
+  };
+  const closeEdit = () => setEditOpen(false);
+
+  const saveProfile = async () => {
+    if (editBusy) return;
+    setEditBusy(true);
+    setEditError(null);
+    try {
+      await updateProfile({ name: editName.trim(), email: editEmail.trim() || null });
+      setEditOpen(false);
+    } catch (e: any) {
+      setEditError(e?.message || tr('profile.couldNotSave'));
+    } finally {
+      setEditBusy(false);
+    }
+  };
+
+  const removeAccount = async () => {
+    if (editBusy) return;
+    setEditBusy(true);
+    try {
+      await deleteAccount();
+      setEditOpen(false);
+      router.replace('/(tabs)/profile');
+    } catch (e: any) {
+      setEditError(e?.message || tr('profile.couldNotDelete'));
+    } finally {
+      setEditBusy(false);
+    }
+  };
+
+  const setNotifications = (next: boolean) => {
+    setNotificationsEnabled(next).catch(() => {});
+  };
+
+  return {
+    // layout + data
+    twoCol,
+    user,
+    isAdmin,
+    isLoyalty,
+    notificationsOn,
+    memberSince,
+    travelerCount,
+    currencyCode,
+    language,
+    isDark: mode === 'dark',
+    // edit-modal state
+    editOpen,
+    editName,
+    editEmail,
+    editBusy,
+    editError,
+    setEditName,
+    setEditEmail,
+    // actions
+    toggleTheme,
+    signOut,
+    openEdit,
+    closeEdit,
+    saveProfile,
+    deleteAccount: removeAccount,
+    setNotifications,
+    // navigation
+    goTravelers: () => router.push('/travelers'),
+    goAdmin: () => router.push('/admin'),
+    goOrders: () => router.push('/orders'),
+    goSignIn: () => router.push('/auth/sign-in'),
+    goSignUp: () => router.push('/auth/sign-up'),
+    openSupport: () => Linking.openURL(SUPPORT_WHATSAPP_URL),
+    openPrivacy: () => Linking.openURL(PRIVACY_URL),
+  };
+}
