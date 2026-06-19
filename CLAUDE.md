@@ -44,6 +44,15 @@ Each domain is a SINGLE self-contained module (`auth.py`, `admin.py`, `users.py`
 - **Follow the established design**: reuse the initial design system — colors, spacing, radius, typography from `src/theme/tokens.ts` and the existing component patterns. No ad-hoc palettes or one-off layouts; new screens must match the existing look.
 - **HD only**: new UI must be high-fidelity — crisp vector/SVG or @2x/@3x raster assets (no blurry/upscaled images), spacing pinned to the token scale, correct light/dark variants. No placeholder-grade visuals in shipped screens.
 
+## Design ↔ Code sync (Claude Design ↔ Claude Code)
+Keep the visual design system (`claude.ai/design` project `019dee07-…`) and this code "on the same
+level" via one contract: **[`SYNC-STRATEGY.md`](./SYNC-STRATEGY.md)**. In short — design **tokens**
+(`src/theme/tokens.ts`) are the shared source of truth (Design owns pixels, Code owns behavior);
+each design card maps **1:1** to a component/screen; changes flow **one component at a time**, never
+wholesale. Automated **pull** (Design → Code) uses the `DesignSync` tool after `/design-login`; the
+**push** direction (`/design-sync`) is not a fit for this Expo/RN app and is done by hand per the
+contract (see `SYNC-STRATEGY.md` §5b).
+
 ## CI/CD actions — do NOT break these
 Three GitHub Actions are the release pipeline. Any change or edit must keep all three green:
 1. **Android Build APK** — `tulip-booking/.github/workflows/android-build.yml`

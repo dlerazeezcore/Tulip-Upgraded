@@ -18,6 +18,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { useTranslation } from 'react-i18next';
 import { Smartphone, Share2, Download, AlertCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
+import { TulipLogo } from './TulipLogo';
 import { useEsimInstallCard } from './useEsimInstallCard';
 
 // react-native-qrcode-svg renders SVG primitives via react-native-svg — works
@@ -115,7 +116,20 @@ export function EsimInstallCard(props: Props) {
       <View style={{ alignItems: 'center', gap: 10, paddingVertical: 8 }}>
         <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 16 }}>
           {vm.lpa ? (
-            <QRCode value={vm.lpa} size={220} backgroundColor="#fff" color="#000" />
+            // QR colors are intentionally hardcoded #fff/#000 — a scannable code
+            // must be black-on-white regardless of light/dark theme.
+            <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center' }}>
+              <QRCode value={vm.lpa} size={220} backgroundColor="#fff" color="#000" ecl="H" />
+              {/* Tulip petal mark centered on a small white badge. ecl="H" gives
+                  ~30% error correction, so the ~24% center occlusion still scans.
+                  Pure-SVG overlay (TulipLogo) renders identically web + native. */}
+              <View
+                pointerEvents="none"
+                style={{ position: 'absolute', width: 52, height: 52, borderRadius: 14, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}
+              >
+                <TulipLogo size={38} />
+              </View>
+            </View>
           ) : (
             <View style={{ width: 220, height: 220 }} />
           )}

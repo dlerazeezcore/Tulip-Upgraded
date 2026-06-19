@@ -18,6 +18,7 @@ import { SERVICES, serviceRoute } from '@/data/services';
 import { EsimSupportBanner } from '@/components/EsimSupportBanner';
 import { useSearchStore } from '@/state/searchStore';
 import { useAuthStore } from '@/state/authStore';
+import { useIsWideWeb } from '@/lib/responsive';
 
 function greetingKeyForHour(h: number): string {
   if (h < 12) return 'home.goodMorning';
@@ -36,13 +37,14 @@ export default function Home() {
   const user = useAuthStore((s) => s.user);
   const firstName = user?.name?.trim().split(/\s+/)[0];
   const greeting = tr(greetingKeyForHour(new Date().getHours()));
+  const isWide = useIsWideWeb();
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <AnimatedScreen>
       <ScrollView
         contentContainerStyle={{
-          padding: 20,
+          padding: isWide ? 28 : 20,
           paddingBottom: 40,
           gap: 22,
           maxWidth: 1200,
@@ -174,7 +176,8 @@ export default function Home() {
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
             {SERVICES.map((s) => (
-              <View key={s.id} style={{ width: '33.33%', padding: 5 }}>
+              // 4 columns on desktop web (≥1024), 3 on mobile/native — unchanged off-web.
+              <View key={s.id} style={{ width: isWide ? '25%' : '33.33%', padding: 5 }}>
                 <ServiceTile svc={s as any} />
               </View>
             ))}

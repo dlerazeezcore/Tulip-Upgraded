@@ -24,12 +24,17 @@ export function PressableScale({
   onPressIn,
   onPressOut,
   onPress,
+  onHoverIn,
+  onHoverOut,
   ...rest
 }: Props) {
   const scale = useSharedValue(1);
+  // Web-only subtle hover lift. onHoverIn/onHoverOut never fire on native, so
+  // `lift` stays 0 there and the transform is unchanged (mobile byte-for-byte).
+  const lift = useSharedValue(0);
 
   const animatedStyle = useAnimatedStyle(() => ({
-    transform: [{ scale: scale.value }],
+    transform: [{ scale: scale.value }, { translateY: lift.value }],
   }));
 
   return (
@@ -45,6 +50,14 @@ export function PressableScale({
       onPressOut={(e) => {
         scale.value = withSpring(1, { mass: 0.4, damping: 16, stiffness: 280 });
         onPressOut?.(e);
+      }}
+      onHoverIn={(e) => {
+        lift.value = withSpring(-3, { mass: 0.4, damping: 18, stiffness: 320 });
+        onHoverIn?.(e);
+      }}
+      onHoverOut={(e) => {
+        lift.value = withSpring(0, { mass: 0.4, damping: 16, stiffness: 280 });
+        onHoverOut?.(e);
       }}
       onPress={onPress}
       style={[animatedStyle, style as any]}

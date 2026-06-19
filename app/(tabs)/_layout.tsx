@@ -25,8 +25,10 @@ function Sidebar() {
     <View
       style={{
         width: 240,
-        borderRightWidth: 1,
-        borderRightColor: t.border,
+        // Logical edge so the divider sits between sidebar and content in both
+        // LTR and RTL (sidebar flips to the right for ar/ku).
+        borderEndWidth: 1,
+        borderEndColor: t.border,
         backgroundColor: t.bgElev,
         paddingTop: 24,
         paddingHorizontal: 14,
@@ -46,16 +48,22 @@ function Sidebar() {
           <Pressable
             key={n.key}
             onPress={() => router.push(n.route as any)}
-            style={{
+            style={(state) => ({
               flexDirection: 'row',
               alignItems: 'center',
               gap: 12,
               paddingVertical: 10,
               paddingHorizontal: 12,
               borderRadius: 12,
-              backgroundColor: on ? t.primary : 'transparent',
+              // Web hover: subtle fill on inactive items (`hovered` is a
+              // react-native-web extension; no-op on native).
+              backgroundColor: on
+                ? t.primary
+                : (state as { hovered?: boolean }).hovered
+                ? t.bgSunken
+                : 'transparent',
               marginBottom: 4,
-            }}
+            })}
           >
             <Icon size={18} color={on ? '#fff' : t.fgMuted} strokeWidth={2} />
             <Text
