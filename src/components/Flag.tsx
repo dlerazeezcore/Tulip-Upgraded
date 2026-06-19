@@ -6,15 +6,28 @@ import { SvgUri } from 'react-native-svg';
 // Flat, genuinely-circular flags (square SVG whose artwork is a filled circle),
 // so they look clean inside a round avatar. Codes are ISO 3166-1 alpha-2
 // (plus region codes like 'EU' that circle-flags supports).
-const flagUrl = (iso2: string) =>
-  `https://cdn.jsdelivr.net/gh/HatScripts/circle-flags/flags/${iso2.toLowerCase()}.svg`;
+//
+// circle-flags stores a few region flags as symlinks (e.g. flags/eu.svg ->
+// european_union.svg). jsDelivr does NOT follow the symlink — it serves the
+// target *filename as plain text* ("european_union.svg", 18 bytes) with a 200
+// status, so the raw `eu.svg` URL yields no valid SVG and renders blank (and
+// never fires onError, since the HTTP request itself "succeeded"). Map known
+// aliases to their real filenames so they resolve to actual artwork.
+const FLAG_ALIASES: Record<string, string> = {
+  eu: 'european_union',
+};
+
+const flagUrl = (iso2: string) => {
+  const key = (iso2 || '').toLowerCase();
+  const file = FLAG_ALIASES[key] ?? key;
+  return `https://cdn.jsdelivr.net/gh/HatScripts/circle-flags/flags/${file}.svg`;
+};
 
 export function Flag({ iso, size = 22 }: { iso: string; size?: number }) {
-  // Some flags (notably the EU flag's eu.svg) fail to render through
-  // react-native-svg's SvgUri on device, leaving a blank gray circle — that's
-  // why the Euro currency showed "no logo". Track load failures and fall back
-  // to a clean code badge so EVERY flag (currencies included) always shows
-  // something legible.
+  // Defensive fallback: if a flag URL genuinely fails to load (network error,
+  // missing code), fall back to a clean code badge so EVERY flag always shows
+  // something legible instead of a blank gray circle. (The EU/Euro "no logo"
+  // bug was a bad CDN URL — see FLAG_ALIASES above — not a render failure.)
   const [errored, setErrored] = React.useState(false);
   const code = (iso || '').toUpperCase();
 

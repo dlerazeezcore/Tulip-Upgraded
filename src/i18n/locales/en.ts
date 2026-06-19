@@ -251,6 +251,18 @@ export default {
     fibTimeout:
       "We couldn't confirm your payment in time. If you approved it in the FIB app, it'll appear shortly — pull down to refresh on the next screen. Otherwise tap Pay to try again.",
   },
+  topup: {
+    title: 'Add on a data plan',
+    subtitle: 'Choose a plan to add to this eSIM',
+    paySubtitle: 'Confirm and pay for your top-up',
+    choosePlan: 'Choose a plan',
+    changePlan: 'Change plan',
+    loading: 'Loading top-up plans…',
+    noneTitle: 'No top-up plans',
+    none: 'No top-up plans are available for this eSIM right now.',
+    loadError: "Couldn't load top-up plans. Please try again.",
+    noIccid: "This eSIM isn't ready for top-up yet. Once it's active, you can add more data.",
+  },
   manage: {
     myFlights: 'My Flights',
     myTransfers: 'My Transfers',

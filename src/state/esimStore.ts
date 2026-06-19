@@ -4,8 +4,6 @@ import {
   refreshMyUsage,
   activateMyProfile,
   installMyProfile,
-  findTopUpPackages,
-  applyTopUp,
 } from '@/services/esim';
 import type { EsimProfile } from '@/services/types';
 import { useAuthStore } from '@/state/authStore';
@@ -161,7 +159,6 @@ type EsimState = {
   refreshHistory: () => Promise<void>;
   activate: (id: string) => Promise<void>;
   install: (id: string) => Promise<void>;
-  topUp: (id: string) => Promise<{ ok: boolean; message?: string }>;
 };
 
 function ingest(profiles: EsimProfile[]) {
@@ -249,21 +246,5 @@ export const useEsimStore = create<EsimState>((set, get) => ({
     if (!profile) return;
     await installMyProfile(identifierFor(profile));
     await get().refresh();
-  },
-
-  topUp: async (id) => {
-    const profile = get().raw[id];
-    if (!profile?.iccid) return { ok: false, message: 'This eSIM has no ICCID yet.' };
-    const packages = await findTopUpPackages(profile.iccid);
-    if (!packages.length) return { ok: false, message: 'No top-up plans available for this eSIM.' };
-    const cheapest = [...packages].sort((a, b) => (a.price ?? 0) - (b.price ?? 0))[0];
-    await applyTopUp({
-      iccid: profile.iccid,
-      esimTranNo: profile.esimTranNo ?? undefined,
-      packageCode: cheapest.packageCode,
-      transactionId: `TOPUP-${Date.now()}`,
-    });
-    await get().refresh();
-    return { ok: true };
   },
 }));

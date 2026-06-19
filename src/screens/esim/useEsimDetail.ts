@@ -1,14 +1,12 @@
 import { useEffect, useRef, useState } from 'react';
-import { Alert, AppState } from 'react-native';
+import { AppState } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import { useEsimStore } from '@/state/esimStore';
 import { checkEsimSupport, type EsimSupportResult } from '@/services/device';
 import { recoverProfile } from '@/services/esim';
 
 export function useEsimDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const { t: tr } = useTranslation();
   const router = useRouter();
   const esims = useEsimStore((s) => s.esims);
   const byId = useEsimStore((s) => s.byId);
@@ -16,10 +14,8 @@ export function useEsimDetail() {
   const refreshUsage = useEsimStore((s) => s.refreshUsage);
   const refreshing = useEsimStore((s) => s.refreshing);
   const install = useEsimStore((s) => s.install);
-  const topUp = useEsimStore((s) => s.topUp);
 
   const [support, setSupport] = useState<EsimSupportResult | null>(null);
-  const [busy, setBusy] = useState(false);
   // Timestamp of last Activate tap. We use it inside the AppState listener
   // below to decide whether a "foreground" event was a return from the iOS /
   // Android system eSIM install sheet (vs. a casual tab switch). null means
@@ -217,18 +213,6 @@ export function useEsimDetail() {
   const fraction = esim && planMb > 0 ? esim.remainingMb / planMb : 0;
   const smdp = profile?.manualEntry?.smdpAddress ?? profile?.smdpAddress ?? null;
 
-  const run = async (fn: () => Promise<void>) => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await fn();
-    } catch (e: any) {
-      Alert.alert(tr('common.error'), e?.message || tr('common.pleaseTryAgain'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
   const onRefresh = async () => {
     // Pull-to-refresh: also force a per-profile provider recover so status,
     // GB usage, and days remaining catch up to whatever the provider knows.
@@ -236,19 +220,18 @@ export function useEsimDetail() {
     await refreshUsage();
   };
 
-  const topUpNow = () =>
-    run(async () => {
-      if (!esim) return;
-      const res = await topUp(esim.id);
-      if (!res.ok) Alert.alert(tr('esim.topUpUnavailable'), res.message || tr('esim.noTopUp'));
-    });
+  // Open the top-up screen (choose a plan → pay via the loyalty/FIB window).
+  // This replaces the old one-tap instant charge for the cheapest plan.
+  const goTopUp = () => {
+    if (!esim) return;
+    router.push(`/esim/top-up?id=${esim.id}`);
+  };
 
   return {
     esim,
     installed: !!profile?.installed,
     support,
     refreshing,
-    busy,
     detectingInstall,
     detectTimedOut,
     showInstall,
@@ -263,6 +246,6 @@ export function useEsimDetail() {
       pendingActivateAt.current = Date.now();
     },
     recheckInstall: () => pollStarterRef.current?.(),
-    topUp: topUpNow,
+    topUp: goTopUp,
   };
 }
