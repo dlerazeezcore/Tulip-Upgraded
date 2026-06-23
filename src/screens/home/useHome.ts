@@ -1,0 +1,32 @@
+import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { SERVICES, serviceRoute } from '@/data/services';
+import { useSearchStore } from '@/state/searchStore';
+import { useAuthStore } from '@/state/authStore';
+import { useIsWideWeb } from '@/lib/responsive';
+
+function greetingKeyForHour(h: number): string {
+  if (h < 12) return 'home.goodMorning';
+  if (h < 18) return 'home.goodAfternoon';
+  return 'home.goodEvening';
+}
+
+export function useHome() {
+  const { t: tr } = useTranslation();
+  const router = useRouter();
+  const activeService = useSearchStore((s) => s.activeService);
+  const svc = SERVICES.find((s) => s.id === activeService)!;
+  const user = useAuthStore((s) => s.user);
+  const firstName = user?.name?.trim().split(/\s+/)[0];
+  const greeting = tr(greetingKeyForHour(new Date().getHours()));
+  const isWide = useIsWideWeb();
+
+  return {
+    svc,
+    firstName,
+    greeting,
+    isWide,
+    openActiveSearch: () => router.push(serviceRoute(svc.id) as any),
+    openServices: () => router.push('/services'),
+  };
+}

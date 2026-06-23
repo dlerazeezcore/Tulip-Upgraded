@@ -2,6 +2,7 @@ import React from 'react';
 import { View, Platform, Text } from 'react-native';
 import { Image } from 'expo-image';
 import { SvgUri } from 'react-native-svg';
+import { useTheme } from '@/theme/ThemeContext';
 
 // Flat, genuinely-circular flags (square SVG whose artwork is a filled circle),
 // so they look clean inside a round avatar. Codes are ISO 3166-1 alpha-2
@@ -24,6 +25,7 @@ const flagUrl = (iso2: string) => {
 };
 
 export function Flag({ iso, size = 22 }: { iso: string; size?: number }) {
+  const t = useTheme();
   // Defensive fallback: if a flag URL genuinely fails to load (network error,
   // missing code), fall back to a clean code badge so EVERY flag always shows
   // something legible instead of a blank gray circle. (The EU/Euro "no logo"
@@ -45,7 +47,7 @@ export function Flag({ iso, size = 22 }: { iso: string; size?: number }) {
         height: size,
         borderRadius: size / 2,
         overflow: 'hidden',
-        backgroundColor: '#E5E7EB',
+        backgroundColor: t.bgSunken,
         alignItems: 'center',
         justifyContent: 'center',
       }}
@@ -56,7 +58,7 @@ export function Flag({ iso, size = 22 }: { iso: string; size?: number }) {
           style={{
             fontSize: Math.max(8, Math.round(size * 0.36)),
             fontWeight: '800',
-            color: '#4B5563',
+            color: t.fgMuted,
             letterSpacing: 0.2,
           }}
         >

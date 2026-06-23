@@ -75,27 +75,6 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     ? tr('install.webReason')
     : tr('install.deviceReason');
 
-  const activate = () => {
-    if (!activateEnabled || !activationUrl) {
-      Alert.alert(tr('install.openOnPhoneTitle'), tr('install.openOnPhoneBody'));
-      return;
-    }
-    // Notify the parent screen BEFORE we open iOS Settings so it can arm an
-    // AppState listener. When the user returns from the system install flow,
-    // the screen calls refreshUsage() and navigates home.
-    input.onActivateTapped?.();
-    // iOS:    iOS Settings → Cellular → Add eSIM with SM-DP+ prefilled.
-    // Android: System eSIM setup intent (Android 9 / API 28+). Older Android
-    // or devices without an eSIM handler will reject the LPA: deeplink — fall
-    // back to the always-visible QR + manual-entry panel below.
-    Linking.openURL(activationUrl).catch(() =>
-      Alert.alert(
-        tr('install.couldNotOpenTitle'),
-        Platform.OS === 'android' ? tr('install.couldNotOpenAndroid') : tr('install.couldNotOpenIos'),
-      ),
-    );
-  };
-
   /** Web-only: download the QR as PNG. Generates the data URL on demand. */
   const download = async () => {
     if (Platform.OS !== 'web' || !lpa) return;
@@ -135,6 +114,43 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
     } finally {
       setBusy(false);
     }
+  };
+
+  /** When the one-tap deeplink can't run (older iOS, no eSIM handler, or the
+   * URL fails to open), don't dead-end the user. You can't scan a QR shown on
+   * the SAME phone, so steer them to the two paths that always work: share the
+   * QR to a second device, or add the eSIM manually with the SM-DP+ / code
+   * shown right below the QR. */
+  const promptInstallFallback = () => {
+    const bodyKey =
+      Platform.OS === 'android' ? 'install.couldNotOpenAndroid' : 'install.couldNotOpenIos';
+    Alert.alert(
+      tr('install.couldNotOpenTitle'),
+      tr(bodyKey),
+      Platform.OS === 'web'
+        ? [{ text: tr('common.ok') }]
+        : [
+            { text: tr('install.shareToDevice'), onPress: () => { void share(); } },
+            { text: tr('common.ok'), style: 'cancel' },
+          ],
+    );
+  };
+
+  const activate = () => {
+    if (!activateEnabled || !activationUrl) {
+      // Disabled tap (web / no install handler): point at the on-phone path.
+      Alert.alert(tr('install.openOnPhoneTitle'), tr('install.openOnPhoneBody'));
+      return;
+    }
+    // Notify the parent screen BEFORE we open iOS Settings so it can arm an
+    // AppState listener. When the user returns from the system install flow,
+    // the screen calls refreshUsage() and navigates home.
+    input.onActivateTapped?.();
+    // iOS:    iOS Settings → Cellular → Add eSIM with SM-DP+ prefilled.
+    // Android: System eSIM setup intent (Android 9 / API 28+). Older Android
+    // or devices without an eSIM handler will reject the LPA: deeplink — fall
+    // back to the actionable share / manual-entry prompt above.
+    Linking.openURL(activationUrl).catch(() => promptInstallFallback());
   };
 
   return {

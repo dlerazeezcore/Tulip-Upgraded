@@ -1,22 +1,21 @@
+// THIN UI — wiring lives in src/screens/services/useServices.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Plus, Star } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { SERVICES, serviceRoute } from '@/data/services';
+import { SERVICES } from '@/data/services';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
-import { useIsWideWeb } from '@/lib/responsive';
+import { useServices } from '@/screens/services/useServices';
 
 export default function Services() {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  const isWide = useIsWideWeb();
-  const colPct = isWide ? '33.333%' : '50%';
+  const vm = useServices();
+  const { isWide, colPct } = vm;
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <AnimatedScreen>
@@ -35,7 +34,7 @@ export default function Services() {
             return (
               <View key={s.id} style={{ width: colPct, padding: 7 }}>
                 <Pressable
-                  onPress={() => router.push(serviceRoute(s.id) as any)}
+                  onPress={() => vm.openService(s.id)}
                   style={({ pressed }) => ({
                     padding: 22,
                     borderRadius: 18,

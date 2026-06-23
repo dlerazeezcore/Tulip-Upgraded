@@ -10,7 +10,8 @@ import { useCallback, useEffect, useState } from 'react';
 import { Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useIqdMoney, useIqdAmount } from '@/lib/pricing';
+import { useIqdAmount } from '@/lib/pricing';
+import { useMoney, useIqdNote } from '@/lib/money';
 import { useIsWideWeb } from '@/lib/responsive';
 import { useAuthStore } from '@/state/authStore';
 import { useEsimStore } from '@/state/esimStore';
@@ -26,7 +27,8 @@ export function useTopUp() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { t: tr } = useTranslation();
-  const money = useIqdMoney();
+  const money = useMoney();
+  const iqdNote = useIqdNote();
   const iqdAmount = useIqdAmount();
   const isWide = useIsWideWeb();
 
@@ -189,6 +191,7 @@ export function useTopUp() {
     busy,
     payError,
     money,
+    iqdNote,
     planLabel,
     reload: load,
     goBack,

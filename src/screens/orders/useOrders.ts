@@ -1,0 +1,43 @@
+import { useEffect, useMemo } from 'react';
+import { useRouter } from 'expo-router';
+import { useOrderStore } from '@/state/orderStore';
+import type { OrderSummary } from '@/services/types';
+
+function orderDate(o: OrderSummary): string {
+  return o.bookedAt || o.createdAt || new Date().toISOString();
+}
+function monthLabel(iso: string) {
+  return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
+}
+
+export function useOrders() {
+  const router = useRouter();
+  const orders = useOrderStore((s) => s.orders);
+  const loading = useOrderStore((s) => s.loading);
+  const loaded = useOrderStore((s) => s.loaded);
+  const refresh = useOrderStore((s) => s.refresh);
+
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  const groups = useMemo(() => {
+    const out: { label: string; items: OrderSummary[] }[] = [];
+    for (const o of orders) {
+      const label = monthLabel(orderDate(o));
+      const last = out[out.length - 1];
+      if (last && last.label === label) last.items.push(o);
+      else out.push({ label, items: [o] });
+    }
+    return out;
+  }, [orders]);
+
+  return {
+    orders,
+    loading,
+    loaded,
+    groups,
+    goBack: () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile')),
+    goOrder: (id: string | number) => router.push(`/orders/${id}`),
+  };
+}

@@ -197,6 +197,11 @@ function PayStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso: st
         icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}
         onPress={vm.onPay}
       />
+      {!!vm.iqdNote(plan.usd) && (
+        <Text style={{ fontSize: 12, color: t.fgMuted, textAlign: 'center' }}>
+          {vm.iqdNote(plan.usd)} · {tr('checkout.chargedInIqd')}
+        </Text>
+      )}
       <Text style={{ fontSize: 11, color: t.fgFaint, textAlign: 'center' }}>
         {vm.method === 'fib' ? tr('checkout.fibHint') : tr('checkout.loyaltyHint')}
       </Text>

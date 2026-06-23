@@ -1,64 +1,23 @@
-import React, { useEffect, useState } from 'react';
-import { ScrollView, View, Text, Pressable, TextInput, Modal, Alert } from 'react-native';
+// THIN UI — wiring lives in src/screens/travelers/useTravelers.ts.
+import React from 'react';
+import { ScrollView, View, Text, Pressable, TextInput, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Plus, Pencil, Trash2, User, X } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useTravelersStore, type Traveler } from '@/state/travelersStore';
-import { useIsWideWeb } from '@/lib/responsive';
+import { useTravelers } from '@/screens/travelers/useTravelers';
 
 const RELATIONS = ['Primary', 'Spouse', 'Child', 'Parent', 'Other'];
 
 export default function Travelers() {
   const t = useTheme();
   const { t: tt } = useTranslation();
-  const router = useRouter();
-  const isWide = useIsWideWeb();
-  const { travelers, add, update, remove, refresh } = useTravelersStore();
-
-  const [editing, setEditing] = useState<Traveler | 'new' | null>(null);
-  const [name, setName] = useState('');
-  const [relation, setRelation] = useState('Primary');
-  const [dob, setDob] = useState('');
-  const [busy, setBusy] = useState(false);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  const openNew = () => {
-    setEditing('new');
-    setName('');
-    setRelation('Primary');
-    setDob('');
-  };
-  const openEdit = (tr: Traveler) => {
-    setEditing(tr);
-    setName(tr.name);
-    setRelation(tr.relation || 'Primary');
-    setDob(tr.dob || '');
-  };
-  const save = async () => {
-    if (!name.trim() || busy) return;
-    setBusy(true);
-    try {
-      if (editing === 'new') await add({ name: name.trim(), relation, dob: dob.trim() });
-      else if (editing) await update(editing.id, { name: name.trim(), relation, dob: dob.trim() });
-      setEditing(null);
-    } catch (e: any) {
-      Alert.alert(tt('common.error'), e?.message || tt('travelers.couldNotSave'));
-    } finally {
-      setBusy(false);
-    }
-  };
-  const onRemove = (id: number) => {
-    Alert.alert(tt('travelers.removeTitle'), tt('travelers.removeBody'), [
-      { text: tt('common.cancel'), style: 'cancel' },
-      { text: tt('travelers.remove'), style: 'destructive', onPress: () => { remove(id).catch((e: any) => Alert.alert(tt('common.error'), e?.message || tt('travelers.failed'))); } },
-    ]);
-  };
+  const vm = useTravelers();
+  const {
+    isWide, travelers, editing, setEditing, name, setName,
+    relation, setRelation, dob, setDob, busy, openNew, openEdit, save, onRemove,
+  } = vm;
 
   const inputStyle = {
     backgroundColor: t.bgElev,
@@ -76,7 +35,7 @@ export default function Travelers() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />

@@ -1,19 +1,20 @@
+// THIN UI — wiring lives in src/screens/results/useHotelResults.ts.
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { ChevronLeft, BedDouble } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
+import { useHotelResults } from '@/screens/results/useHotelResults';
 
 export default function HotelResults() {
   const t = useTheme();
-  const router = useRouter();
+  const vm = useHotelResults();
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />

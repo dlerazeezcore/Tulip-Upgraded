@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { View, Text, Pressable, Modal } from 'react-native';
 import { Check, ChevronDown } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { useLocaleStore } from '@/state/localeStore';
 import type { Lang } from '@/i18n';
@@ -14,6 +15,7 @@ const LANGS: { id: Lang; native: string; sub: string }[] = [
 /** Compact chip + modal language picker (mirrors CurrencyPicker). */
 export function LanguagePicker() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const language = useLocaleStore((s) => s.language);
   const setLanguage = useLocaleStore((s) => s.setLanguage);
   const [open, setOpen] = useState(false);
@@ -60,7 +62,7 @@ export function LanguagePicker() {
             }}
           >
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg, padding: 16, paddingBottom: 8 }}>
-              Language
+              {tr('onboarding.language')}
             </Text>
             {LANGS.map((l) => {
               const on = l.id === language;

@@ -1,33 +1,9 @@
-import React, { useEffect, useMemo, useRef, useState } from 'react';
+import React from 'react';
 import { View, Text, TextInput, Pressable, Modal, ScrollView } from 'react-native';
-import * as Localization from 'expo-localization';
 import { ChevronDown, Search, X } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
-import { COUNTRIES, DEFAULT_COUNTRY, findCountryByIso, toE164, type Country } from '@/data/countries';
-
-/** Best-effort IP geolocation → ISO country code (web + native). */
-async function detectCountryByIp(): Promise<string | null> {
-  try {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 4000);
-    const res = await fetch('https://get.geojs.io/v1/ip/country.json', { signal: ctrl.signal });
-    clearTimeout(timer);
-    const data = await res.json();
-    const code = String(data?.country ?? '').toUpperCase();
-    return /^[A-Z]{2}$/.test(code) ? code : null;
-  } catch {
-    return null;
-  }
-}
-
-function localeCountry(): Country | undefined {
-  try {
-    return findCountryByIso(Localization.getLocales?.()[0]?.regionCode);
-  } catch {
-    return undefined;
-  }
-}
+import { useCountryPhoneField } from '@/components/useCountryPhoneField';
 
 /**
  * Phone input with a country/dial-code picker. Defaults to the device region
@@ -42,37 +18,8 @@ export function CountryPhoneField({
   autoFocus?: boolean;
 }) {
   const t = useTheme();
-  // Default to Iraq instantly; refine via IP geolocation unless the user picks one.
-  const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
-  const [local, setLocal] = useState('');
-  const [open, setOpen] = useState(false);
-  const [query, setQuery] = useState('');
-  const userPicked = useRef(false);
-  const localRef = useRef('');
-
-  const emit = (c: Country, l: string) => onChange(toE164(c.dial, l));
-
-  useEffect(() => {
-    let cancelled = false;
-    detectCountryByIp().then((iso) => {
-      if (cancelled || userPicked.current) return;
-      const detected = (iso && findCountryByIso(iso)) || localeCountry();
-      if (detected) {
-        setCountry(detected);
-        emit(detected, localRef.current);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  const filtered = useMemo(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return COUNTRIES;
-    return COUNTRIES.filter((c) => c.name.toLowerCase().includes(q) || c.dial.includes(q) || c.iso.toLowerCase().includes(q));
-  }, [query]);
+  const { country, local, open, query, filtered, setQuery, openPicker, closePicker, onChangeLocal, onSelectCountry } =
+    useCountryPhoneField({ onChange, autoFocus });
 
   return (
     <View>
@@ -88,7 +35,7 @@ export function CountryPhoneField({
         }}
       >
         <Pressable
-          onPress={() => setOpen(true)}
+          onPress={() => openPicker()}
           style={{
             flexDirection: 'row',
             alignItems: 'center',
@@ -108,12 +55,7 @@ export function CountryPhoneField({
         </Pressable>
         <TextInput
           value={local}
-          onChangeText={(v) => {
-            const digits = v.replace(/[^\d]/g, '').slice(0, 13);
-            setLocal(digits);
-            localRef.current = digits;
-            emit(country, digits);
-          }}
+          onChangeText={(v) => onChangeLocal(v)}
           keyboardType="phone-pad"
           autoFocus={autoFocus}
           placeholder="750 123 4567"
@@ -122,12 +64,12 @@ export function CountryPhoneField({
         />
       </View>
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => setOpen(false)}>
-        <Pressable onPress={() => setOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+      <Modal visible={open} transparent animationType="slide" onRequestClose={() => closePicker()}>
+        <Pressable onPress={() => closePicker()} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '78%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Select country</Text>
-              <Pressable onPress={() => setOpen(false)}>
+              <Pressable onPress={() => closePicker()}>
                 <X size={20} color={t.fgMuted} />
               </Pressable>
             </View>
@@ -148,12 +90,7 @@ export function CountryPhoneField({
                 return (
                   <Pressable
                     key={c.iso}
-                    onPress={() => {
-                      userPicked.current = true;
-                      setCountry(c);
-                      setOpen(false);
-                      emit(c, local);
-                    }}
+                    onPress={() => onSelectCountry(c)}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 6 }}
                   >
                     <Flag iso={c.iso} size={24} />

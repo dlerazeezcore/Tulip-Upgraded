@@ -28,6 +28,9 @@ export function HotelCard({ hotel, onPress }: { hotel: Hotel; onPress?: () => vo
         ...t.shadow1,
       }}
     >
+      {/* Badges below sit on the photo, so they stay light-on-dark regardless
+          of app theme — these whites/darks are intentional overlay colors, not
+          token bypasses (same rationale as the eSIM QR badge). */}
       <View style={{ width: 160, height: 120, borderRadius: 12, overflow: 'hidden' }}>
         <Image
           source={hotel.photo}
@@ -87,7 +90,7 @@ export function HotelCard({ hotel, onPress }: { hotel: Hotel; onPress?: () => vo
           </Text>
           <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{hotel.area}</Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 6, gap: 6 }}>
-            <Star size={12} color="#F59E0B" fill="#F59E0B" />
+            <Star size={12} color={t.accent.amber} fill={t.accent.amber} />
             <Text style={{ fontSize: 12, fontWeight: '700', color: t.fg }}>{hotel.rating}</Text>
             <Text style={{ fontSize: 11, color: t.fgMuted }}>({hotel.reviews} reviews)</Text>
           </View>

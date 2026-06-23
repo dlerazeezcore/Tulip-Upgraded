@@ -1,14 +1,14 @@
-import React, { useEffect, useMemo, useState } from 'react';
+// THIN UI — wiring lives in src/screens/admin/useAdminOrders.ts.
+import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Redirect } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { ChevronLeft, Globe, ChevronDown, RefreshCw, Check, AlertCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
-import { useAuthStore } from '@/state/authStore';
-import { getAdminOrders, refreshOrdersFromProvider, type RefreshOrdersResult } from '@/services/admin';
 import type { AdminOrder } from '@/services/types';
 import { formatIqd } from '@/lib/pricing';
+import { useAdminOrders } from '@/screens/admin/useAdminOrders';
 
 const YEARS = [2026, 2027, 2028, 2029, 2030];
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -35,72 +35,15 @@ function orderDate(o: AdminOrder): string {
 
 export default function AdminOrders() {
   const t = useTheme();
-  const router = useRouter();
-  const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
-  const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number | null>(null); // 1-12; null = nothing selected yet
-  const [orders, setOrders] = useState<AdminOrder[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [esim, setEsim] = useState<string>('all');
-  const [expanded, setExpanded] = useState<Record<number, boolean>>({});
-  const toggle = (id: number) => setExpanded((m) => ({ ...m, [id]: !m[id] }));
-  const [refreshing, setRefreshing] = useState(false);
-  const [refreshSummary, setRefreshSummary] = useState<RefreshOrdersResult | null>(null);
+  const vm = useAdminOrders();
+  const {
+    year, month, esim, setYear, setMonth, setEsim,
+    orders, filtered, loading, error,
+    expanded, toggle,
+    refreshing, refreshSummary, onRefreshFromProvider,
+  } = vm;
 
-  // Reload the same month's orders after an admin refresh. Triggered by the
-  // "Refresh from provider" button below.
-  const reloadCurrentMonth = React.useCallback(() => {
-    if (month === null) return Promise.resolve();
-    const key = `${year}-${String(month).padStart(2, '0')}`;
-    return getAdminOrders({ month: key })
-      .then((rows) => setOrders(rows))
-      .catch((e: any) => setError(e?.message || 'Failed to reload orders'));
-  }, [year, month]);
-
-  const onRefreshFromProvider = async () => {
-    if (refreshing) return;
-    setRefreshing(true);
-    setRefreshSummary(null);
-    try {
-      const summary = await refreshOrdersFromProvider();
-      setRefreshSummary(summary);
-      await reloadCurrentMonth();
-    } catch (e: any) {
-      setRefreshSummary({
-        attempted: 0, activeRefreshed: 0, placeholdersRecovered: 0,
-        errorCount: 1, errors: [{ error: e?.message || 'Refresh failed' }],
-      });
-    } finally {
-      setRefreshing(false);
-    }
-  };
-
-  // Load orders only once a year + month are chosen — filtered server-side, so
-  // nothing is fetched by default and we never pull the whole table.
-  useEffect(() => {
-    if (month === null) {
-      setOrders([]);
-      return;
-    }
-    const key = `${year}-${String(month).padStart(2, '0')}`;
-    let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setExpanded({});
-    getAdminOrders({ month: key })
-      .then((rows) => { if (!cancelled) setOrders(rows); })
-      .catch((e: any) => { if (!cancelled) setError(e?.message || 'Failed to load orders'); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
-  }, [year, month]);
-
-  const filtered = useMemo(
-    () => orders.filter((o) => esim === 'all' || o.esimStatus === esim),
-    [orders, esim],
-  );
-
-  if (!isAdmin) return <Redirect href="/(tabs)/profile" />;
+  if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   const labelStyle = { fontSize: 11, fontWeight: '700' as const, color: t.fgMuted, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
   const Chip = ({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) => (
@@ -113,7 +56,7 @@ export default function AdminOrders() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/admin'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />

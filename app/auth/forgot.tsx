@@ -1,113 +1,69 @@
-import React, { useState } from 'react';
+// THIN UI — wiring lives in src/screens/auth/useForgot.ts.
+import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Check } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { useAuthStore } from '@/state/authStore';
 import { AuthShell, Field, PasswordField } from '@/components/AuthShell';
 import { CountryPhoneField } from '@/components/CountryPhoneField';
 import { OtpInput } from '@/components/OtpInput';
 import { PrimaryButton } from '@/components/PrimaryButton';
-
-type Step = 'phone' | 'otp' | 'reset' | 'done';
+import { useForgot } from '@/screens/auth/useForgot';
 
 export default function Forgot() {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  const { requestOtp, resetPassword } = useAuthStore();
-
-  const [step, setStep] = useState<Step>('phone');
-  const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [pw, setPw] = useState('');
-  const [pw2, setPw2] = useState('');
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  const run = async (fn: () => Promise<void>) => {
-    if (busy) return;
-    setBusy(true);
-    setError(null);
-    try {
-      await fn();
-    } catch (e: any) {
-      setError(e?.message || tr('common.somethingWrong'));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const subtitle =
-    step === 'phone'
-      ? tr('auth.resetPhoneStep')
-      : step === 'otp'
-        ? tr('auth.resetOtpStep')
-        : step === 'reset'
-          ? tr('auth.resetResetStep')
-          : tr('auth.resetDoneStep');
+  const vm = useForgot();
 
   return (
-    <AuthShell title={tr('auth.resetTitle')} subtitle={subtitle}>
-      {step === 'phone' && (
+    <AuthShell title={tr('auth.resetTitle')} subtitle={vm.subtitle}>
+      {vm.step === 'phone' && (
         <>
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
               {tr('auth.phoneNumber')}
             </Text>
-            <CountryPhoneField onChange={setPhone} autoFocus />
+            <CountryPhoneField onChange={vm.setPhone} autoFocus />
           </View>
-          {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
+          {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton
-            label={busy ? tr('auth.sending') : tr('auth.sendResetCode')}
-            onPress={() => run(async () => { await requestOtp(phone, 'sms'); setStep('otp'); })}
+            label={vm.busy ? tr('auth.sending') : tr('auth.sendResetCode')}
+            onPress={vm.onSendResetCode}
           />
         </>
       )}
 
-      {step === 'otp' && (
+      {vm.step === 'otp' && (
         <>
-          <Text style={{ fontSize: 13, color: t.fg }}>{tr('auth.enterCodeSentTo', { phone })}</Text>
-          <OtpInput value={code} onChange={setCode} />
-          {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
+          <Text style={{ fontSize: 13, color: t.fg }}>{tr('auth.enterCodeSentTo', { phone: vm.phone })}</Text>
+          <OtpInput value={vm.code} onChange={vm.setCode} />
+          {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton
             label={tr('common.continue')}
-            onPress={() => {
-              if (code.replace(/\D/g, '').length >= 4) setStep('reset');
-            }}
+            onPress={vm.onContinueOtp}
           />
-          <Pressable onPress={() => setStep('phone')} style={{ alignSelf: 'center' }}>
+          <Pressable onPress={vm.backToPhone} style={{ alignSelf: 'center' }}>
             <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.changeNumber')}</Text>
           </Pressable>
         </>
       )}
 
-      {step === 'reset' && (
+      {vm.step === 'reset' && (
         <>
-          <PasswordField label={tr('auth.newPassword')} value={pw} onChangeText={setPw} placeholder={tr('auth.newPasswordPlaceholder')} />
-          <PasswordField label={tr('auth.confirmPassword')} value={pw2} onChangeText={setPw2} placeholder={tr('auth.confirmPasswordPlaceholder')} />
-          {pw.length > 0 && pw !== pw2 && (
+          <PasswordField label={tr('auth.newPassword')} value={vm.pw} onChangeText={vm.setPw} placeholder={tr('auth.newPasswordPlaceholder')} />
+          <PasswordField label={tr('auth.confirmPassword')} value={vm.pw2} onChangeText={vm.setPw2} placeholder={tr('auth.confirmPasswordPlaceholder')} />
+          {vm.pw.length > 0 && vm.pw !== vm.pw2 && (
             <Text style={{ fontSize: 12, color: t.danger }}>{tr('auth.passwordsDontMatch')}</Text>
           )}
-          {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
+          {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton
-            label={busy ? tr('auth.resetting') : tr('auth.resetPassword')}
-            onPress={() =>
-              run(async () => {
-                if (pw.length < 8 || pw !== pw2) {
-                  setError(tr('auth.passwordRule'));
-                  return;
-                }
-                await resetPassword({ phone, otpCode: code, newPassword: pw, otpChannel: 'sms' });
-                setStep('done');
-              })
-            }
+            label={vm.busy ? tr('auth.resetting') : tr('auth.resetPassword')}
+            onPress={vm.onResetPassword}
           />
         </>
       )}
 
-      {step === 'done' && (
+      {vm.step === 'done' && (
         <>
           <View style={{ alignItems: 'center', gap: 12, paddingVertical: 8 }}>
             <View
@@ -129,7 +85,7 @@ export default function Forgot() {
               {tr('auth.signedInNewPassword')}
             </Text>
           </View>
-          <PrimaryButton label={tr('common.continue')} onPress={() => router.replace('/(tabs)/profile')} />
+          <PrimaryButton label={tr('common.continue')} onPress={vm.goProfile} />
         </>
       )}
     </AuthShell>

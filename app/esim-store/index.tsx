@@ -1,7 +1,7 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+// THIN UI — wiring lives in src/screens/esim-store/useEsimStore.ts.
+import React, { useCallback } from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Search, Globe } from 'lucide-react-native';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -12,67 +12,21 @@ import { Skeleton } from '@/components/Skeleton';
 
 // Region card gradients live in the design tokens (theme.gradients) — vibrant
 // by design so the Regions grid looks polished without a photo per region.
-import { useIsWideWeb } from '@/lib/responsive';
-import { getFeaturedLocations, getCountries, getRegions, cachedCountries, type LocationCountry, type ProviderRegion } from '@/services/esim';
-import type { FeaturedLocation } from '@/services/types';
-
-type Tab = 'popular' | 'countries' | 'regions';
-const TABS: { id: Tab; label: string }[] = [
-  { id: 'popular', label: 'Popular' },
-  { id: 'countries', label: 'Countries' },
-  { id: 'regions', label: 'Regions' },
-];
+import type { LocationCountry } from '@/services/esim';
+import { useEsimStore, TABS } from '@/screens/esim-store/useEsimStore';
 
 export default function EsimStore() {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  const isWide = useIsWideWeb();
-  const [tab, setTab] = useState<Tab>('popular');
-  const [q, setQ] = useState('');
-  const [popular, setPopular] = useState<FeaturedLocation[]>([]);
-  const [countries, setCountries] = useState<LocationCountry[]>(cachedCountries());
-  const [regions, setRegions] = useState<ProviderRegion[]>([]);
-  const [loadingCountries, setLoadingCountries] = useState(cachedCountries().length === 0);
-
-  useEffect(() => {
-    getFeaturedLocations('esim').then(setPopular).catch(() => setPopular([]));
-    getRegions().then(setRegions).catch(() => setRegions([]));
-    getCountries()
-      .then(setCountries)
-      .catch(() => setCountries([]))
-      .finally(() => setLoadingCountries(false));
-  }, []);
-
-  const goBack = () => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/(tabs)/services');
-  };
-  const openPlace = (code: string, name: string) =>
-    router.push(`/esim-store/${code}?name=${encodeURIComponent(name)}`);
-
-  // Resolve full country names (provider list) for popular codes like "TR" -> "Türkiye".
-  const nameByCode = useMemo(() => {
-    const m: Record<string, string> = {};
-    for (const c of countries) m[c.code] = c.name;
-    return m;
-  }, [countries]);
-
-  const query = q.trim().toLowerCase();
-  const filteredCountries = useMemo(
-    () =>
-      query
-        ? countries.filter((c) => c.name.toLowerCase().includes(query) || c.code.toLowerCase().includes(query))
-        : countries,
-    [countries, query],
-  );
+  const vm = useEsimStore();
+  const { isWide, tab, q, popular, regions, loadingCountries, filteredCountries, nameByCode } = vm;
 
   // Memoized renderItem for the countries FlatList — prevents recreating closures
   // on every re-render, lets RN bail out of re-rendering rows whose data unchanged.
   const renderCountryRow = useCallback(
     ({ item, index }: { item: LocationCountry; index: number }) => (
       <Pressable
-        onPress={() => openPlace(item.code, item.name)}
+        onPress={() => vm.openPlace(item.code, item.name)}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -88,21 +42,14 @@ export default function EsimStore() {
         <ChevronRight size={16} color={t.fgFaint} />
       </Pressable>
     ),
-    [filteredCountries.length, t.border, t.fg, t.fgFaint, t.font.displayMedium],
-  );
-
-  // Fixed-height rows let FlatList skip layout measurement → faster scroll.
-  const COUNTRY_ROW_HEIGHT = 52;
-  const getCountryItemLayout = useCallback(
-    (_: unknown, index: number) => ({ length: COUNTRY_ROW_HEIGHT, offset: COUNTRY_ROW_HEIGHT * index, index }),
-    [],
+    [filteredCountries.length, t.border, t.fg, t.fgFaint, t.font.displayMedium, vm.openPlace],
   );
 
   // Shared header: back button + title. Renders for every tab.
   const header = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
       <Pressable
-        onPress={goBack}
+        onPress={vm.goBack}
         style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
       >
         <ChevronLeft size={18} color={t.fg} />
@@ -122,7 +69,7 @@ export default function EsimStore() {
         return (
           <Pressable
             key={tb.id}
-            onPress={() => setTab(tb.id)}
+            onPress={() => vm.setTab(tb.id)}
             style={{ flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: on ? t.bgElev : 'transparent', ...(on ? t.shadow1 : {}) }}
           >
             <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 13, color: on ? t.fg : t.fgMuted }}>
@@ -145,7 +92,7 @@ export default function EsimStore() {
           <Search size={18} color={t.fgMuted} />
           <TextInput
             value={q}
-            onChangeText={setQ}
+            onChangeText={vm.setQ}
             placeholder={tr('esimStore.searchCountry')}
             placeholderTextColor={t.fgFaint}
             autoCapitalize="none"
@@ -177,10 +124,10 @@ export default function EsimStore() {
             ListHeaderComponent={listHeader}
             ListEmptyComponent={
               <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20 }}>
-                {query ? tr('esimStore.noMatch', { q }) : tr('esimStore.noCountries')}
+                {q.trim() ? tr('esimStore.noMatch', { q }) : tr('esimStore.noCountries')}
               </Text>
             }
-            getItemLayout={getCountryItemLayout}
+            getItemLayout={vm.getCountryItemLayout}
             initialNumToRender={20}
             maxToRenderPerBatch={20}
             windowSize={10}
@@ -217,7 +164,7 @@ export default function EsimStore() {
                   return (
                     <View key={c.code} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
                       <PressableScale
-                        onPress={() => openPlace(c.code, full)}
+                        onPress={() => vm.openPlace(c.code, full)}
                         scaleTo={0.98}
                         style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
                       >
@@ -249,7 +196,7 @@ export default function EsimStore() {
                 return (
                   <View key={r.code} style={{ width: isWide ? '33.333%' : '50%', padding: 5 }}>
                     <PressableScale
-                      onPress={() => router.push(`/esim-store/${r.code}?region=1&name=${encodeURIComponent(r.name)}`)}
+                      onPress={() => vm.openRegion(r.code, r.name)}
                       scaleTo={0.97}
                     >
                       <LinearGradient

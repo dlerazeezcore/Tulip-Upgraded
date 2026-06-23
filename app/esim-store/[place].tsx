@@ -1,121 +1,28 @@
-import React, { useEffect, useMemo, useState } from 'react';
+// THIN UI — wiring lives in src/screens/esim-store/usePlacePackages.ts.
+import React from 'react';
 import { ScrollView, View, Text, Pressable, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Globe, Check, Infinity as InfinityIcon, X, ArrowRight, Clock } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useIqdMoney } from '@/lib/pricing';
 import { useTranslation } from 'react-i18next';
-import { useIsWideWeb } from '@/lib/responsive';
-import { packagesToBundles } from '@/lib/catalog';
-import { queryPackages, getCountries, cachedCountries } from '@/services/esim';
-import type { Bundle } from '@/data/esim';
-import { useEsimCart } from '@/state/esimCart';
 import { Skeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { usePlacePackages } from '@/screens/esim-store/usePlacePackages';
 
 export default function PlaceDetail() {
-  const { place, region, name: nameParam } = useLocalSearchParams<{ place: string; region?: string; name?: string }>();
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  const money = useIqdMoney();
-  const select = useEsimCart((s) => s.select);
-
-  const isRegion = region === '1';
-  const isWide = useIsWideWeb();
-  const [coverageOpen, setCoverageOpen] = useState(false);
-  const [selected, setSelected] = useState<Bundle | null>(null);
-  const [bundles, setBundles] = useState<Bundle[]>([]);
-  const [loading, setLoading] = useState(true);
-  // For regions: the ISO codes this region's plans actually cover, and a
-  // code -> full-name map so we can show "Germany" instead of "DE".
-  const [coverage, setCoverage] = useState<string[]>([]);
-  const [nameByCode, setNameByCode] = useState<Record<string, string>>(() => {
-    const m: Record<string, string> = {};
-    for (const c of cachedCountries()) m[c.code.toUpperCase()] = c.name;
-    return m;
-  });
-
-  const name = nameParam || (place as string) || 'eSIM';
-  const iso = isRegion ? undefined : String(place || '').toUpperCase();
-
-  const goBack = () => {
-    if (router.canGoBack()) router.back();
-    else router.replace('/esim-store');
-  };
-
-  useEffect(() => {
-    let cancelled = false;
-    const locationCode = (iso ?? String(place || '')).toUpperCase();
-    setLoading(true);
-    queryPackages({ locationCode })
-      .then((pkgs) => {
-        if (cancelled) return;
-        setBundles(packagesToBundles(pkgs, place as string, { countryCode: isRegion ? undefined : locationCode }));
-        if (isRegion) {
-          // Union of every covered country across this region's plans.
-          const codes = new Set<string>();
-          for (const p of pkgs) {
-            String(p.location ?? '')
-              .split(',')
-              .map((s) => s.trim().toUpperCase())
-              .filter(Boolean)
-              .forEach((c) => codes.add(c));
-          }
-          setCoverage([...codes].sort());
-        }
-      })
-      .catch(() => {
-        if (!cancelled) setBundles([]);
-      })
-      .finally(() => {
-        if (!cancelled) setLoading(false);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [iso, place]);
-
-  // Resolve ISO codes to full country names for the coverage list (regions only).
-  useEffect(() => {
-    if (!isRegion) return;
-    getCountries()
-      .then((cs) => {
-        const m: Record<string, string> = {};
-        for (const c of cs) m[c.code.toUpperCase()] = c.name;
-        setNameByCode(m);
-      })
-      .catch(() => {});
-  }, [isRegion]);
-
-  // Group plans by duration, ascending (1-day plans, then 7-day, etc.).
-  const groups = useMemo(() => {
-    const m = new Map<number, Bundle[]>();
-    for (const b of bundles) {
-      const arr = m.get(b.days) ?? [];
-      arr.push(b);
-      m.set(b.days, arr);
-    }
-    return [...m.entries()]
-      .sort((a, b) => a[0] - b[0])
-      .map(([days, items]) => ({ days, items: items.sort((x, y) => x.usd - y.usd) }));
-  }, [bundles]);
-
-  const onContinue = () => {
-    if (!selected) return;
-    select({ id: place as string, name, iso, isRegion }, selected);
-    router.push('/esim-store/checkout');
-  };
+  const vm = usePlacePackages();
+  const { name, iso, money } = vm;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={goBack}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -127,19 +34,19 @@ export default function PlaceDetail() {
       </View>
 
       <ScrollView
-        contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 120, gap: 16, maxWidth: isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: vm.isWide ? 28 : 20, paddingBottom: 120, gap: 16, maxWidth: vm.isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
       >
-        {isRegion && coverage.length > 0 && (
+        {vm.isRegion && vm.coverage.length > 0 && (
           <PressableScale
-            onPress={() => setCoverageOpen(true)}
+            onPress={() => vm.setCoverageOpen(true)}
             scaleTo={0.98}
             style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.brand.blue50, borderWidth: 1, borderColor: t.brand.blue100 }}
           >
             <Globe size={20} color={t.primary} strokeWidth={2} />
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.brand.blue800 }}>
-                {tr('esimStore.coverageCount', { count: coverage.length })}
+                {tr('esimStore.coverageCount', { count: vm.coverage.length })}
               </Text>
               <Text style={{ fontSize: 12, color: t.brand.blue700, marginTop: 1 }}>{tr('esimStore.coverageHint')}</Text>
             </View>
@@ -147,27 +54,27 @@ export default function PlaceDetail() {
           </PressableScale>
         )}
 
-        {loading ? (
+        {vm.loading ? (
           <View style={{ gap: 14 }}>
             {[0, 1].map((s) => (
               <View key={s} style={{ gap: 10 }}>
                 <Skeleton width={96} height={26} radius={t.radius.pill} />
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
                   {[0, 1, 2, 3].map((c) => (
-                    <Skeleton key={c} width={isWide ? 220 : '47%'} height={120} radius={t.radius.md} />
+                    <Skeleton key={c} width={vm.isWide ? 220 : '47%'} height={120} radius={t.radius.md} />
                   ))}
                 </View>
               </View>
             ))}
           </View>
-        ) : groups.length === 0 ? (
+        ) : vm.groups.length === 0 ? (
           <EmptyState
             icon={Globe}
             title={tr('esimStore.noPlans', { name })}
             subtitle={tr('esimStore.noPlansSub')}
           />
         ) : (
-          groups.map((g) => (
+          vm.groups.map((g) => (
             <View key={g.days} style={{ gap: 10 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 2 }}>
                 <View
@@ -184,13 +91,13 @@ export default function PlaceDetail() {
                 </View>
                 <View style={{ flex: 1, height: 1, backgroundColor: t.border }} />
               </View>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: vm.isWide ? -5 : 0, gap: vm.isWide ? 0 : 10 }}>
                 {g.items.map((b) => {
-                  const isSelected = selected?.id === b.id;
+                  const isSelected = vm.selected?.id === b.id;
                   return (
-                    <View key={b.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
+                    <View key={b.id} style={{ width: vm.isWide ? '50%' : '100%', padding: vm.isWide ? 5 : 0 }}>
                       <PressableScale
-                        onPress={() => setSelected(b)}
+                        onPress={() => vm.setSelected(b)}
                         scaleTo={0.98}
                         style={{
                           flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16,
@@ -224,32 +131,32 @@ export default function PlaceDetail() {
         )}
       </ScrollView>
 
-      {selected && (
+      {vm.selected && (
         <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: 28, backgroundColor: t.bgElev, borderTopWidth: 1, borderTopColor: t.border }}>
           <View style={{ maxWidth: 780, width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 12, color: t.fgMuted }}>
-                {selected.type === 'unlimited' ? tr('esimStore.unlimited') : `${selected.gb} GB`} · {selected.days} {tr('esim.days')}
+                {vm.selected.type === 'unlimited' ? tr('esimStore.unlimited') : `${vm.selected.gb} GB`} · {vm.selected.days} {tr('esim.days')}
               </Text>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(selected.usd)}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(vm.selected.usd)}</Text>
             </View>
-            <PrimaryButton label={tr('common.continue')} icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />} onPress={onContinue} style={{ flex: 1 }} />
+            <PrimaryButton label={tr('common.continue')} icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />} onPress={vm.onContinue} style={{ flex: 1 }} />
           </View>
         </View>
       )}
 
-      <Modal visible={coverageOpen} transparent animationType="slide" onRequestClose={() => setCoverageOpen(false)}>
-        <Pressable onPress={() => setCoverageOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+      <Modal visible={vm.coverageOpen} transparent animationType="slide" onRequestClose={() => vm.setCoverageOpen(false)}>
+        <Pressable onPress={() => vm.setCoverageOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '76%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('esimStore.coverageTitle', { name })}</Text>
-              <Pressable onPress={() => setCoverageOpen(false)}><X size={20} color={t.fgMuted} /></Pressable>
+              <Pressable onPress={() => vm.setCoverageOpen(false)}><X size={20} color={t.fgMuted} /></Pressable>
             </View>
             <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {coverage.map((c) => (
+              {vm.coverage.map((c) => (
                 <View key={c} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 10, borderRadius: 999, backgroundColor: t.bgSunken }}>
                   <Flag iso={c} size={18} />
-                  <Text style={{ fontSize: 12, color: t.fg, fontWeight: '600' }}>{nameByCode[c] || c}</Text>
+                  <Text style={{ fontSize: 12, color: t.fg, fontWeight: '600' }}>{vm.nameByCode[c] || c}</Text>
                 </View>
               ))}
             </ScrollView>

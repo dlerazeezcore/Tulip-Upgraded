@@ -1,32 +1,21 @@
-import React, { useMemo } from 'react';
+// THIN UI — wiring lives in src/screens/bookings/useBookings.ts.
+import React from 'react';
 import { ScrollView, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES } from '@/data/services';
-import { useEsimStore } from '@/state/esimStore';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { PressableScale } from '@/components/PressableScale';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
-import { useIsWideWeb } from '@/lib/responsive';
+import { useBookings } from '@/screens/bookings/useBookings';
 
 export default function Bookings() {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  const isWide = useIsWideWeb();
-  const esims = useEsimStore((s) => s.esims);
-
-  // eSIM is the only live service today; its counts are real (from the store).
-  const esimSummary = useMemo(() => {
-    const active = esims.filter((e) => e.status === 'active').length;
-    return {
-      count: esims.length,
-      sub: active > 0 ? tr('bookings.active', { count: active }) : esims.length ? tr('bookings.noneActive') : tr('bookings.noneYet'),
-    };
-  }, [esims, tr]);
+  const vm = useBookings();
+  const { isWide, esimSummary } = vm;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
@@ -51,7 +40,7 @@ export default function Bookings() {
               return (
                 <View key={svc.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
                   <PressableScale
-                    onPress={() => router.push(`/manage/${svc.id}`)}
+                    onPress={() => vm.openManage(svc.id)}
                     scaleTo={0.98}
                     style={{
                       flexDirection: 'row',

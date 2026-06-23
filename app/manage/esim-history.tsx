@@ -1,16 +1,17 @@
+// THIN UI — wiring lives in src/screens/manage/useEsimHistory.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Archive } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { formatEsimDataLabel, useEsimStore } from '@/state/esimStore';
+import { formatEsimDataLabel } from '@/state/esimStore';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
 import { EsimListSkeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { useEsimHistory } from '@/screens/manage/useEsimHistory';
 
 /**
  * History view for terminal eSIM bundles (expired / cancelled / refunded /
@@ -21,20 +22,14 @@ import { EmptyState } from '@/components/EmptyState';
 export default function EsimHistoryScreen() {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  const history = useEsimStore((s) => s.history);
-  const loading = useEsimStore((s) => s.historyLoading);
-  const refreshHistory = useEsimStore((s) => s.refreshHistory);
-
-  React.useEffect(() => {
-    refreshHistory();
-  }, [refreshHistory]);
+  const vm = useEsimHistory();
+  const { history, loading, refreshHistory } = vm;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/manage/esim'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -65,7 +60,7 @@ export default function EsimHistoryScreen() {
           history.map((e) => (
             <PressableScale
               key={e.id}
-              onPress={() => router.push(`/esim/${e.id}`)}
+              onPress={() => vm.goEsim(e.id)}
               scaleTo={0.98}
               style={{
                 backgroundColor: t.bgElev,

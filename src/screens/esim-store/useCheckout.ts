@@ -2,7 +2,8 @@ import { useState } from 'react';
 import { Alert, Linking } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useIqdMoney, useIqdAmount } from '@/lib/pricing';
+import { useIqdAmount } from '@/lib/pricing';
+import { useMoney, useIqdNote } from '@/lib/money';
 import { useEsimCart } from '@/state/esimCart';
 import { useAuthStore } from '@/state/authStore';
 import { useEsimStore } from '@/state/esimStore';
@@ -16,7 +17,8 @@ import { createFibPayment, pollFibPayment, isPaid, fibOutcome } from '@/services
 export function useCheckout() {
   const router = useRouter();
   const { t: tr } = useTranslation();
-  const money = useIqdMoney();
+  const money = useMoney();
+  const iqdNote = useIqdNote();
   const iqdAmount = useIqdAmount();
   const { place, bundle, clear } = useEsimCart();
   const user = useAuthStore((s) => s.user);
@@ -138,6 +140,7 @@ export function useCheckout() {
     planLabel,
     isWide,
     money,
+    iqdNote,
     availableMethods,
     method,
     setMethod,

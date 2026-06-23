@@ -37,7 +37,7 @@ function Sidebar() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 28, paddingHorizontal: 6 }}>
         <TulipLogo size={32} color={t.primary} />
         <Text style={{ fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>
-          Tulip Booking
+          {tr('common.appName')}
         </Text>
       </View>
 
@@ -65,12 +65,12 @@ function Sidebar() {
               marginBottom: 4,
             })}
           >
-            <Icon size={18} color={on ? '#fff' : t.fgMuted} strokeWidth={2} />
+            <Icon size={18} color={on ? t.onPrimary : t.fgMuted} strokeWidth={2} />
             <Text
               style={{
                 fontFamily: t.font.displayMedium,
                 fontWeight: '600',
-                color: on ? '#fff' : t.fg,
+                color: on ? t.onPrimary : t.fg,
                 fontSize: 14,
               }}
             >
@@ -85,6 +85,7 @@ function Sidebar() {
 
 export default function TabsLayout() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const { width, height } = useWindowDimensions();
   const isWide = Platform.OS === 'web' && width >= 1024;
 
@@ -116,10 +117,10 @@ export default function TabsLayout() {
       screenOptions={{ headerShown: false }}
       tabBar={(props) => <TulipTabBar {...props} />}
     >
-      <Tabs.Screen name="index" options={{ title: 'Home' }} />
-      <Tabs.Screen name="services" options={{ title: 'Services' }} />
-      <Tabs.Screen name="bookings" options={{ title: 'Bookings' }} />
-      <Tabs.Screen name="profile" options={{ title: 'Profile' }} />
+      <Tabs.Screen name="index" options={{ title: tr('nav.home') }} />
+      <Tabs.Screen name="services" options={{ title: tr('nav.services') }} />
+      <Tabs.Screen name="bookings" options={{ title: tr('nav.bookings') }} />
+      <Tabs.Screen name="profile" options={{ title: tr('nav.profile') }} />
     </Tabs>
   );
 }

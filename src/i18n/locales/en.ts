@@ -1,5 +1,6 @@
 export default {
   common: {
+    appName: 'Tulip Booking',
     continue: 'Continue',
     getStarted: 'Get started',
     search: 'Search',
@@ -9,6 +10,7 @@ export default {
     save: 'Save',
     cancel: 'Cancel',
     back: 'Back',
+    ok: 'OK',
     tryAgain: 'Try again',
     error: 'Something went wrong',
     somethingWrong: 'Something went wrong. Please try again.',
@@ -236,6 +238,7 @@ export default {
     pay: 'Pay {{amount}}',
     fibHint: "You'll confirm payment in the FIB app, then your eSIM is issued.",
     loyaltyHint: 'Your eSIM is issued instantly after checkout.',
+    chargedInIqd: 'charged in IQD',
     noPackage: "This plan can't be purchased right now. Please pick a country plan.",
     unsupportedTitle: "This device doesn't support eSIM",
     unsupportedBody:
@@ -327,6 +330,7 @@ export default {
     deviceReason: 'Use the QR to install on this device',
     scanHint: "Scan with another phone's camera, or send to someone to install on their device.",
     shareQr: 'Share QR',
+    shareToDevice: 'Share QR to another device',
     downloadQr: 'Download QR',
     working: 'Working…',
     manualEntry: 'Manual entry',

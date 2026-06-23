@@ -4,6 +4,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { ChevronLeft, Eye, EyeOff } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { TulipLogo } from './TulipLogo';
 
@@ -20,6 +21,7 @@ export function AuthShell({
   canGoBack?: boolean;
 }) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
 
   return (
@@ -62,7 +64,7 @@ export function AuthShell({
                 <TulipLogo size={26} color={t.primary} />
               </View>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: '#fff' }}>
-                Tulip Booking
+                {tr('common.appName')}
               </Text>
             </View>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 28, color: '#fff', letterSpacing: -0.6 }}>
@@ -157,9 +159,15 @@ export function AuthSegmented<T extends string>({
 /** Labeled text input matching the auth card style. */
 export function Field({
   label,
+  onFocus,
+  onBlur,
   ...rest
 }: { label: string } & React.ComponentProps<typeof TextInput>) {
   const t = useTheme();
+  const [focused, setFocused] = useState(false);
+  // Web-only focus affordance (primary border). Mobile has none — the flag is
+  // gated to web so native renders byte-for-byte unchanged.
+  const showFocus = Platform.OS === 'web' && focused;
   return (
     <View style={{ gap: 6 }}>
       <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
@@ -168,9 +176,11 @@ export function Field({
       <TextInput
         placeholderTextColor={t.fgFaint}
         {...rest}
+        onFocus={(e) => { setFocused(true); onFocus?.(e); }}
+        onBlur={(e) => { setFocused(false); onBlur?.(e); }}
         style={{
           backgroundColor: t.bgElev,
-          borderColor: t.border,
+          borderColor: showFocus ? t.primary : t.border,
           borderWidth: 1,
           borderRadius: 14,
           paddingHorizontal: 14,
@@ -198,6 +208,9 @@ export function PasswordField({
 }) {
   const t = useTheme();
   const [show, setShow] = useState(false);
+  const [focused, setFocused] = useState(false);
+  // Web-only focus affordance; mobile unchanged (flag gated to web).
+  const showFocus = Platform.OS === 'web' && focused;
   return (
     <View style={{ gap: 6 }}>
       <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
@@ -208,7 +221,7 @@ export function PasswordField({
           flexDirection: 'row',
           alignItems: 'center',
           backgroundColor: t.bgElev,
-          borderColor: t.border,
+          borderColor: showFocus ? t.primary : t.border,
           borderWidth: 1,
           borderRadius: 14,
           overflow: 'hidden',
@@ -221,6 +234,8 @@ export function PasswordField({
           placeholderTextColor={t.fgFaint}
           secureTextEntry={!show}
           autoCapitalize="none"
+          onFocus={() => setFocused(true)}
+          onBlur={() => setFocused(false)}
           style={{ flex: 1, paddingHorizontal: 14, paddingVertical: 14, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }}
         />
         <Pressable onPress={() => setShow((s) => !s)} hitSlop={8} style={{ paddingHorizontal: 14, paddingVertical: 14 }}>

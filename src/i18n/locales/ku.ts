@@ -1,5 +1,6 @@
 export default {
   common: {
+    appName: 'Tulip Booking',
     continue: 'بەردەوام بە',
     getStarted: 'دەستپێبکە',
     search: 'گەڕان',
@@ -9,6 +10,7 @@ export default {
     save: 'پاشەکەوتکردن',
     cancel: 'هەڵوەشاندنەوە',
     back: 'گەڕانەوە',
+    ok: 'باشە',
     tryAgain: 'دووبارە هەوڵ بدە',
     error: 'هەڵەیەک ڕوویدا',
     somethingWrong: 'هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵ بدە.',
@@ -236,6 +238,7 @@ export default {
     pay: 'پارە بدە {{amount}}',
     fibHint: 'پارەدان لە ئەپی FIB پشتڕاست دەکەیتەوە، پاشان eSIM ـەکەت دەردەچێت.',
     loyaltyHint: 'eSIM ـەکەت دەستبەجێ دوای پارەدان دەردەچێت.',
+    chargedInIqd: 'بە دیناری عێراقی وەردەگیرێت',
     noPackage: 'ئێستا ناتوانرێت ئەم پلانە بکڕدرێت. تکایە پلانی وڵاتێک هەڵبژێرە.',
     unsupportedTitle: 'ئەم ئامێرە پشتگیری eSIM ناکات',
     unsupportedBody:
@@ -327,6 +330,7 @@ export default {
     deviceReason: 'QR بەکاربهێنە بۆ دامەزراندن لەسەر ئەم ئامێرە',
     scanHint: 'بە کامێرای مۆبایلێکی تر بیمسێنە، یان بۆ کەسێک بینێرە بۆ دامەزراندن لەسەر ئامێرەکەی.',
     shareQr: 'هاوبەشکردنی QR',
+    shareToDevice: 'هاوبەشکردنی QR بۆ ئامێرێکی تر',
     downloadQr: 'داگرتنی QR',
     working: 'لە کاردایە…',
     manualEntry: 'تۆمارکردنی دەستی',

@@ -50,7 +50,6 @@ On-screen QR (`react-native-qrcode-svg`, already a dep — supports a center log
 ```tsx
 // add a crisp @2x/@3x PNG of the petal mark, e.g. assets/tulip-mark.png
 import tulipMark from '../../assets/tulip-mark.png';
-
 <QRCode
   value={vm.lpa}
   size={220}

@@ -49,7 +49,7 @@ export function Toggle({ value, onChange }: { value: boolean; onChange: (v: bool
               width: THUMB,
               height: THUMB,
               borderRadius: THUMB / 2,
-              backgroundColor: '#fff',
+              backgroundColor: t.onPrimary,
               shadowColor: '#000',
               shadowOpacity: 0.2,
               shadowRadius: 2,

@@ -53,6 +53,13 @@ wholesale. Automated **pull** (Design → Code) uses the `DesignSync` tool after
 **push** direction (`/design-sync`) is not a fit for this Expo/RN app and is done by hand per the
 contract (see `SYNC-STRATEGY.md` §5b).
 
+**Established UI rules** (recorded as they're approved, so every session honors them):
+- **Desktop web ≥1024** uses the sidebar shell (`app/(tabs)/_layout.tsx`); gate web-only
+  multi-column layouts on `useIsWideWeb()` (`src/lib/responsive.ts`). Mobile/native stays
+  byte-for-byte unchanged below the breakpoint.
+- **eSIM QR** always renders the Tulip petal mark centered on a small white badge with
+  error-correction `H` — on-screen (`EsimInstallCard`) and in the shared/downloaded PNG.
+
 ## CI/CD actions — do NOT break these
 Three GitHub Actions are the release pipeline. Any change or edit must keep all three green:
 1. **Android Build APK** — `tulip-booking/.github/workflows/android-build.yml`

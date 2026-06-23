@@ -1,69 +1,28 @@
-import React, { useEffect, useMemo, useState } from 'react';
+// THIN UI — wiring lives in src/screens/admin/useAdminUsers.ts.
+import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Redirect } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { ChevronLeft, Search, Star, X, Ban, ShieldCheck, Trash2 } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { useAuthStore } from '@/state/authStore';
-import { getUsers, updateUser, deleteUser } from '@/services/admin';
-import type { AdminUserRow } from '@/services/types';
+import { useAdminUsers } from '@/screens/admin/useAdminUsers';
 
 export default function AdminUsers() {
   const t = useTheme();
-  const router = useRouter();
-  const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
-  const [q, setQ] = useState('');
-  const [rows, setRows] = useState<AdminUserRow[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<AdminUserRow | null>(null);
-  const [busy, setBusy] = useState(false);
+  const vm = useAdminUsers();
+  const {
+    q, setQ, rows, users, loading, error,
+    selected, setSelected, clearError, busy,
+    onToggleLoyalty, onToggleBlock, onDelete,
+  } = vm;
 
-  useEffect(() => {
-    getUsers({ limit: 200 })
-      .then(setRows)
-      .catch((e: any) => setError(e?.message || 'Failed to load users'))
-      .finally(() => setLoading(false));
-  }, []);
-
-  const users = useMemo(
-    () => rows.filter((u) => `${u.name} ${u.phone}`.toLowerCase().includes(q.trim().toLowerCase())),
-    [rows, q],
-  );
-
-  if (!isAdmin) return <Redirect href="/(tabs)/profile" />;
-
-  const applyLocal = (u: AdminUserRow) => {
-    setRows((prev) => prev.map((r) => (r.id === u.id ? { ...r, ...u } : r)));
-    setSelected((s) => (s && s.id === u.id ? { ...s, ...u } : s));
-  };
-
-  const run = async (fn: () => Promise<void>) => {
-    if (busy) return;
-    setBusy(true);
-    try {
-      await fn();
-    } catch (e: any) {
-      setError(e?.message || 'Action failed');
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const onToggleLoyalty = (u: AdminUserRow) => run(async () => applyLocal(await updateUser(u.id, { isLoyalty: !u.isLoyalty })));
-  const onToggleBlock = (u: AdminUserRow) => run(async () => applyLocal(await updateUser(u.id, { blocked: !u.isBlocked })));
-  const onDelete = (u: AdminUserRow) =>
-    run(async () => {
-      await deleteUser(u.id);
-      setRows((prev) => prev.filter((r) => r.id !== u.id));
-      setSelected(null);
-    });
+  if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/admin'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -88,7 +47,7 @@ export default function AdminUsers() {
             {users.map((u, i) => (
               <Pressable
                 key={u.id}
-                onPress={() => { setError(null); setSelected(u); }}
+                onPress={() => { clearError(); setSelected(u); }}
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderBottomWidth: i === users.length - 1 ? 0 : 1, borderBottomColor: t.border }}
               >
                 <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>

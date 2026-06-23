@@ -1,21 +1,18 @@
-import React, { useEffect, useMemo } from 'react';
+// THIN UI — wiring lives in src/screens/orders/useOrders.ts.
+import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Receipt, Globe } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
-import { useOrderStore } from '@/state/orderStore';
 import type { OrderSummary } from '@/services/types';
 import { formatIqd } from '@/lib/pricing';
+import { useOrders } from '@/screens/orders/useOrders';
 
 function orderDate(o: OrderSummary): string {
   return o.bookedAt || o.createdAt || new Date().toISOString();
-}
-function monthLabel(iso: string) {
-  return new Date(iso).toLocaleDateString(undefined, { year: 'numeric', month: 'long' });
 }
 function dayLabel(iso: string) {
   return new Date(iso).toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
@@ -24,36 +21,17 @@ function dayLabel(iso: string) {
 export default function Orders() {
   const t = useTheme();
   const { t: tr } = useTranslation();
+  const vm = useOrders();
   const orderTitle = (o: OrderSummary): string => {
     const it = o.items[0];
     return it?.countryName ? tr('orders.countryEsim', { country: it.countryName }) : tr('orders.esimOrder');
   };
-  const router = useRouter();
-  const orders = useOrderStore((s) => s.orders);
-  const loading = useOrderStore((s) => s.loading);
-  const loaded = useOrderStore((s) => s.loaded);
-  const refresh = useOrderStore((s) => s.refresh);
-
-  useEffect(() => {
-    refresh();
-  }, [refresh]);
-
-  const groups = useMemo(() => {
-    const out: { label: string; items: OrderSummary[] }[] = [];
-    for (const o of orders) {
-      const label = monthLabel(orderDate(o));
-      const last = out[out.length - 1];
-      if (last && last.label === label) last.items.push(o);
-      else out.push({ label, items: [o] });
-    }
-    return out;
-  }, [orders]);
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -64,9 +42,9 @@ export default function Orders() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 20, maxWidth: 780, width: '100%', alignSelf: 'center' }}>
-        {loading && !loaded ? (
+        {vm.loading && !vm.loaded ? (
           <View style={{ paddingVertical: 60, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
-        ) : orders.length === 0 ? (
+        ) : vm.orders.length === 0 ? (
           <View style={{ alignItems: 'center', justifyContent: 'center', paddingVertical: 80, gap: 12 }}>
             <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
               <Receipt size={30} color={t.fgMuted} strokeWidth={2} />
@@ -75,7 +53,7 @@ export default function Orders() {
             <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center' }}>{tr('orders.noOrdersSub')}</Text>
           </View>
         ) : (
-          groups.map((g) => (
+          vm.groups.map((g) => (
             <View key={g.label} style={{ gap: 10 }}>
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 4 }}>
                 {g.label}
@@ -87,7 +65,7 @@ export default function Orders() {
                   return (
                     <Pressable
                       key={o.id}
-                      onPress={() => router.push(`/orders/${o.id}`)}
+                      onPress={() => vm.goOrder(o.id)}
                       style={({ pressed }) => ({
                         flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14,
                         borderBottomWidth: i === g.items.length - 1 ? 0 : 1, borderBottomColor: t.border, opacity: pressed ? 0.85 : 1,

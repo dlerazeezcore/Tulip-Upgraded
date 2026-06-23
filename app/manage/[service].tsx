@@ -1,18 +1,18 @@
+// THIN UI — wiring lives in src/screens/manage/useManageService.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Archive, ChevronRight, Smartphone } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { SERVICES, serviceRoute } from '@/data/services';
-import { formatEsimDataLabel, useEsimStore } from '@/state/esimStore';
+import { formatEsimDataLabel } from '@/state/esimStore';
 import { formatRemainingData, formatTimeRemaining } from '@/lib/esimUsage';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
 import { EsimListSkeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { useManageService } from '@/screens/manage/useManageService';
 
 function Card({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) {
   const t = useTheme();
@@ -34,22 +34,13 @@ function Card({ children, onPress }: { children: React.ReactNode; onPress?: () =
   );
 }
 
-function HistoryCard() {
+function HistoryCard({ count, onPress }: { count: number; onPress: () => void }) {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  const history = useEsimStore((s) => s.history);
-  // Refresh the history count silently so the card always shows accurate
-  // numbers without forcing the user onto the History screen.
-  const refreshHistory = useEsimStore((s) => s.refreshHistory);
-  React.useEffect(() => {
-    refreshHistory();
-  }, [refreshHistory]);
-  const count = history.length;
   if (count === 0) return null;
   return (
     <PressableScale
-      onPress={() => router.push('/manage/esim-history')}
+      onPress={onPress}
       scaleTo={0.98}
       style={{
         backgroundColor: t.bgElev,
@@ -79,16 +70,12 @@ function HistoryCard() {
   );
 }
 
-function EsimList() {
+function EsimList({ vm }: { vm: ReturnType<typeof useManageService> }) {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  // The backend filters out terminal (cancelled/refunded/expired) profiles by
-  // default — this list shows only live bundles. Terminal ones live behind
-  // the HistoryCard rendered alongside the list.
-  const esims = useEsimStore((s) => s.esims);
-  const refreshing = useEsimStore((s) => s.refreshing);
-  const loaded = useEsimStore((s) => s.loaded);
+  const esims = vm.esims;
+  const refreshing = vm.refreshing;
+  const loaded = vm.loaded;
 
   if (!loaded && refreshing) {
     return <EsimListSkeleton count={3} />;
@@ -102,7 +89,7 @@ function EsimList() {
           title={tr('manage.noEsimsTitle')}
           subtitle={tr('manage.noEsimsSub')}
         />
-        <HistoryCard />
+        <HistoryCard count={vm.historyCount} onPress={vm.goHistory} />
       </View>
     );
   }
@@ -123,7 +110,7 @@ function EsimList() {
         const pillLabel = e.status === 'provider_waiting' ? tr('status.provider_waiting') : undefined;
         const hasUsageRow = e.planGb > 0 && (e.status === 'active' || e.status === 'provider_waiting');
         return (
-          <Card key={e.id} onPress={() => router.push(`/esim/${e.id}`)}>
+          <Card key={e.id} onPress={() => vm.goEsim(e.id)}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Flag iso={e.iso} size={40} />
               <View style={{ flex: 1 }}>
@@ -168,7 +155,7 @@ function EsimList() {
           </Card>
         );
       })}
-      <HistoryCard />
+      <HistoryCard count={vm.historyCount} onPress={vm.goHistory} />
     </View>
   );
 }
@@ -187,46 +174,16 @@ function ComingSoon({ label }: { label: string }) {
 }
 
 export default function ManageService() {
-  const { service } = useLocalSearchParams<{ service: string }>();
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
-  const svc = SERVICES.find((s) => s.id === service);
-
-  const title =
-    service === 'esim' ? tr('bookings.myEsims')
-    : service === 'hotels' ? tr('bookings.myStays')
-    : service === 'flights' ? tr('manage.myFlights')
-    : service === 'transfers' ? tr('manage.myTransfers')
-    : service === 'cars' ? tr('manage.myCars')
-    : tr('manage.myBookings');
-
-  // For the eSIM tab we own a single refresh affordance (pull-to-refresh +
-  // initial load) so the user can force-resync status/usage from the
-  // provider on demand. This is what catches: a bundle that's been
-  // refunded/cancelled provider-side, latest GB usage, and ONBOARDING ->
-  // IN_USE transitions that beat the recover-poll on the detail screen.
-  const refreshList = useEsimStore((s) => s.refresh);
-  const refreshUsage = useEsimStore((s) => s.refreshUsage);
-  const refreshing = useEsimStore((s) => s.refreshing);
-
-  React.useEffect(() => {
-    if (service === 'esim') refreshList();
-  }, [service, refreshList]);
-
-  const onPullToRefresh = React.useCallback(async () => {
-    if (service !== 'esim') return;
-    // refreshUsage hits /usage/sync/my which forces a provider round-trip,
-    // then returns the latest list. That's strictly more authoritative than
-    // refreshList (which only reads our DB), so use it for explicit refreshes.
-    await refreshUsage();
-  }, [service, refreshUsage]);
+  const vm = useManageService();
+  const { svc, service, title } = vm;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -239,7 +196,7 @@ export default function ManageService() {
         </View>
         {svc && service === 'esim' && (
           <Pressable
-            onPress={() => router.push(serviceRoute(svc.id) as any)}
+            onPress={vm.goBookNew}
             style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: svc.color }}
           >
             <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
@@ -253,11 +210,11 @@ export default function ManageService() {
         contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 10, maxWidth: 900, width: '100%', alignSelf: 'center' }}
         refreshControl={
           service === 'esim' ? (
-            <RefreshControl refreshing={refreshing} onRefresh={onPullToRefresh} tintColor={t.primary} colors={[t.primary]} />
+            <RefreshControl refreshing={vm.refreshing} onRefresh={vm.onPullToRefresh} tintColor={t.primary} colors={[t.primary]} />
           ) : undefined
         }
       >
-        {service === 'esim' ? <EsimList /> : <ComingSoon label={svc?.label ?? 'This'} />}
+        {service === 'esim' ? <EsimList vm={vm} /> : <ComingSoon label={svc?.label ?? 'This'} />}
       </ScrollView>
     </SafeAreaView>
   );

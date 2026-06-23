@@ -1,5 +1,6 @@
 export default {
   common: {
+    appName: 'Tulip Booking',
     continue: 'متابعة',
     getStarted: 'ابدأ الآن',
     search: 'بحث',
@@ -9,6 +10,7 @@ export default {
     save: 'حفظ',
     cancel: 'إلغاء',
     back: 'رجوع',
+    ok: 'حسناً',
     tryAgain: 'حاول مرة أخرى',
     error: 'حدث خطأ ما',
     somethingWrong: 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
@@ -236,6 +238,7 @@ export default {
     pay: 'ادفع {{amount}}',
     fibHint: 'ستؤكد الدفع في تطبيق FIB، ثم تُصدَر شريحتك.',
     loyaltyHint: 'تُصدَر شريحتك فوراً بعد الدفع.',
+    chargedInIqd: 'يُحصَّل بالدينار العراقي',
     noPackage: 'لا يمكن شراء هذه الباقة الآن. يرجى اختيار باقة دولة.',
     unsupportedTitle: 'هذا الجهاز لا يدعم الشريحة الإلكترونية',
     unsupportedBody:
@@ -327,6 +330,7 @@ export default {
     deviceReason: 'استخدم رمز QR للتثبيت على هذا الجهاز',
     scanHint: 'امسحه بكاميرا هاتف آخر، أو أرسله لشخص لتثبيته على جهازه.',
     shareQr: 'مشاركة QR',
+    shareToDevice: 'مشاركة QR إلى جهاز آخر',
     downloadQr: 'تنزيل QR',
     working: 'جارٍ العمل…',
     manualEntry: 'الإدخال اليدوي',

@@ -1,34 +1,24 @@
-import React, { useEffect, useState } from 'react';
+// THIN UI — wiring lives in src/screens/admin/useAdminHome.ts.
+import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter, Redirect } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck, MapPin, Receipt } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
-import { useAuthStore } from '@/state/authStore';
-import { useIsWideWeb } from '@/lib/responsive';
-import { getUsers, listFeaturedLocations } from '@/services/admin';
+import { useAdminHome } from '@/screens/admin/useAdminHome';
 
 export default function AdminHome() {
   const t = useTheme();
-  const router = useRouter();
-  const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
-  const isWide = useIsWideWeb();
-  const [userCount, setUserCount] = useState<number | null>(null);
-  const [featuredCount, setFeaturedCount] = useState<number | null>(null);
+  const vm = useAdminHome();
+  const isWide = vm.isWide;
 
-  useEffect(() => {
-    if (!isAdmin) return;
-    getUsers({ limit: 200 }).then((u) => setUserCount(u.length)).catch(() => {});
-    listFeaturedLocations().then((f) => setFeaturedCount(f.length)).catch(() => {});
-  }, [isAdmin]);
-
-  if (!isAdmin) return <Redirect href="/(tabs)/profile" />;
+  if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   const cards = [
-    { id: 'users', title: 'Users', sub: userCount === null ? 'View signups' : `${userCount} signed up`, Icon: Users, color: t.accent.blue, route: '/admin/users' },
+    { id: 'users', title: 'Users', sub: vm.userCount === null ? 'View signups' : `${vm.userCount} signed up`, Icon: Users, color: t.accent.blue, route: '/admin/users' },
     { id: 'orders', title: 'Order history', sub: 'All users · filter by month', Icon: Receipt, color: t.accent.sky, route: '/admin/orders' },
-    { id: 'featured', title: 'Popular destinations', sub: featuredCount === null ? 'Add, edit, remove' : `${featuredCount} configured`, Icon: MapPin, color: t.accent.amber, route: '/admin/featured' },
+    { id: 'featured', title: 'Popular destinations', sub: vm.featuredCount === null ? 'Add, edit, remove' : `${vm.featuredCount} configured`, Icon: MapPin, color: t.accent.amber, route: '/admin/featured' },
     { id: 'notif', title: 'Push notifications', sub: 'Compose & send', Icon: Bell, color: t.accent.purple, route: '/admin/notifications' },
     { id: 'cur', title: 'Exchange rate & markup', sub: 'USD→IQD rate, markup', Icon: Coins, color: t.accent.emerald, route: '/admin/currency' },
   ];
@@ -37,7 +27,7 @@ export default function AdminHome() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -53,7 +43,7 @@ export default function AdminHome() {
           {cards.map((c) => (
             <View key={c.id} style={{ width: isWide ? '33.333%' : '100%', padding: isWide ? 6 : 0 }}>
             <PressableScale
-              onPress={() => router.push(c.route as any)}
+              onPress={() => vm.goRoute(c.route)}
               scaleTo={0.98}
               style={{
                 flexDirection: isWide ? 'column' : 'row',

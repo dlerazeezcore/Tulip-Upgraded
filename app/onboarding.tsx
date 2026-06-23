@@ -1,39 +1,21 @@
+// THIN UI — wiring lives in src/screens/onboarding/useOnboarding.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Check, ArrowRight } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { TulipLogo } from '@/components/TulipLogo';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useLocaleStore } from '@/state/localeStore';
-import { useCurrencyStore } from '@/state/currencyStore';
-import type { Lang } from '@/i18n';
-import { CURRENCY_LIST, type CurrencyCode } from '@/data/currency';
-
-const LANGS: { id: Lang; native: string; sub: string }[] = [
-  { id: 'en', native: 'English', sub: 'English' },
-  { id: 'ar', native: 'العربية', sub: 'Arabic' },
-  { id: 'ku', native: 'کوردی', sub: 'Kurdish (Sorani)' },
-];
+import type { CurrencyCode } from '@/data/currency';
+import { useOnboarding } from '@/screens/onboarding/useOnboarding';
 
 export default function Onboarding() {
   const t = useTheme();
-  const router = useRouter();
   const { t: tr } = useTranslation();
-  const language = useLocaleStore((s) => s.language);
-  const setLanguage = useLocaleStore((s) => s.setLanguage);
-  const completeOnboarding = useLocaleStore((s) => s.completeOnboarding);
-  const code = useCurrencyStore((s) => s.code);
-  const setCode = useCurrencyStore((s) => s.setCode);
-
-  const onStart = () => {
-    completeOnboarding();
-    router.replace('/(tabs)');
-  };
+  const vm = useOnboarding();
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
@@ -62,12 +44,12 @@ export default function Onboarding() {
           <Text style={{ fontFamily: t.font.display, fontSize: 16, fontWeight: '700', color: t.fg }}>
             {tr('onboarding.language')}
           </Text>
-          {LANGS.map((l) => {
-            const on = l.id === language;
+          {vm.langs.map((l) => {
+            const on = l.id === vm.language;
             return (
               <Pressable
                 key={l.id}
-                onPress={() => setLanguage(l.id)}
+                onPress={() => vm.setLanguage(l.id)}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -97,12 +79,12 @@ export default function Onboarding() {
           <Text style={{ fontFamily: t.font.display, fontSize: 16, fontWeight: '700', color: t.fg }}>
             {tr('onboarding.currency')}
           </Text>
-          {CURRENCY_LIST.map((c) => {
-            const on = c.code === code;
+          {vm.currencyList.map((c) => {
+            const on = c.code === vm.code;
             return (
               <Pressable
                 key={c.code}
-                onPress={() => setCode(c.code as CurrencyCode)}
+                onPress={() => vm.setCode(c.code as CurrencyCode)}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -120,7 +102,7 @@ export default function Onboarding() {
                   <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
                     {c.code} · {c.symbol}
                   </Text>
-                  <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{tr(`currency.${c.code}`)}</Text>
+                  <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{tr(`currency.${c.code}`, { defaultValue: c.name })}</Text>
                 </View>
                 <Selected on={on} />
               </Pressable>
@@ -131,7 +113,7 @@ export default function Onboarding() {
         <PrimaryButton
           label={tr('onboarding.getStarted')}
           icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />}
-          onPress={onStart}
+          onPress={vm.onStart}
         />
       </ScrollView>
     </View>

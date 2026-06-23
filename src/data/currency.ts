@@ -1,36 +1,37 @@
-// Multi-currency support. Base prices in the app are stored in USD;
-// everything is converted at display time via useMoney().
-// Rates are illustrative — swap for a live FX feed later.
+// Universal multi-currency display. The exchange RATE (IQD per 1 unit) is the
+// shared/universal FX — it applies to every service, not just eSIM. Per-currency
+// presentation + the live rates come from the backend `/api/v1/currencies` feed;
+// these bundled defaults are only the offline fallback before that loads.
+// (Markup/discount is a separate, service-scoped concern — see pricing rules.)
 
-export type CurrencyCode = 'USD' | 'EUR' | 'IQD';
+export type CurrencyCode = string;
 
-export type Currency = {
+export type CurrencyMeta = {
   code: CurrencyCode;
   symbol: string;
   name: string;
-  /** Units of this currency per 1 USD. */
-  rate: number;
   decimals: number;
-  /** Where the symbol sits relative to the number. */
   position: 'prefix' | 'suffix';
   flag: string; // ISO-2 for the Flag component
+  /** IQD per 1 unit of this currency (universal FX). IQD itself is 1. */
+  rate: number;
+  enabled: boolean;
 };
 
-export const CURRENCIES: Record<CurrencyCode, Currency> = {
-  USD: { code: 'USD', symbol: '$',   name: 'US Dollar',     rate: 1,    decimals: 2, position: 'prefix', flag: 'US' },
-  EUR: { code: 'EUR', symbol: '€',   name: 'Euro',          rate: 0.92, decimals: 2, position: 'prefix', flag: 'EU' },
-  IQD: { code: 'IQD', symbol: 'IQD', name: 'Iraqi Dinar',   rate: 1310, decimals: 0, position: 'suffix', flag: 'IQ' },
-};
+/** Offline fallback used before the backend `/currencies` feed loads. */
+export const DEFAULT_CURRENCIES: CurrencyMeta[] = [
+  { code: 'IQD', symbol: 'IQD', name: 'Iraqi Dinar', decimals: 0, position: 'suffix', flag: 'IQ', rate: 1, enabled: true },
+  { code: 'USD', symbol: '$', name: 'US Dollar', decimals: 2, position: 'prefix', flag: 'US', rate: 1500, enabled: true },
+  { code: 'EUR', symbol: '€', name: 'Euro', decimals: 2, position: 'prefix', flag: 'EU', rate: 1650, enabled: true },
+];
 
-export const CURRENCY_LIST: Currency[] = [CURRENCIES.USD, CURRENCIES.EUR, CURRENCIES.IQD];
-
-export function formatMoney(usd: number, cur: Currency): string {
-  const value = usd * cur.rate;
+/** Format a value that is ALREADY expressed in `meta`'s currency. */
+export function formatAmount(value: number, meta: CurrencyMeta): string {
   const n =
-    cur.decimals === 0
+    meta.decimals === 0
       ? Math.round(value).toLocaleString('en-US')
-      : (Number.isInteger(value)
-          ? value.toLocaleString('en-US')
-          : value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }));
-  return cur.position === 'prefix' ? `${cur.symbol}${n}` : `${n} ${cur.symbol}`;
+      : Number.isInteger(value)
+        ? value.toLocaleString('en-US')
+        : value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return meta.position === 'prefix' ? `${meta.symbol}${n}` : `${n} ${meta.symbol}`;
 }

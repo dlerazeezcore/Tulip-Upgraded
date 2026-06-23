@@ -27,7 +27,7 @@ export function Checkbox({
           justifyContent: 'center',
         }}
       >
-        {checked && <Check size={size - 6} color="#fff" strokeWidth={3} />}
+        {checked && <Check size={size - 6} color={t.onPrimary} strokeWidth={3} />}
       </View>
     </Pressable>
   );

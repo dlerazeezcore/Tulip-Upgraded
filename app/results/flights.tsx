@@ -1,32 +1,31 @@
+// THIN UI — wiring lives in src/screens/results/useFlightResults.ts.
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useRouter } from 'expo-router';
 import { ChevronLeft, Plane } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { useSearchStore } from '@/state/searchStore';
+import { useFlightResults } from '@/screens/results/useFlightResults';
 
 export default function FlightResults() {
   const t = useTheme();
-  const router = useRouter();
-  const { from, to, departDate, returnDate, tripType } = useSearchStore();
+  const vm = useFlightResults();
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/(tabs)'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>
-            {(from || 'Flights').split(' · ')[0]}{to ? ` → ${to.split(' · ')[0]}` : ''}
+            {(vm.from || 'Flights').split(' · ')[0]}{vm.to ? ` → ${vm.to.split(' · ')[0]}` : ''}
           </Text>
-          {departDate ? (
+          {vm.departDate ? (
             <Text style={{ fontSize: 11, color: t.fgMuted }}>
-              {departDate}{tripType === 'roundtrip' && returnDate ? ` – ${returnDate}` : ''}
+              {vm.departDate}{vm.tripType === 'roundtrip' && vm.returnDate ? ` – ${vm.returnDate}` : ''}
             </Text>
           ) : null}
         </View>

@@ -31,13 +31,10 @@ export function TulipTabBar({ state, navigation }: BottomTabBarProps) {
         paddingHorizontal: 8,
         borderTopWidth: 1,
         borderTopColor: t.border,
-        // On Android (no real blur) fall back to a solid elevated surface.
-        backgroundColor:
-          Platform.OS === 'android'
-            ? t.bgElev
-            : t.mode === 'dark'
-              ? 'rgba(20,28,47,0.80)'
-              : 'rgba(255,255,255,0.80)',
+        // On Android (no real blur) fall back to a solid elevated surface; on
+        // iOS/web tint with the elevated surface at ~80% over the blur ('CC'
+        // = 0xCC ≈ 0.80 alpha), so the colour tracks the theme token.
+        backgroundColor: Platform.OS === 'android' ? t.bgElev : t.bgElev + 'CC',
       }}
     >
         {state.routes.map((route, index) => {

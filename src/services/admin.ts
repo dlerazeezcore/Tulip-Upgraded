@@ -34,17 +34,58 @@ export async function getAdminOrders(params: { month?: string } = {}): Promise<A
   return unwrap<{ orders: AdminOrder[] }>(res).orders;
 }
 
-/** Save the active USD->IQD rate + markup% (markup stored in custom_fields). */
-export async function saveExchangeRate(input: { rate: number; markupPercent: number }): Promise<void> {
+/**
+ * Save (add or update) a UNIVERSAL display-currency FX rate — `rate` is IQD per
+ * 1 unit (e.g. 1 USD = 1550 IQD). Presentation metadata rides in customFields.
+ * The exchange rate is currency-only (no markup): markup is service-scoped.
+ */
+export async function saveCurrencyRate(input: {
+  code: string;
+  rate: number;
+  symbol?: string;
+  name?: string;
+  decimals?: number;
+  position?: 'prefix' | 'suffix';
+  flag?: string;
+  enabled?: boolean;
+}): Promise<void> {
   await apiFetch('/api/v1/admin/exchange-rates', {
     method: 'POST',
     body: {
-      baseCurrency: 'USD',
+      baseCurrency: input.code.trim().toUpperCase(),
       quoteCurrency: 'IQD',
       rate: input.rate,
       source: 'tulip-admin',
       active: true,
-      customFields: { enableIQD: true, markupPercent: String(input.markupPercent) },
+      customFields: {
+        symbol: input.symbol,
+        name: input.name,
+        decimals: input.decimals,
+        position: input.position,
+        flag: input.flag,
+        enabled: input.enabled ?? true,
+      },
+    },
+  });
+}
+
+/**
+ * Save the GLOBAL eSIM markup % as a service-scoped pricing rule — the
+ * future-ready home (per-country / per-package / per-class rules slot in the
+ * same way, no code change). The backend deactivates the previous global eSIM
+ * rule so this is an upsert.
+ */
+export async function saveEsimMarkup(markupPercent: number): Promise<void> {
+  await apiFetch('/api/v1/admin/pricing-rules', {
+    method: 'POST',
+    body: {
+      serviceType: 'esim',
+      ruleScope: 'global',
+      adjustmentType: 'percent',
+      adjustmentValue: markupPercent,
+      appliesTo: 'provider_cost',
+      priority: 100,
+      active: true,
     },
   });
 }

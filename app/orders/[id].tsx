@@ -1,14 +1,14 @@
-import React, { useEffect } from 'react';
+// THIN UI — wiring lives in src/screens/orders/useOrderDetail.ts.
+import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { useLocalSearchParams, useRouter } from 'expo-router';
 import { ChevronLeft, Globe, Check } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { useOrderStore } from '@/state/orderStore';
 import { formatIqd } from '@/lib/pricing';
+import { useOrderDetail } from '@/screens/orders/useOrderDetail';
 
 function fmtDateTime(iso?: string | null) {
   if (!iso) return '—';
@@ -18,24 +18,15 @@ function fmtDateTime(iso?: string | null) {
 }
 
 export default function OrderDetail() {
-  const { id } = useLocalSearchParams<{ id: string }>();
   const t = useTheme();
-  const router = useRouter();
-  const order = useOrderStore((s) => s.byId(id));
-  const refresh = useOrderStore((s) => s.refresh);
-
-  useEffect(() => {
-    if (!order) refresh();
-  }, [order, refresh]);
-
-  const item = order?.items[0];
-  const completed = order ? ['BOOKED', 'ACTIVE', 'COMPLETED', 'GOT_RESOURCE'].includes(String(order.status).toUpperCase()) : false;
+  const vm = useOrderDetail();
+  const { order, item, completed } = vm;
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
-          onPress={() => (router.canGoBack() ? router.back() : router.replace('/orders'))}
+          onPress={vm.goBack}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -48,7 +39,7 @@ export default function OrderDetail() {
       {!order ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
           <Text style={{ color: t.fgMuted }}>Order not found.</Text>
-          <PrimaryButton label="Back to orders" onPress={() => router.replace('/orders')} />
+          <PrimaryButton label="Back to orders" onPress={vm.goOrders} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
@@ -100,7 +91,7 @@ export default function OrderDetail() {
             )}
           </View>
 
-          <PrimaryButton label="Manage eSIM" onPress={() => router.replace('/manage/esim')} />
+          <PrimaryButton label="Manage eSIM" onPress={vm.goManageEsim} />
         </ScrollView>
       )}
     </SafeAreaView>
