@@ -3,6 +3,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Bell, Check } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -10,6 +11,7 @@ import { useUpdateNotification } from '@/screens/admin/notifications/useUpdateNo
 
 export default function AdminSendUpdateNotification() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const vm = useUpdateNotification();
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
@@ -19,21 +21,20 @@ export default function AdminSendUpdateNotification() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable onPress={vm.goBack} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Bell size={20} color={t.primary} strokeWidth={2} />
           <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-            Send update notification
+            {tr('admin.notifications.update.title')}
           </Text>
         </View>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 560, width: '100%', alignSelf: 'center' }}>
         <Text style={{ fontSize: 12, color: t.fgMuted, lineHeight: 18 }}>
-          One tap sends the pre-baked "new version available" notification to every active device.
-          Each device receives the message in its own language (English, Arabic, or Kurdish).
+          {tr('admin.notifications.update.intro')}
         </Text>
 
         {/* Language preview tabs */}
@@ -44,6 +45,8 @@ export default function AdminSendUpdateNotification() {
               <Pressable
                 key={p.lang}
                 onPress={() => vm.setSelectedLang(p.lang)}
+                accessibilityRole="button"
+                accessibilityState={{ selected }}
                 style={{
                   paddingVertical: 8,
                   paddingHorizontal: 14,
@@ -62,7 +65,7 @@ export default function AdminSendUpdateNotification() {
         {/* Preview card */}
         <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 8, ...t.shadow1 }}>
           <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>
-            Preview
+            {tr('admin.notifications.preview')}
           </Text>
           <Text style={{ fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>
             {current.title}
@@ -78,10 +81,10 @@ export default function AdminSendUpdateNotification() {
         ) : (
           <View style={{ padding: 12, borderRadius: 12, backgroundColor: t.bgSunken, gap: 4 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>
-              Store URLs (from app/version-info)
+              {tr('admin.notifications.update.storeUrls')}
             </Text>
-            <Text style={{ fontSize: 11, color: t.fgMuted }}>iOS: {vm.versionInfo?.appStoreUrl || '(not set)'}</Text>
-            <Text style={{ fontSize: 11, color: t.fgMuted }}>Android: {vm.versionInfo?.playStoreUrl || '(not set)'}</Text>
+            <Text style={{ fontSize: 11, color: t.fgMuted }}>iOS: {vm.versionInfo?.appStoreUrl || tr('admin.notifications.update.notSet')}</Text>
+            <Text style={{ fontSize: 11, color: t.fgMuted }}>Android: {vm.versionInfo?.playStoreUrl || tr('admin.notifications.update.notSet')}</Text>
           </View>
         )}
 
@@ -91,11 +94,19 @@ export default function AdminSendUpdateNotification() {
           <View style={{ padding: 14, borderRadius: 14, backgroundColor: 'rgba(22,163,74,0.12)', gap: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Check size={16} color={t.success} strokeWidth={2.5} />
-              <Text style={{ color: t.success, fontWeight: '700' }}>Sent</Text>
+              <Text style={{ color: t.success, fontWeight: '700' }}>{tr('admin.notifications.sent')}</Text>
             </View>
             <Text style={{ fontSize: 12, color: t.fgMuted }}>
-              Delivered to {vm.lastDelivery.successCount} of {vm.lastDelivery.requestedTokens} devices
-              {vm.lastDelivery.failureCount ? ` (${vm.lastDelivery.failureCount} failed)` : ''}.
+              {vm.lastDelivery.failureCount
+                ? tr('admin.notifications.deliveredToWithFailures', {
+                    success: vm.lastDelivery.successCount,
+                    total: vm.lastDelivery.requestedTokens,
+                    failed: vm.lastDelivery.failureCount,
+                  })
+                : tr('admin.notifications.deliveredTo', {
+                    success: vm.lastDelivery.successCount,
+                    total: vm.lastDelivery.requestedTokens,
+                  })}
             </Text>
             {vm.lastDelivery.perLanguageCounts && (
               <Text style={{ fontSize: 11, color: t.fgFaint }}>
@@ -108,7 +119,7 @@ export default function AdminSendUpdateNotification() {
         ) : null}
 
         <PrimaryButton
-          label={vm.sending ? 'Sending…' : 'Send to all users'}
+          label={vm.sending ? tr('auth.sending') : tr('admin.notifications.update.sendToAll')}
           onPress={vm.send}
         />
       </ScrollView>

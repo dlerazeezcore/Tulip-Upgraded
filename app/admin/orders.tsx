@@ -3,6 +3,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, Globe, ChevronDown, RefreshCw, Check, AlertCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
@@ -11,23 +12,8 @@ import { formatIqd } from '@/lib/pricing';
 import { useAdminOrders } from '@/screens/admin/useAdminOrders';
 
 const YEARS = [2026, 2027, 2028, 2029, 2030];
-const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-
-const ESIM_FILTERS: { id: string; label: string }[] = [
-  { id: 'all', label: 'All' },
-  { id: 'installed', label: 'Installed' },
-  { id: 'not_installed', label: 'Not installed' },
-  { id: 'expired', label: 'Expired' },
-  { id: 'used', label: 'Data used' },
-];
-
-const ESIM_LABEL: Record<string, string> = {
-  installed: 'Installed',
-  not_installed: 'Not installed',
-  expired: 'Expired',
-  used: 'Data used',
-  pending: 'Pending',
-};
+const MONTH_KEYS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'] as const;
+const ESIM_FILTER_IDS = ['all', 'installed', 'not_installed', 'expired', 'used'] as const;
 
 function orderDate(o: AdminOrder): string {
   return o.bookedAt || o.createdAt || '';
@@ -35,6 +21,7 @@ function orderDate(o: AdminOrder): string {
 
 export default function AdminOrders() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const vm = useAdminOrders();
   const {
     year, month, esim, setYear, setMonth, setEsim,
@@ -45,9 +32,12 @@ export default function AdminOrders() {
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
+  const monthLabel = (m: number) => tr(`admin.orders.months.${MONTH_KEYS[m - 1]}`);
+  const esimLabel = (id: string) => tr(`admin.orders.esimStatus.${id}`, { defaultValue: id });
+
   const labelStyle = { fontSize: 11, fontWeight: '700' as const, color: t.fgMuted, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
   const Chip = ({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) => (
-    <Pressable onPress={onPress} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}>
       <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 12, color: on ? '#fff' : t.fgMuted }}>{label}</Text>
     </Pressable>
   );
@@ -57,12 +47,14 @@ export default function AdminOrders() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
+          accessibilityRole="button"
+          accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-          Order history{month !== null && !loading ? ` · ${orders.length}` : ''}
+          {tr('admin.orders.title')}{month !== null && !loading ? ` · ${orders.length}` : ''}
         </Text>
         <Pressable
           onPress={onRefreshFromProvider}
@@ -82,7 +74,7 @@ export default function AdminOrders() {
         >
           <RefreshCw size={14} color={t.primary} strokeWidth={2.2} />
           <Text style={{ color: t.primary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
-            {refreshing ? 'Refreshing…' : 'Refresh from provider'}
+            {refreshing ? tr('admin.orders.refreshing') : tr('admin.orders.refreshFromProvider')}
           </Text>
         </Pressable>
       </View>
@@ -95,39 +87,46 @@ export default function AdminOrders() {
             <Check size={14} color={t.success} strokeWidth={2.5} />
           )}
           <Text style={{ flex: 1, fontSize: 11, color: t.fg }}>
-            Synced {refreshSummary.attempted} profile{refreshSummary.attempted === 1 ? '' : 's'} from provider · {refreshSummary.activeRefreshed} updated · {refreshSummary.placeholdersRecovered} recovered{refreshSummary.errorCount > 0 ? ` · ${refreshSummary.errorCount} error${refreshSummary.errorCount === 1 ? '' : 's'}` : ''}
+            {tr('admin.orders.syncSummary', {
+              count: refreshSummary.attempted,
+              updated: refreshSummary.activeRefreshed,
+              recovered: refreshSummary.placeholdersRecovered,
+            })}
+            {refreshSummary.errorCount > 0
+              ? tr('admin.orders.syncErrors', { count: refreshSummary.errorCount })
+              : ''}
           </Text>
         </View>
       )}
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 14, maxWidth: 820, width: '100%', alignSelf: 'center' }}>
         <View style={{ gap: 8 }}>
-          <Text style={labelStyle}>Year</Text>
+          <Text style={labelStyle}>{tr('admin.orders.year')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
             {YEARS.map((y) => <Chip key={y} on={year === y} label={String(y)} onPress={() => setYear(y)} />)}
           </ScrollView>
-          <Text style={[labelStyle, { marginTop: 4 }]}>Month</Text>
+          <Text style={[labelStyle, { marginTop: 4 }]}>{tr('admin.orders.month')}</Text>
           <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {MONTHS.map((m, i) => <Chip key={m} on={month === i + 1} label={m} onPress={() => setMonth(i + 1)} />)}
+            {MONTH_KEYS.map((m, i) => <Chip key={m} on={month === i + 1} label={monthLabel(i + 1)} onPress={() => setMonth(i + 1)} />)}
           </ScrollView>
           {month !== null && (
             <>
-              <Text style={[labelStyle, { marginTop: 4 }]}>eSIM status</Text>
+              <Text style={[labelStyle, { marginTop: 4 }]}>{tr('admin.orders.esimStatusLabel')}</Text>
               <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                {ESIM_FILTERS.map((f) => <Chip key={f.id} on={esim === f.id} label={f.label} onPress={() => setEsim(f.id)} />)}
+                {ESIM_FILTER_IDS.map((id) => <Chip key={id} on={esim === id} label={tr(`admin.orders.filters.${id}`)} onPress={() => setEsim(id)} />)}
               </ScrollView>
             </>
           )}
         </View>
 
         {month === null ? (
-          <Text style={{ color: t.fgMuted, textAlign: 'center', paddingVertical: 40 }}>Select a year and month to view orders.</Text>
+          <Text style={{ color: t.fgMuted, textAlign: 'center', paddingVertical: 40 }}>{tr('admin.orders.selectYearMonth')}</Text>
         ) : loading ? (
           <View style={{ paddingVertical: 50, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
         ) : error ? (
           <Text style={{ color: t.danger, textAlign: 'center', paddingVertical: 20 }}>{error}</Text>
         ) : filtered.length === 0 ? (
-          <Text style={{ color: t.fgMuted, textAlign: 'center', paddingVertical: 40 }}>No orders for {MONTHS[month - 1]} {year}.</Text>
+          <Text style={{ color: t.fgMuted, textAlign: 'center', paddingVertical: 40 }}>{tr('admin.orders.noOrdersForMonth', { month: monthLabel(month), year })}</Text>
         ) : (
           <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
             {filtered.map((o, i) => {
@@ -143,15 +142,15 @@ export default function AdminOrders() {
                     )}
                     <View style={{ flex: 1 }}>
                       <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>
-                        {o.user?.name || 'Unknown'} <Text style={{ color: t.fgMuted, fontWeight: '400' }}>· {o.user?.phone || ''}</Text>
+                        {o.user?.name || tr('admin.orders.unknownUser')} <Text style={{ color: t.fgMuted, fontWeight: '400' }}>· {o.user?.phone || ''}</Text>
                       </Text>
                       <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                        {it?.countryName || it?.countryCode || 'eSIM'}{orderDate(o) ? ` · ${new Date(orderDate(o)).toLocaleDateString()}` : ''}
+                        {it?.countryName || it?.countryCode || tr('admin.orders.esim')}{orderDate(o) ? ` · ${new Date(orderDate(o)).toLocaleDateString()}` : ''}
                       </Text>
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
                         <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, backgroundColor: t.bgSunken }}>
                           <Text style={{ fontSize: 9, fontWeight: '800', color: t.fgMuted, letterSpacing: 0.3 }}>
-                            {(ESIM_LABEL[o.esimStatus] || o.esimStatus).toUpperCase()}
+                            {esimLabel(o.esimStatus).toUpperCase()}
                           </Text>
                         </View>
                         {o.paymentMethod ? <Text style={{ fontSize: 10, color: t.fgFaint }}>{o.paymentMethod}</Text> : null}
@@ -165,13 +164,13 @@ export default function AdminOrders() {
                   {open && (
                     <View style={{ paddingHorizontal: 14, paddingBottom: 14, paddingLeft: 60, gap: 8 }}>
                       <Text style={{ fontSize: 10, fontWeight: '800', color: t.fgMuted, letterSpacing: 0.4 }}>
-                        BUNDLE{o.items.length > 1 ? `S (${o.items.length})` : ''} · ORDER {o.orderNumber}
+                        {tr('admin.orders.bundleHeader', { count: o.items.length })} · {tr('admin.orders.orderLabel', { number: o.orderNumber })}
                       </Text>
                       {o.items.map((item) => {
-                        const data = item.unlimited ? 'Unlimited' : item.dataGb ? `${item.dataGb} GB` : null;
-                        const spec = [data, item.validityDays ? `${item.validityDays} days` : null]
+                        const data = item.unlimited ? tr('admin.orders.unlimited') : item.dataGb ? `${item.dataGb} GB` : null;
+                        const spec = [data, item.validityDays ? tr('admin.orders.daysCount', { count: item.validityDays }) : null]
                           .filter(Boolean)
-                          .join(' · ') || 'eSIM bundle';
+                          .join(' · ') || tr('admin.orders.esimBundle');
                         return (
                           <View key={item.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
                             {item.countryCode ? <Flag iso={item.countryCode} size={20} /> : null}

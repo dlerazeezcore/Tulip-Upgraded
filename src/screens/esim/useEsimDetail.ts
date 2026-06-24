@@ -10,6 +10,8 @@ export function useEsimDetail() {
   const router = useRouter();
   const esims = useEsimStore((s) => s.esims);
   const byId = useEsimStore((s) => s.byId);
+  const history = useEsimStore((s) => s.history);
+  const refreshHistory = useEsimStore((s) => s.refreshHistory);
   const refresh = useEsimStore((s) => s.refresh);
   const refreshUsage = useEsimStore((s) => s.refreshUsage);
   const refreshing = useEsimStore((s) => s.refreshing);
@@ -32,6 +34,9 @@ export function useEsimDetail() {
   // Lets the "I've installed it" button trigger the SAME polling loop the
   // AppState listener uses. Wired inside the AppState useEffect.
   const pollStarterRef = useRef<(() => void) | null>(null);
+  // A terminal/history eSIM is not in the live `esims` list; load history once
+  // so we resolve the EXACT bundle the user tapped (never substitute another).
+  const historyRequested = useRef(false);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -43,9 +48,18 @@ export function useEsimDetail() {
     checkEsimSupport().then(setSupport).catch(() => {});
   }, [refresh]);
 
+  // If this id is not among the live eSIMs, it is a terminal/history bundle —
+  // load history (once) so the lookup below resolves the right one.
+  useEffect(() => {
+    if (id && !esims.some((e) => e.id === id) && !historyRequested.current) {
+      historyRequested.current = true;
+      refreshHistory();
+    }
+  }, [id, esims, refreshHistory]);
+
   // Compute derived values UP FRONT — used by the polling effect below
   // (effects can't reference variables declared further down the function).
-  const esim = esims.find((e) => e.id === id) ?? esims[0];
+  const esim = esims.find((e) => e.id === id) ?? history.find((e) => e.id === id);
   const profile = esim ? byId(esim.id) : undefined;
   const activationCode =
     profile?.manualEntry?.activationCode ??

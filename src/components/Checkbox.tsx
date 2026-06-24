@@ -14,7 +14,12 @@ export function Checkbox({
 }) {
   const t = useTheme();
   return (
-    <Pressable onPress={onChange} hitSlop={8}>
+    <Pressable
+      onPress={onChange}
+      hitSlop={8}
+      accessibilityRole="checkbox"
+      accessibilityState={{ checked }}
+    >
       <View
         style={{
           width: size,

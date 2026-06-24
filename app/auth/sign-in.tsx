@@ -73,7 +73,7 @@ export default function SignIn() {
         <>
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-              Phone number
+              {tr('auth.phoneNumber')}
             </Text>
             <CountryPhoneField onChange={vm.setPhone} />
           </View>

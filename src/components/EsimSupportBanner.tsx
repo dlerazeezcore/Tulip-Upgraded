@@ -4,6 +4,7 @@
 // on web / Expo Go / simulator where we can't tell).
 import React from 'react';
 import { View, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { AlertTriangle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useDeviceStore } from '@/state/deviceStore';
@@ -15,6 +16,7 @@ type Props = {
 
 export function EsimSupportBanner({ message }: Props) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const esimSupport = useDeviceStore((s) => s.esimSupport);
   if (esimSupport !== 'unsupported') return null;
   return (
@@ -32,8 +34,7 @@ export function EsimSupportBanner({ message }: Props) {
     >
       <AlertTriangle size={16} color={t.warning ?? '#F59E0B'} />
       <Text style={{ flex: 1, fontSize: 12, color: t.fg, lineHeight: 17 }}>
-        {message ??
-          "This device doesn't support eSIM. You can still browse and buy — share the QR code with someone whose phone does support eSIM."}
+        {message ?? tr('checkout.bannerUnsupported')}
       </Text>
     </View>
   );

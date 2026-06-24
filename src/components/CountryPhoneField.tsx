@@ -1,6 +1,7 @@
 import React from 'react';
 import { View, Text, TextInput, Pressable, Modal, ScrollView } from 'react-native';
 import { ChevronDown, Search, X } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { useCountryPhoneField } from '@/components/useCountryPhoneField';
@@ -18,6 +19,7 @@ export function CountryPhoneField({
   autoFocus?: boolean;
 }) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const { country, local, open, query, filtered, setQuery, openPicker, closePicker, onChangeLocal, onSelectCountry } =
     useCountryPhoneField({ onChange, autoFocus });
 
@@ -69,7 +71,11 @@ export function CountryPhoneField({
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '78%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Select country</Text>
-              <Pressable onPress={() => closePicker()}>
+              <Pressable
+                onPress={() => closePicker()}
+                accessibilityRole="button"
+                accessibilityLabel={tr('a11y.close')}
+              >
                 <X size={20} color={t.fgMuted} />
               </Pressable>
             </View>

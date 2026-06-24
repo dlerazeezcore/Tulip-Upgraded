@@ -3,6 +3,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, User, X, Check, Copy } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -10,6 +11,7 @@ import { useSendToUser } from '@/screens/admin/notifications/useSendToUser';
 
 export default function AdminSendToUser() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const vm = useSendToUser();
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
@@ -29,13 +31,13 @@ export default function AdminSendToUser() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable onPress={vm.goBack} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <User size={20} color={t.primary} strokeWidth={2} />
           <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-            Send to a specific user
+            {tr('admin.notifications.user.title')}
           </Text>
         </View>
       </View>
@@ -43,7 +45,7 @@ export default function AdminSendToUser() {
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 640, width: '100%', alignSelf: 'center' }}>
         {/* User picker */}
         <View style={{ gap: 8 }}>
-          <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>Recipient</Text>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>{tr('admin.notifications.user.recipient')}</Text>
           {vm.selectedUser ? (
             <View style={{
               flexDirection: 'row',
@@ -62,7 +64,7 @@ export default function AdminSendToUser() {
                 <Text style={{ fontWeight: '700', color: t.fg }}>{vm.selectedUser.name}</Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted }}>{vm.selectedUser.phone}</Text>
               </View>
-              <Pressable onPress={() => vm.selectUser(null)} style={{ padding: 8 }}>
+              <Pressable onPress={() => vm.selectUser(null)} accessibilityRole="button" accessibilityLabel="Remove selected user" style={{ padding: 8 }}>
                 <X size={18} color={t.fgMuted} />
               </Pressable>
             </View>
@@ -71,7 +73,7 @@ export default function AdminSendToUser() {
               <TextInput
                 value={vm.search}
                 onChangeText={vm.setSearch}
-                placeholder="Search by name or phone"
+                placeholder={tr('admin.notifications.user.searchPlaceholder')}
                 placeholderTextColor={t.fgFaint}
                 style={inputStyle}
               />
@@ -81,7 +83,7 @@ export default function AdminSendToUser() {
                     <ActivityIndicator color={t.primary} />
                   </View>
                 ) : vm.users.length === 0 ? (
-                  <Text style={{ padding: 16, fontSize: 12, color: t.fgMuted }}>No users found.</Text>
+                  <Text style={{ padding: 16, fontSize: 12, color: t.fgMuted }}>{tr('admin.notifications.user.noUsers')}</Text>
                 ) : (
                   <ScrollView>
                     {vm.users.map((u) => (
@@ -113,10 +115,10 @@ export default function AdminSendToUser() {
 
         {/* 3-language form */}
         <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>
-          Message (3 languages)
+          {tr('admin.notifications.messageLangs')}
         </Text>
         <Text style={{ fontSize: 11, color: t.fgFaint, marginTop: -8 }}>
-          English is required (used as fallback). Arabic and Kurdish are optional — leave blank to fall back to English.
+          {tr('admin.notifications.user.langHint')}
         </Text>
 
         {vm.langs.map(({ code, label }) => (
@@ -126,14 +128,14 @@ export default function AdminSendToUser() {
               {code !== 'en' && (
                 <Pressable onPress={() => vm.copyFromEn(code)} style={{ flexDirection: 'row', alignItems: 'center', gap: 4, padding: 6 }}>
                   <Copy size={12} color={t.primary} />
-                  <Text style={{ fontSize: 11, color: t.primary, fontWeight: '600' }}>Copy from EN</Text>
+                  <Text style={{ fontSize: 11, color: t.primary, fontWeight: '600' }}>{tr('admin.notifications.copyFromEn')}</Text>
                 </Pressable>
               )}
             </View>
             <TextInput
               value={vm.form[code].title}
               onChangeText={(v) => vm.setField(code, 'title', v)}
-              placeholder={`Title (${code.toUpperCase()})`}
+              placeholder={tr('admin.notifications.titlePlaceholder', { lang: code.toUpperCase() })}
               placeholderTextColor={t.fgFaint}
               maxLength={120}
               style={inputStyle}
@@ -141,7 +143,7 @@ export default function AdminSendToUser() {
             <TextInput
               value={vm.form[code].body}
               onChangeText={(v) => vm.setField(code, 'body', v)}
-              placeholder={`Body (${code.toUpperCase()})`}
+              placeholder={tr('admin.notifications.bodyPlaceholder', { lang: code.toUpperCase() })}
               placeholderTextColor={t.fgFaint}
               multiline
               numberOfLines={3}
@@ -158,16 +160,16 @@ export default function AdminSendToUser() {
           <View style={{ padding: 14, borderRadius: 14, backgroundColor: 'rgba(22,163,74,0.12)', gap: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Check size={16} color={t.success} strokeWidth={2.5} />
-              <Text style={{ color: t.success, fontWeight: '700' }}>Sent</Text>
+              <Text style={{ color: t.success, fontWeight: '700' }}>{tr('admin.notifications.sent')}</Text>
             </View>
             <Text style={{ fontSize: 12, color: t.fgMuted }}>
-              Delivered to {vm.lastDelivery.successCount} of {vm.lastDelivery.requestedTokens} devices.
+              {tr('admin.notifications.deliveredTo', { success: vm.lastDelivery.successCount, total: vm.lastDelivery.requestedTokens })}
             </Text>
           </View>
         )}
 
         <PrimaryButton
-          label={vm.sending ? 'Sending…' : 'Send'}
+          label={vm.sending ? tr('auth.sending') : tr('admin.notifications.send')}
           onPress={vm.send}
         />
       </ScrollView>

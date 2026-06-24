@@ -181,7 +181,7 @@ export default function Profile() {
         <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('profile.editProfile')}</Text>
-            <Pressable onPress={vm.closeEdit}><X size={20} color={t.fgMuted} /></Pressable>
+            <Pressable onPress={vm.closeEdit} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
           </View>
 
           <View style={{ gap: 6 }}>

@@ -58,6 +58,8 @@ export function TulipTabBar({ state, navigation }: BottomTabBarProps) {
             <Pressable
               key={route.key}
               onPress={onPress}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: focused }}
               style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 3 }}
             >
               <View

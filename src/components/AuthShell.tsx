@@ -37,6 +37,8 @@ export function AuthShell({
             {canGoBack && (
               <Pressable
                 onPress={() => router.back()}
+                accessibilityRole="button"
+                accessibilityLabel={tr('a11y.back')}
                 style={{
                   width: 38,
                   height: 38,
@@ -207,6 +209,7 @@ export function PasswordField({
   placeholder?: string;
 }) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const [show, setShow] = useState(false);
   const [focused, setFocused] = useState(false);
   // Web-only focus affordance; mobile unchanged (flag gated to web).
@@ -238,7 +241,13 @@ export function PasswordField({
           onBlur={() => setFocused(false)}
           style={{ flex: 1, paddingHorizontal: 14, paddingVertical: 14, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }}
         />
-        <Pressable onPress={() => setShow((s) => !s)} hitSlop={8} style={{ paddingHorizontal: 14, paddingVertical: 14 }}>
+        <Pressable
+          onPress={() => setShow((s) => !s)}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={show ? tr('a11y.hidePassword') : tr('a11y.showPassword')}
+          style={{ paddingHorizontal: 14, paddingVertical: 14 }}
+        >
           {show ? <EyeOff size={18} color={t.fgMuted} /> : <Eye size={18} color={t.fgMuted} />}
         </Pressable>
       </View>

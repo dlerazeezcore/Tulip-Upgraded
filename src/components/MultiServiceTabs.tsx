@@ -1,5 +1,6 @@
 import React from 'react';
 import { ScrollView, Pressable, View, Text } from 'react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, Service } from '@/data/services';
 import { useSearchStore } from '@/state/searchStore';
@@ -23,6 +24,7 @@ export function MultiServiceTabs({
   onSelect?: (id: Service['id']) => void;
 }) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const active = useSearchStore((s) => s.activeService);
   const setActive = useSearchStore((s) => s.setActive);
 
@@ -63,6 +65,8 @@ export function MultiServiceTabs({
           <Pressable
             key={s.id}
             onPress={() => (onSelect ? onSelect(s.id as Service['id']) : setActive(s.id as Service['id']))}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
             style={{
               paddingVertical: compact ? 8 : 9,
               paddingHorizontal: compact ? 12 : 14,
@@ -84,7 +88,7 @@ export function MultiServiceTabs({
                 color: contentColor,
               }}
             >
-              {s.label}
+              {tr(`serviceNames.${s.id}`)}
             </Text>
           </Pressable>
         );

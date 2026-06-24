@@ -50,6 +50,8 @@ export default function Onboarding() {
               <Pressable
                 key={l.id}
                 onPress={() => vm.setLanguage(l.id)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
@@ -85,6 +87,8 @@ export default function Onboarding() {
               <Pressable
                 key={c.code}
                 onPress={() => vm.setCode(c.code as CurrencyCode)}
+                accessibilityRole="button"
+                accessibilityState={{ selected: on }}
                 style={{
                   flexDirection: 'row',
                   alignItems: 'center',
