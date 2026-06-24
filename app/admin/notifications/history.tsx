@@ -3,6 +3,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, History } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { useNotificationHistory } from '@/screens/admin/notifications/useNotificationHistory';
@@ -28,7 +29,13 @@ function formatDate(iso: string | null | undefined): string {
 
 export default function AdminNotificationHistory() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const vm = useNotificationHistory();
+
+  const statusLabel = (status: string): string => {
+    const s = status.toLowerCase();
+    return tr(`admin.notifications.history.status.${s}`, { defaultValue: status });
+  };
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
@@ -41,7 +48,7 @@ export default function AdminNotificationHistory() {
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <History size={20} color={t.primary} strokeWidth={2} />
           <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-            Notification history
+            {tr('admin.notifications.history.title')}
           </Text>
         </View>
       </View>
@@ -59,7 +66,7 @@ export default function AdminNotificationHistory() {
 
           {vm.rows.length === 0 ? (
             <Text style={{ fontSize: 13, color: t.fgMuted, padding: 24, textAlign: 'center' }}>
-              No notifications sent yet.
+              {tr('admin.notifications.history.empty')}
             </Text>
           ) : (
             vm.rows.map((row) => {
@@ -86,7 +93,7 @@ export default function AdminNotificationHistory() {
                     </Text>
                     <View style={{ paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, backgroundColor: `${sc}20` }}>
                       <Text style={{ fontSize: 10, fontWeight: '700', color: sc, textTransform: 'uppercase' }}>
-                        {row.status}
+                        {statusLabel(row.status)}
                       </Text>
                     </View>
                   </View>
@@ -102,7 +109,7 @@ export default function AdminNotificationHistory() {
                     )}
                     {row.invalidTokenCount > 0 && (
                       <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                        invalid {row.invalidTokenCount}
+                        {tr('admin.notifications.history.invalid', { count: row.invalidTokenCount })}
                       </Text>
                     )}
                     <Text style={{ flex: 1, textAlign: 'right', fontSize: 11, color: t.fgFaint }}>

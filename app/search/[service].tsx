@@ -2,6 +2,7 @@
 import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import { useTranslation } from 'react-i18next';
 import {
   ArrowUpDown,
   Calendar,
@@ -18,8 +19,8 @@ import { useServiceSearch } from '@/screens/search/useServiceSearch';
 import { useIsWideWeb } from '@/lib/responsive';
 
 const TRIP_TYPES = [
-  { id: 'roundtrip', label: 'Round trip' },
-  { id: 'oneway',    label: 'One way' },
+  { id: 'roundtrip', labelKey: 'search.roundTrip' },
+  { id: 'oneway',    labelKey: 'search.oneWay' },
 ] as const;
 
 function Stepper({
@@ -83,6 +84,7 @@ function Stepper({
 
 export default function SearchScreen() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const vm = useServiceSearch();
   const svc = vm.svc;
   const isWide = useIsWideWeb();
@@ -102,7 +104,7 @@ export default function SearchScreen() {
               style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}
             >
               <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? '#fff' : t.fgMuted }}>
-                {tt.label}
+                {tr(tt.labelKey)}
               </Text>
             </Pressable>
           );
@@ -115,7 +117,7 @@ export default function SearchScreen() {
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <View style={{ flex: 1, padding: 14 }}>
           <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-            {svc.id === 'hotels' ? 'Destination' : 'From'}
+            {svc.id === 'hotels' ? tr('search.destination') : tr('search.from')}
           </Text>
           <TextInput
             value={vm.from}
@@ -136,11 +138,11 @@ export default function SearchScreen() {
       </View>
       {svc.id !== 'hotels' && (
         <View style={{ borderTopColor: t.border, borderTopWidth: 1, padding: 14 }}>
-          <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>To</Text>
+          <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tr('search.to')}</Text>
           <TextInput
             value={vm.to}
             onChangeText={vm.setTo}
-            placeholder="Destination"
+            placeholder={tr('search.destination')}
             placeholderTextColor={t.fgFaint}
             style={{ fontSize: 15, fontFamily: t.font.bodyMedium, color: t.fg, marginTop: 4, paddingVertical: 2 }}
           />
@@ -153,7 +155,7 @@ export default function SearchScreen() {
     <View style={{ flexDirection: 'row', gap: 10 }}>
       <View style={{ flex: 1, padding: 14, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16 }}>
         <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-          {svc.id === 'hotels' ? 'Check-in' : 'Depart'}
+          {svc.id === 'hotels' ? tr('search.checkIn') : tr('search.depart')}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
           <Calendar size={14} color={t.fgMuted} />
@@ -163,7 +165,7 @@ export default function SearchScreen() {
       {(svc.id !== 'flights' || vm.tripType === 'roundtrip') && (
         <View style={{ flex: 1, padding: 14, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16 }}>
           <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-            {svc.id === 'hotels' ? 'Check-out' : 'Return'}
+            {svc.id === 'hotels' ? tr('search.checkOut') : tr('search.return')}
           </Text>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
             <Calendar size={14} color={t.fgMuted} />
@@ -176,21 +178,21 @@ export default function SearchScreen() {
 
   const roomsStepper =
     svc.id === 'hotels' ? (
-      <Stepper label="Rooms" value={vm.rooms} unit={vm.rooms === 1 ? 'room' : 'rooms'} onDec={vm.decRooms} onInc={vm.incRooms} />
+      <Stepper label={tr('search.rooms')} value={vm.rooms} unit={tr('search.roomUnit', { count: vm.rooms })} onDec={vm.decRooms} onInc={vm.incRooms} />
     ) : null;
 
   const guestsStepper = (
     <Stepper
-      label={svc.id === 'hotels' ? 'Guests' : 'Travelers'}
+      label={svc.id === 'hotels' ? tr('search.guests') : tr('search.travelers')}
       value={vm.travelers}
-      unit={svc.id === 'hotels' ? (vm.travelers === 1 ? 'guest' : 'guests') : vm.travelers === 1 ? 'adult' : 'adults'}
+      unit={svc.id === 'hotels' ? tr('search.guestUnit', { count: vm.travelers }) : tr('search.adultUnit', { count: vm.travelers })}
       onDec={vm.decTravelers}
       onInc={vm.incTravelers}
     />
   );
 
   const searchButton = (
-    <PrimaryButton label="Search" onPress={vm.onSearch} icon={<SearchIcon size={16} color="#fff" strokeWidth={2.2} />} style={{ marginTop: 6 }} />
+    <PrimaryButton label={tr('search.searchButton')} onPress={vm.onSearch} icon={<SearchIcon size={16} color="#fff" strokeWidth={2.2} />} style={{ marginTop: 6 }} />
   );
 
   return (
@@ -218,7 +220,7 @@ export default function SearchScreen() {
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 22, fontWeight: '700', color: t.fg }}>
-          Search
+          {tr('search.title')}
         </Text>
       </View>
 

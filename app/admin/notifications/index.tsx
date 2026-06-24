@@ -3,6 +3,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Bell } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
@@ -10,6 +11,7 @@ import { useNotificationsLanding } from '@/screens/admin/notifications/useNotifi
 
 export default function AdminNotificationsLanding() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const router = useRouter();
   const vm = useNotificationsLanding();
 
@@ -27,7 +29,7 @@ export default function AdminNotificationsLanding() {
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Bell size={20} color={t.primary} strokeWidth={2} />
           <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-            Push notifications
+            {tr('admin.notifications.landing.title')}
           </Text>
         </View>
       </View>

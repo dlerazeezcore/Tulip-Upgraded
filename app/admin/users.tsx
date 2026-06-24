@@ -4,11 +4,13 @@ import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator, Modal 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { ChevronLeft, Search, Star, X, Ban, ShieldCheck, Trash2 } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { useAdminUsers } from '@/screens/admin/useAdminUsers';
 
 export default function AdminUsers() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const vm = useAdminUsers();
   const {
     q, setQ, rows, users, loading, error,
@@ -28,14 +30,14 @@ export default function AdminUsers() {
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-          Users{loading ? '' : ` · ${rows.length}`}
+          {tr('admin.users.title')}{loading ? '' : ` · ${rows.length}`}
         </Text>
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 12, maxWidth: 780, width: '100%', alignSelf: 'center' }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: t.bgSunken }}>
           <Search size={18} color={t.fgMuted} />
-          <TextInput value={q} onChangeText={setQ} placeholder="Search users" placeholderTextColor={t.fgFaint} style={{ flex: 1, fontSize: 14, color: t.fg, fontFamily: t.font.bodyMedium, paddingVertical: 2 }} />
+          <TextInput value={q} onChangeText={setQ} placeholder={tr('admin.users.searchPlaceholder')} placeholderTextColor={t.fgFaint} style={{ flex: 1, fontSize: 14, color: t.fg, fontFamily: t.font.bodyMedium, paddingVertical: 2 }} />
         </View>
 
         {loading ? (
@@ -61,18 +63,18 @@ export default function AdminUsers() {
                     {u.isLoyalty && (
                       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: 'rgba(25,103,210,0.12)' }}>
                         <Star size={9} color={t.primary} fill={t.primary} />
-                        <Text style={{ fontSize: 9, fontWeight: '800', color: t.primary }}>LOYALTY</Text>
+                        <Text style={{ fontSize: 9, fontWeight: '800', color: t.primary }}>{tr('admin.users.loyaltyBadge')}</Text>
                       </View>
                     )}
                   </View>
                   <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{u.phone}</Text>
                 </View>
                 <Text style={{ fontSize: 11, color: u.isBlocked ? t.danger : u.status === 'active' ? t.success : t.fgMuted, fontWeight: '700' }}>
-                  {u.isBlocked ? 'blocked' : u.status}
+                  {u.isBlocked ? tr('admin.users.blockedBadge') : u.status}
                 </Text>
               </Pressable>
             ))}
-            {users.length === 0 && <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20 }}>No users found.</Text>}
+            {users.length === 0 && <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20 }}>{tr('admin.users.empty')}</Text>}
           </View>
         )}
       </ScrollView>
@@ -99,7 +101,7 @@ export default function AdminUsers() {
                 >
                   <Star size={18} color={t.primary} fill={selected.isLoyalty ? t.primary : 'transparent'} />
                   <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>
-                    {selected.isLoyalty ? 'Revoke loyalty' : 'Grant loyalty'}
+                    {selected.isLoyalty ? tr('admin.users.revokeLoyalty') : tr('admin.users.grantLoyalty')}
                   </Text>
                 </Pressable>
 
@@ -109,7 +111,7 @@ export default function AdminUsers() {
                 >
                   {selected.isBlocked ? <ShieldCheck size={18} color={t.success} /> : <Ban size={18} color={t.warning} />}
                   <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>
-                    {selected.isBlocked ? 'Unblock user' : 'Block user'}
+                    {selected.isBlocked ? tr('admin.users.unblockUser') : tr('admin.users.blockUser')}
                   </Text>
                 </Pressable>
 
@@ -119,7 +121,7 @@ export default function AdminUsers() {
                 >
                   <Trash2 size={18} color={t.danger} />
                   <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.danger }}>
-                    {busy ? 'Working…' : 'Delete user'}
+                    {busy ? tr('admin.users.working') : tr('admin.users.deleteUser')}
                   </Text>
                 </Pressable>
               </>

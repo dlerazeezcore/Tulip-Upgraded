@@ -3,6 +3,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck, MapPin, Receipt } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
@@ -10,17 +11,18 @@ import { useAdminHome } from '@/screens/admin/useAdminHome';
 
 export default function AdminHome() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const vm = useAdminHome();
   const isWide = vm.isWide;
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   const cards = [
-    { id: 'users', title: 'Users', sub: vm.userCount === null ? 'View signups' : `${vm.userCount} signed up`, Icon: Users, color: t.accent.blue, route: '/admin/users' },
-    { id: 'orders', title: 'Order history', sub: 'All users · filter by month', Icon: Receipt, color: t.accent.sky, route: '/admin/orders' },
-    { id: 'featured', title: 'Popular destinations', sub: vm.featuredCount === null ? 'Add, edit, remove' : `${vm.featuredCount} configured`, Icon: MapPin, color: t.accent.amber, route: '/admin/featured' },
-    { id: 'notif', title: 'Push notifications', sub: 'Compose & send', Icon: Bell, color: t.accent.purple, route: '/admin/notifications' },
-    { id: 'cur', title: 'Exchange rate & markup', sub: 'USD→IQD rate, markup', Icon: Coins, color: t.accent.emerald, route: '/admin/currency' },
+    { id: 'users', title: tr('admin.users.title'), sub: vm.userCount === null ? tr('admin.users.subView') : tr('admin.users.subCount', { count: vm.userCount }), Icon: Users, color: t.accent.blue, route: '/admin/users' },
+    { id: 'orders', title: tr('admin.orders.title'), sub: tr('admin.orders.sub'), Icon: Receipt, color: t.accent.sky, route: '/admin/orders' },
+    { id: 'featured', title: tr('admin.featured.title'), sub: vm.featuredCount === null ? tr('admin.featured.subEdit') : tr('admin.featured.subCount', { count: vm.featuredCount }), Icon: MapPin, color: t.accent.amber, route: '/admin/featured' },
+    { id: 'notif', title: tr('admin.notif.title'), sub: tr('admin.notif.sub'), Icon: Bell, color: t.accent.purple, route: '/admin/notifications' },
+    { id: 'cur', title: tr('admin.currency.title'), sub: tr('admin.currency.sub'), Icon: Coins, color: t.accent.emerald, route: '/admin/currency' },
   ];
 
   return (
@@ -34,7 +36,7 @@ export default function AdminHome() {
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <ShieldCheck size={20} color={t.primary} strokeWidth={2} />
-          <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>Admin panel</Text>
+          <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>{tr('admin.title')}</Text>
         </View>
       </View>
 
