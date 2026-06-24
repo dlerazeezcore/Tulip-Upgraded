@@ -31,7 +31,7 @@ export default function AdminSendToUser() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable onPress={vm.goBack} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -64,7 +64,7 @@ export default function AdminSendToUser() {
                 <Text style={{ fontWeight: '700', color: t.fg }}>{vm.selectedUser.name}</Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted }}>{vm.selectedUser.phone}</Text>
               </View>
-              <Pressable onPress={() => vm.selectUser(null)} style={{ padding: 8 }}>
+              <Pressable onPress={() => vm.selectUser(null)} accessibilityRole="button" accessibilityLabel="Remove selected user" style={{ padding: 8 }}>
                 <X size={18} color={t.fgMuted} />
               </Pressable>
             </View>

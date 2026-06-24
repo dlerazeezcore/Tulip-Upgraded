@@ -37,6 +37,7 @@ function Stepper({
   onInc: () => void;
 }) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   return (
     <View
       style={{
@@ -64,6 +65,8 @@ function Stepper({
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
         <Pressable
           onPress={onDec}
+          accessibilityRole="button"
+          accessibilityLabel={tr('a11y.decrease')}
           style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <Minus size={14} color={t.fg} />
@@ -73,6 +76,8 @@ function Stepper({
         </Text>
         <Pressable
           onPress={onInc}
+          accessibilityRole="button"
+          accessibilityLabel={tr('a11y.increase')}
           style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.primary, alignItems: 'center', justifyContent: 'center' }}
         >
           <Plus size={14} color="#fff" />
@@ -101,6 +106,8 @@ export default function SearchScreen() {
             <Pressable
               key={tt.id}
               onPress={() => vm.setTripType(tt.id)}
+              accessibilityRole="button"
+              accessibilityState={{ selected: on }}
               style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}
             >
               <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? '#fff' : t.fgMuted }}>
@@ -130,6 +137,8 @@ export default function SearchScreen() {
         {svc.id !== 'hotels' && (
           <Pressable
             onPress={vm.swap}
+            accessibilityRole="button"
+            accessibilityLabel="Swap origin and destination"
             style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center', marginHorizontal: 8 }}
           >
             <ArrowUpDown size={16} color={t.fgMuted} />
@@ -208,6 +217,8 @@ export default function SearchScreen() {
       >
         <Pressable
           onPress={vm.goBack}
+          accessibilityRole="button"
+          accessibilityLabel={tr('a11y.back')}
           style={{
             width: 36,
             height: 36,

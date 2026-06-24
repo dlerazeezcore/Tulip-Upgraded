@@ -65,6 +65,8 @@ export function MultiServiceTabs({
           <Pressable
             key={s.id}
             onPress={() => (onSelect ? onSelect(s.id as Service['id']) : setActive(s.id as Service['id']))}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
             style={{
               paddingVertical: compact ? 8 : 9,
               paddingHorizontal: compact ? 12 : 14,

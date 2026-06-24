@@ -25,6 +25,8 @@ export default function AdminUsers() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
+          accessibilityRole="button"
+          accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -90,7 +92,7 @@ export default function AdminUsers() {
                     <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{selected.name}</Text>
                     <Text style={{ fontSize: 12, color: t.fgMuted }}>{selected.phone}{selected.email ? ` · ${selected.email}` : ''}</Text>
                   </View>
-                  <Pressable onPress={() => setSelected(null)}><X size={20} color={t.fgMuted} /></Pressable>
+                  <Pressable onPress={() => setSelected(null)} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
                 </View>
 
                 {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}

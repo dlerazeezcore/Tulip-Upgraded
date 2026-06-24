@@ -62,6 +62,8 @@ export function HotelCard({ hotel, onPress }: { hotel: Hotel; onPress?: () => vo
           </Text>
         </View>
         <Pressable
+          accessibilityRole="button"
+          accessibilityLabel="Save to favorites"
           style={{
             position: 'absolute',
             top: 8,

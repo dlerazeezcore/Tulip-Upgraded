@@ -3,6 +3,7 @@ import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { ChevronLeft, MapPin } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { useTrip } from '@/screens/trip/useTrip';
 
@@ -10,6 +11,7 @@ import { useTrip } from '@/screens/trip/useTrip';
 // stale/deep link doesn't surface mock trip data.
 export default function TripDetail() {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const vm = useTrip();
 
   return (
@@ -17,6 +19,8 @@ export default function TripDetail() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
+          accessibilityRole="button"
+          accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />

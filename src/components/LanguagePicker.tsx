@@ -25,6 +25,9 @@ export function LanguagePicker() {
     <>
       <Pressable
         onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={tr('a11y.selectLanguage')}
+        accessibilityState={{ expanded: open }}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -73,6 +76,8 @@ export function LanguagePicker() {
                     setLanguage(l.id);
                     setOpen(false);
                   }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',

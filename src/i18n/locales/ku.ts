@@ -578,4 +578,16 @@ export default {
     staysComingSoon: 'مانەوەکان بەم زووانە',
     staysBody: 'حیجزی هۆتێل هێشتا بەردەست نییە. ئێستا eSIM لە کۆگای eSIM بەردەستە.',
   },
+  a11y: {
+    back: 'گەڕانەوە',
+    close: 'داخستن',
+    refresh: 'نوێکردنەوە',
+    showPassword: 'پیشاندانی وشەی نهێنی',
+    hidePassword: 'شاردنەوەی وشەی نهێنی',
+    selectCurrency: 'هەڵبژاردنی دراو',
+    selectLanguage: 'هەڵبژاردنی زمان',
+    increase: 'زیادکردن',
+    decrease: 'کەمکردنەوە',
+    menu: 'مێنیو',
+  },
 };

@@ -25,7 +25,7 @@ export default function AdminFeatured() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable onPress={vm.goBack} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <ChevronLeft size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>{tr('admin.featured.title')}</Text>
@@ -47,10 +47,10 @@ export default function AdminFeatured() {
                   <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>{r.name}</Text>
                   <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{tr('admin.featured.codeOrder', { code: r.code, order: r.sort_order ?? 0 })}</Text>
                 </View>
-                <Pressable onPress={() => vm.toggleEnabled(r)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => vm.toggleEnabled(r)} accessibilityRole="button" accessibilityLabel={(r.enabled ?? true) ? 'Hide from featured' : 'Show in featured'} accessibilityState={{ selected: (r.enabled ?? true) }} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                   {(r.enabled ?? true) ? <Eye size={15} color={t.fg} /> : <EyeOff size={15} color={t.fgMuted} />}
                 </Pressable>
-                <Pressable onPress={() => vm.onDelete(r)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => vm.onDelete(r)} accessibilityRole="button" accessibilityLabel="Delete" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
                   <Trash2 size={15} color={t.danger} />
                 </Pressable>
               </View>
@@ -84,7 +84,7 @@ export default function AdminFeatured() {
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('admin.featured.addTitle')}</Text>
-              <Pressable onPress={() => vm.setAdding(false)}><X size={20} color={t.fgMuted} /></Pressable>
+              <Pressable onPress={() => vm.setAdding(false)} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
             </View>
             <View style={{ gap: 6 }}>
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>{tr('admin.featured.countryCode')}</Text>

@@ -38,6 +38,8 @@ export default function AdminCurrency() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
+          accessibilityRole="button"
+          accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -134,7 +136,7 @@ export default function AdminCurrency() {
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
                 {vm.editing?.isNew ? tr('admin.currency.addCurrency') : tr('admin.currency.editCurrency', { code: vm.editing?.code })}
               </Text>
-              <Pressable onPress={vm.closeEditor}><X size={20} color={t.fgMuted} /></Pressable>
+              <Pressable onPress={vm.closeEditor} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
             </View>
 
             <View style={{ flexDirection: 'row', gap: 10 }}>

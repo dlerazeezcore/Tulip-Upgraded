@@ -579,4 +579,16 @@ export default {
     staysComingSoon: 'Stays coming soon',
     staysBody: "Hotel booking isn't live yet. eSIMs are available today from the eSIM store.",
   },
+  a11y: {
+    back: 'Go back',
+    close: 'Close',
+    refresh: 'Refresh',
+    showPassword: 'Show password',
+    hidePassword: 'Hide password',
+    selectCurrency: 'Select currency',
+    selectLanguage: 'Select language',
+    increase: 'Increase',
+    decrease: 'Decrease',
+    menu: 'Menu',
+  },
 } as const;

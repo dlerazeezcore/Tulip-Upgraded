@@ -19,6 +19,9 @@ export function CurrencyPicker() {
     <>
       <Pressable
         onPress={() => setOpen(true)}
+        accessibilityRole="button"
+        accessibilityLabel={tr('a11y.selectCurrency')}
+        accessibilityState={{ expanded: open }}
         style={{
           flexDirection: 'row',
           alignItems: 'center',
@@ -76,6 +79,8 @@ export function CurrencyPicker() {
                     setCode(c.code);
                     setOpen(false);
                   }}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
                   style={{
                     flexDirection: 'row',
                     alignItems: 'center',

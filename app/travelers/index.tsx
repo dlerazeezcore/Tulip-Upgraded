@@ -36,6 +36,8 @@ export default function Travelers() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
+          accessibilityRole="button"
+          accessibilityLabel={tt('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <ChevronLeft size={18} color={t.fg} />
@@ -90,10 +92,10 @@ export default function Travelers() {
                   {tt(`travelers.relations.${tr.relation}`, { defaultValue: tr.relation })}{tr.dob ? ` · ${tr.dob}` : ''}
                 </Text>
               </View>
-              <Pressable onPress={() => openEdit(tr)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => openEdit(tr)} accessibilityRole="button" accessibilityLabel="Edit traveler" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                 <Pencil size={15} color={t.fg} />
               </Pressable>
-              <Pressable onPress={() => onRemove(tr.id)} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => onRemove(tr.id)} accessibilityRole="button" accessibilityLabel="Remove traveler" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
                 <Trash2 size={15} color={t.danger} />
               </Pressable>
             </View>
@@ -111,7 +113,7 @@ export default function Travelers() {
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
                 {editing === 'new' ? tt('travelers.addTraveler') : tt('travelers.editTraveler')}
               </Text>
-              <Pressable onPress={() => setEditing(null)}>
+              <Pressable onPress={() => setEditing(null)} accessibilityRole="button" accessibilityLabel={tt('a11y.close')}>
                 <X size={20} color={t.fgMuted} />
               </Pressable>
             </View>
@@ -130,6 +132,8 @@ export default function Travelers() {
                     <Pressable
                       key={r}
                       onPress={() => setRelation(r)}
+                      accessibilityRole="button"
+                      accessibilityState={{ selected: on }}
                       style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}
                     >
                       <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? '#fff' : t.fgMuted }}>{tt(`travelers.relations.${r}`, { defaultValue: r })}</Text>

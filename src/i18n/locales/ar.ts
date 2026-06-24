@@ -578,4 +578,16 @@ export default {
     staysComingSoon: 'الإقامات قريبًا',
     staysBody: 'حجز الفنادق غير متاح بعد. شرائح eSIM متوفرة اليوم من متجر eSIM.',
   },
+  a11y: {
+    back: 'رجوع',
+    close: 'إغلاق',
+    refresh: 'تحديث',
+    showPassword: 'إظهار كلمة المرور',
+    hidePassword: 'إخفاء كلمة المرور',
+    selectCurrency: 'اختيار العملة',
+    selectLanguage: 'اختيار اللغة',
+    increase: 'زيادة',
+    decrease: 'إنقاص',
+    menu: 'القائمة',
+  },
 };
