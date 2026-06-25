@@ -4,7 +4,7 @@ import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck, MapPin, Receipt } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck, MapPin, Receipt, Percent } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
 import { useAdminHome } from '@/screens/admin/useAdminHome';
@@ -23,6 +23,7 @@ export default function AdminHome() {
     { id: 'featured', title: tr('admin.featured.title'), sub: vm.featuredCount === null ? tr('admin.featured.subEdit') : tr('admin.featured.subCount', { count: vm.featuredCount }), Icon: MapPin, color: t.accent.amber, route: '/admin/featured' },
     { id: 'notif', title: tr('admin.notif.title'), sub: tr('admin.notif.sub'), Icon: Bell, color: t.accent.purple, route: '/admin/notifications' },
     { id: 'cur', title: tr('admin.currency.title'), sub: tr('admin.currency.sub'), Icon: Coins, color: t.accent.emerald, route: '/admin/currency' },
+    { id: 'pricing', title: tr('admin.pricing.title'), sub: tr('admin.pricing.sub'), Icon: Percent, color: t.accent.pink, route: '/admin/pricing' },
   ];
 
   return (

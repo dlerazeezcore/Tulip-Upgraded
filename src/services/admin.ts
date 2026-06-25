@@ -76,17 +76,121 @@ export async function saveCurrencyRate(input: {
  * rule so this is an upsert.
  */
 export async function saveEsimMarkup(markupPercent: number): Promise<void> {
+  await savePricingRule({ ruleScope: 'global', type: 'percent', value: markupPercent });
+}
+
+// ─── eSIM pricing & discount rules (per-country / per-bundle overrides) ──────
+// The engine applies the single MOST-SPECIFIC active rule (package > country >
+// provider > global); rules never stack. So a country/bundle rule overrides the
+// general for that country/bundle and the general still applies to the rest.
+
+export type RuleScope = 'global' | 'country' | 'package' | 'provider';
+export type AdjustmentType = 'percent' | 'fixed';
+
+export type RuleCustomFields = { label?: string; slug?: string } | null;
+
+export type AdminPricingRule = {
+  id: number;
+  service_type: string;
+  rule_scope: RuleScope;
+  country_code: string | null;
+  package_code: string | null;
+  provider_code: string | null;
+  adjustment_type: AdjustmentType;
+  adjustment_value: number;
+  applies_to: string;
+  priority: number;
+  active: boolean;
+  custom_fields?: RuleCustomFields;
+};
+
+export type AdminDiscountRule = {
+  id: number;
+  service_type: string;
+  rule_scope: RuleScope;
+  country_code: string | null;
+  package_code: string | null;
+  provider_code: string | null;
+  discount_type: AdjustmentType;
+  discount_value: number;
+  applies_to: string;
+  priority: number;
+  active: boolean;
+  custom_fields?: RuleCustomFields;
+};
+
+export type RuleInput = {
+  ruleScope: RuleScope;
+  countryCode?: string | null;
+  packageCode?: string | null;
+  type: AdjustmentType;
+  value: number;
+  priority?: number;
+  active?: boolean;
+  /** Friendly label/slug for a bundle rule (so the admin list reads "Turkey 5GB · 30d"). */
+  customFields?: Record<string, unknown>;
+};
+
+function scopedKeys(input: RuleInput, appliesTo: string) {
+  return {
+    serviceType: 'esim',
+    ruleScope: input.ruleScope,
+    countryCode: input.ruleScope === 'country' ? (input.countryCode || '').trim().toUpperCase() : null,
+    packageCode: input.ruleScope === 'package' ? (input.packageCode || '').trim() : null,
+    appliesTo,
+    priority: input.priority ?? 100,
+    active: input.active ?? true,
+  };
+}
+
+export async function getPricingRules(): Promise<AdminPricingRule[]> {
+  const res: any = await apiFetch('/api/v1/admin/pricing-rules', { method: 'GET', query: { limit: 200 } });
+  return ((res?.pricingRules ?? res?.pricing_rules ?? []) as AdminPricingRule[]).filter((r) => r.service_type === 'esim');
+}
+
+export async function getDiscountRules(): Promise<AdminDiscountRule[]> {
+  const res: any = await apiFetch('/api/v1/admin/discount-rules', { method: 'GET', query: { limit: 200 } });
+  return ((res?.discountRules ?? res?.discount_rules ?? []) as AdminDiscountRule[]).filter((r) => r.service_type === 'esim');
+}
+
+export async function savePricingRule(input: RuleInput): Promise<void> {
+  // Markup applies to the provider cost (cost → sale price).
   await apiFetch('/api/v1/admin/pricing-rules', {
     method: 'POST',
-    body: {
-      serviceType: 'esim',
-      ruleScope: 'global',
-      adjustmentType: 'percent',
-      adjustmentValue: markupPercent,
-      appliesTo: 'provider_cost',
-      priority: 100,
-      active: true,
-    },
+    body: { ...scopedKeys(input, 'provider_cost'), adjustmentType: input.type, adjustmentValue: input.value, customFields: input.customFields ?? {} },
+  });
+}
+
+export async function saveDiscountRule(input: RuleInput): Promise<void> {
+  // Discount comes off the marked-up item total (i.e. % off the sale price).
+  await apiFetch('/api/v1/admin/discount-rules', {
+    method: 'POST',
+    body: { ...scopedKeys(input, 'item_total'), discountType: input.type, discountValue: input.value, customFields: input.customFields ?? {} },
+  });
+}
+
+/** Remove a rule = upsert the same scope with active:false (backend deactivates the match). */
+export function removePricingRule(rule: AdminPricingRule): Promise<void> {
+  return savePricingRule({
+    ruleScope: rule.rule_scope,
+    countryCode: rule.country_code,
+    packageCode: rule.package_code,
+    type: rule.adjustment_type,
+    value: rule.adjustment_value,
+    priority: rule.priority,
+    active: false,
+  });
+}
+
+export function removeDiscountRule(rule: AdminDiscountRule): Promise<void> {
+  return saveDiscountRule({
+    ruleScope: rule.rule_scope,
+    countryCode: rule.country_code,
+    packageCode: rule.package_code,
+    type: rule.discount_type,
+    value: rule.discount_value,
+    priority: rule.priority,
+    active: false,
   });
 }
 
