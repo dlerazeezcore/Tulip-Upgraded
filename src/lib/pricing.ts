@@ -24,8 +24,16 @@ export function useIqdMoney() {
   return useCallback((usd: number) => formatIqd(usdToIqd(usd, iqdPerUsd)), [iqdPerUsd]);
 }
 
-/** Raw IQD integer (no formatting) for amounts sent to the backend / payment. */
+/**
+ * Raw IQD integer (no formatting) for amounts sent to the backend / payment.
+ * Pass `saleIqdOverride` (the backend-computed catalog price, with per-country /
+ * per-bundle rules applied) to charge exactly the displayed price; otherwise it
+ * falls back to the global-markup computation.
+ */
 export function useIqdAmount() {
   const iqdPerUsd = useCurrencyStore((s) => s.iqdPerUsd);
-  return useCallback((usd: number) => usdToIqd(usd, iqdPerUsd), [iqdPerUsd]);
+  return useCallback(
+    (usd: number, saleIqdOverride?: number) => (saleIqdOverride != null ? roundIqd250(saleIqdOverride) : usdToIqd(usd, iqdPerUsd)),
+    [iqdPerUsd],
+  );
 }

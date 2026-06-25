@@ -30,8 +30,8 @@ export function useMoney() {
   const fx = useCurrencyStore((s) => s.fx);
   const currencies = useCurrencyStore((s) => s.currencies);
   return useCallback(
-    (providerUsd: number) => {
-      const iqd = saleIqd(providerUsd, iqdPerUsd);
+    (providerUsd: number, saleIqdOverride?: number) => {
+      const iqd = saleIqdOverride != null ? saleIqdOverride : saleIqd(providerUsd, iqdPerUsd);
       const meta = metaFor(currencies, code);
       if (!meta) return `${Math.round(iqd).toLocaleString('en-US')} IQD`;
       const rate = meta.code === 'IQD' ? 1 : fx[meta.code] || 1;
@@ -50,9 +50,10 @@ export function useIqdNote() {
   const code = useCurrencyStore((s) => s.code);
   const iqdPerUsd = useCurrencyStore((s) => s.iqdPerUsd);
   return useCallback(
-    (providerUsd: number): string | null => {
+    (providerUsd: number, saleIqdOverride?: number): string | null => {
       if (code === 'IQD') return null;
-      return `≈ ${Math.round(saleIqd(providerUsd, iqdPerUsd)).toLocaleString('en-US')} IQD`;
+      const iqd = saleIqdOverride != null ? saleIqdOverride : saleIqd(providerUsd, iqdPerUsd);
+      return `≈ ${Math.round(iqd).toLocaleString('en-US')} IQD`;
     },
     [code, iqdPerUsd],
   );

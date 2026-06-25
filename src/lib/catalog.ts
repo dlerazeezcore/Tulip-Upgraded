@@ -22,6 +22,7 @@ export function packageToBundle(p: ProviderPackage, placeId: string): Bundle {
     packageCode: p.packageCode,
     providerPriceMinor,
     periodNum: days,
+    saleIqdMinor: typeof p.salePriceMinor === 'number' ? p.salePriceMinor : undefined,
   };
 }
 

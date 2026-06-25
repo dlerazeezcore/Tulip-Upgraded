@@ -140,8 +140,10 @@ export default function AdminPricing() {
 
       {/* ── Add / edit rule editor ── */}
       <Modal visible={!!ed} transparent animationType="slide" onRequestClose={vm.closeEditor}>
-        <Pressable onPress={vm.closeEditor} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
-          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14, maxWidth: 620, width: '100%', alignSelf: 'center' }}>
+        {/* Backdrop is a plain View: tapping outside does NOT close — only the X
+            (or Android back) closes, so an accidental tap can't discard the form. */}
+        <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+          <View style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14, maxWidth: 620, width: '100%', alignSelf: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
                 {tr(ed?.kind === 'discount' ? (ed?.isNew ? 'admin.pricing.addDiscount' : 'admin.pricing.editDiscount') : ed?.isNew ? 'admin.pricing.addOverride' : 'admin.pricing.editOverride')}
@@ -224,8 +226,8 @@ export default function AdminPricing() {
             </View>
 
             <PrimaryButton label={vm.busy ? tr('admin.currency.saving') : tr('admin.pricing.saveRule')} onPress={vm.onSave} />
-          </Pressable>
-        </Pressable>
+          </View>
+        </View>
       </Modal>
     </SafeAreaView>
   );

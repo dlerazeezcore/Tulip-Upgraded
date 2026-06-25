@@ -120,7 +120,7 @@ function ChooseStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso:
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
               {vm.planLabel(p)}{daysSuffix(p.days, tr('esim.days'))}
             </Text>
-            <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{vm.money(p.usd)}</Text>
+            <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{vm.money(p.usd, p.saleIqdMinor)}</Text>
           </View>
           <ChevronRight size={18} color={t.fgFaint} />
         </Pressable>
@@ -147,7 +147,7 @@ function PayStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso: st
             <Text style={{ fontSize: 12, color: t.primary, fontWeight: '700', marginTop: 2 }}>{tr('topup.changePlan')}</Text>
           </Pressable>
         </View>
-        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{vm.money(plan.usd)}</Text>
+        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{vm.money(plan.usd, plan.saleIqdMinor)}</Text>
       </View>
 
       {/* Payment method — same window as checkout */}
@@ -186,22 +186,22 @@ function PayStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso: st
         <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>
           {tr('checkout.orderSummary')}
         </Text>
-        <SummaryRow label={tr('checkout.subtotal')} value={vm.money(plan.usd)} />
+        <SummaryRow label={tr('checkout.subtotal')} value={vm.money(plan.usd, plan.saleIqdMinor)} />
         <SummaryRow label={tr('checkout.taxesFees')} value={vm.money(0)} />
         <View style={{ height: 1, backgroundColor: t.border, marginVertical: 4 }} />
-        <SummaryRow label={tr('checkout.total')} value={vm.money(plan.usd)} strong />
+        <SummaryRow label={tr('checkout.total')} value={vm.money(plan.usd, plan.saleIqdMinor)} strong />
       </View>
 
       {vm.payError && <Text style={{ fontSize: 12, color: t.danger, textAlign: 'center' }}>{vm.payError}</Text>}
 
       <PrimaryButton
-        label={vm.busy ? tr('checkout.processing') : tr('checkout.pay', { amount: vm.money(plan.usd) })}
+        label={vm.busy ? tr('checkout.processing') : tr('checkout.pay', { amount: vm.money(plan.usd, plan.saleIqdMinor) })}
         icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}
         onPress={vm.onPay}
       />
-      {!!vm.iqdNote(plan.usd) && (
+      {!!vm.iqdNote(plan.usd, plan.saleIqdMinor) && (
         <Text style={{ fontSize: 12, color: t.fgMuted, textAlign: 'center' }}>
-          {vm.iqdNote(plan.usd)} · {tr('checkout.chargedInIqd')}
+          {vm.iqdNote(plan.usd, plan.saleIqdMinor)} · {tr('checkout.chargedInIqd')}
         </Text>
       )}
       <Text style={{ fontSize: 11, color: t.fgFaint, textAlign: 'center' }}>

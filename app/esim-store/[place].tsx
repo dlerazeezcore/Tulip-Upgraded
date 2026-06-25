@@ -119,7 +119,7 @@ export default function PlaceDetail() {
                           </Text>
                           <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{tr('esimStore.validForDays', { count: b.days })}</Text>
                         </View>
-                        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{money(b.usd)}</Text>
+                        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{money(b.usd, b.saleIqdMinor)}</Text>
                         <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: isSelected ? t.primary : t.borderStrong, backgroundColor: isSelected ? t.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
                           {isSelected && <Check size={13} color="#fff" strokeWidth={3} />}
                         </View>
@@ -140,7 +140,7 @@ export default function PlaceDetail() {
               <Text style={{ fontSize: 12, color: t.fgMuted }}>
                 {vm.selected.type === 'unlimited' ? tr('esimStore.unlimited') : `${vm.selected.gb} GB`} · {vm.selected.days} {tr('esim.days')}
               </Text>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(vm.selected.usd)}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(vm.selected.usd, vm.selected.saleIqdMinor)}</Text>
             </View>
             <PrimaryButton label={tr('common.continue')} icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />} onPress={vm.onContinue} style={{ flex: 1 }} />
           </View>

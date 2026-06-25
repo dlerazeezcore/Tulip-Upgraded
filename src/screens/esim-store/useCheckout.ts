@@ -64,7 +64,7 @@ export function useCheckout() {
       paymentMethod: payment.method,
       paymentStatus: payment.status,
       paymentTransactionId: payment.transactionId,
-      salePriceMinor: iqdAmount(bundle.usd),
+      salePriceMinor: iqdAmount(bundle.usd, bundle.saleIqdMinor),
     });
     clear();
     await refreshEsims();
@@ -82,7 +82,7 @@ export function useCheckout() {
       }
 
       // FIB: create payment, open the FIB app, poll for confirmation, then book.
-      const amountIqd = iqdAmount(bundle.usd);
+      const amountIqd = iqdAmount(bundle.usd, bundle.saleIqdMinor);
       const payment = await createFibPayment({
         amount: amountIqd,
         currency: 'IQD',

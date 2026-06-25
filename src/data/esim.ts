@@ -97,6 +97,9 @@ export type Bundle = {
   packageCode?: string;
   providerPriceMinor?: number;
   periodNum?: number;
+  /** Backend-computed IQD sale price (per-country/per-bundle rules applied). When
+   *  present the UI shows/charges this instead of recomputing from the global markup. */
+  saleIqdMinor?: number;
 };
 
 const round = (n: number) => Math.round(n * 2) / 2;

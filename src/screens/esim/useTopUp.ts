@@ -141,7 +141,7 @@ export function useTopUp() {
       }
       // FIB: create the payment, open the FIB app, poll for confirmation, then
       // apply the top-up only once the charge is confirmed paid.
-      const amountIqd = iqdAmount(selected.usd);
+      const amountIqd = iqdAmount(selected.usd, selected.saleIqdMinor);
       const payment = await createFibPayment({
         amount: amountIqd,
         currency: 'IQD',

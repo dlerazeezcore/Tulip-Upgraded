@@ -114,7 +114,7 @@ export default function Checkout() {
                 <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>{place.name}</Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{planLabel} · {bundle.days} {tr('checkout.days')}</Text>
               </View>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{vm.money(bundle.usd)}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{vm.money(bundle.usd, bundle.saleIqdMinor)}</Text>
             </View>
 
             <View>
@@ -154,23 +154,23 @@ export default function Checkout() {
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>
                 {tr('checkout.orderSummary')}
               </Text>
-              <SummaryRow label={tr('checkout.subtotal')} value={vm.money(bundle.usd)} />
+              <SummaryRow label={tr('checkout.subtotal')} value={vm.money(bundle.usd, bundle.saleIqdMinor)} />
               <SummaryRow label={tr('checkout.taxesFees')} value={vm.money(0)} />
               <View style={{ height: 1, backgroundColor: t.border, marginVertical: 4 }} />
-              <SummaryRow label={tr('checkout.total')} value={vm.money(bundle.usd)} strong />
+              <SummaryRow label={tr('checkout.total')} value={vm.money(bundle.usd, bundle.saleIqdMinor)} strong />
             </View>
 
             {vm.error && (
               <Text style={{ fontSize: 12, color: t.danger, textAlign: 'center' }}>{vm.error}</Text>
             )}
             <PrimaryButton
-              label={vm.busy ? tr('checkout.processing') : tr('checkout.pay', { amount: vm.money(bundle.usd) })}
+              label={vm.busy ? tr('checkout.processing') : tr('checkout.pay', { amount: vm.money(bundle.usd, bundle.saleIqdMinor) })}
               icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}
               onPress={vm.onPay}
             />
-            {!!vm.iqdNote(bundle.usd) && (
+            {!!vm.iqdNote(bundle.usd, bundle.saleIqdMinor) && (
               <Text style={{ fontSize: 12, color: t.fgMuted, textAlign: 'center' }}>
-                {vm.iqdNote(bundle.usd)} · {tr('checkout.chargedInIqd')}
+                {vm.iqdNote(bundle.usd, bundle.saleIqdMinor)} · {tr('checkout.chargedInIqd')}
               </Text>
             )}
             <Text style={{ fontSize: 11, color: t.fgFaint, textAlign: 'center' }}>

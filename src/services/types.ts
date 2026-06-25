@@ -59,6 +59,7 @@ export type ProviderPackage = {
   slug?: string;
   name?: string;
   price?: number; // provider price (USD, in 1/10000 units)
+  salePriceMinor?: number; // backend-computed IQD sale price (pricing/discount rules applied)
   currencyCode?: string;
   volume?: number; // total data in bytes (0 = unlimited)
   unusedValidTime?: number;
