@@ -253,6 +253,14 @@ export default {
     fibExpired: 'The payment request expired before it was approved. Tap Pay to start a new one.',
     fibTimeout:
       "We couldn't confirm your payment in time. If you approved it in the FIB app, it'll appear shortly — pull down to refresh on the next screen. Otherwise tap Pay to try again.",
+    fibPayTitle: 'Pay with FIB',
+    fibScanHint: 'Scan this QR with the FIB app to approve the payment.',
+    fibPayByPhone: 'Pay by phone',
+    fibOr: 'or',
+    fibWaiting: 'Waiting for payment…',
+    fibCodeLabel: 'Code',
+    fibClose: 'Close',
+    fibCheckAgain: 'Try again',
   },
   topup: {
     title: 'Add on a data plan',

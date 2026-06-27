@@ -8,6 +8,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { EsimSupportBanner } from '@/components/EsimSupportBanner';
+import { FibPaymentSheet } from '@/components/FibPaymentSheet';
 import { useCheckout } from '@/screens/esim-store/useCheckout';
 
 // Representative flag for region eSIMs (mock).
@@ -179,6 +180,7 @@ export default function Checkout() {
           </View>
         </View>
       </ScrollView>
+      <FibPaymentSheet sheet={vm.fibSheet} />
     </SafeAreaView>
   );
 }

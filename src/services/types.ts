@@ -146,6 +146,7 @@ export type FibPayment = {
   redirectUrl?: string | null;
   qrCode?: string | null;
   readableCode?: string | null;
+  expiresAt?: string | null;
   raw?: any;
 };
 

@@ -8,7 +8,8 @@ function normalize(res: any): FibPayment {
     status: String(res?.status || 'pending'),
     redirectUrl: res?.paymentLink || res?.personalAppLink || res?.redirectUrl || null,
     qrCode: res?.qrCodeUrl || res?.qrCode || null,
-    readableCode: res?.readableCode || null,
+    readableCode: res?.readableCode || res?.providerInfo?.reference || null,
+    expiresAt: res?.expiresAt || res?.validUntil || null,
     raw: res,
   };
 }
@@ -41,15 +42,23 @@ export async function getFibPaymentStatus(paymentId: string, refresh = true): Pr
 
 const TERMINAL = new Set(['paid', 'failed', 'canceled', 'cancelled', 'expired', 'refunded']);
 
-/** Poll the payment until it reaches a terminal state or times out. */
+/** Poll the payment until it reaches a terminal state or times out.
+ *  Pass `isCancelled` so a closed sheet / unmounted screen stops the loop
+ *  instead of leaking a 3-minute background poll. */
 export async function pollFibPayment(
   paymentId: string,
-  opts: { intervalMs?: number; timeoutMs?: number; onTick?: (p: FibPayment) => void } = {},
+  opts: {
+    intervalMs?: number;
+    timeoutMs?: number;
+    onTick?: (p: FibPayment) => void;
+    isCancelled?: () => boolean;
+  } = {},
 ): Promise<FibPayment> {
   const interval = opts.intervalMs ?? 3000;
   const deadline = Date.now() + (opts.timeoutMs ?? 180000);
   let last: FibPayment | null = null;
   while (Date.now() < deadline) {
+    if (opts.isCancelled?.()) return last ?? { paymentId, status: 'pending' };
     last = await getFibPaymentStatus(paymentId, true);
     opts.onTick?.(last);
     if (TERMINAL.has(last.status.toLowerCase())) return last;

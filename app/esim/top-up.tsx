@@ -11,6 +11,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { EmptyState } from '@/components/EmptyState';
+import { FibPaymentSheet } from '@/components/FibPaymentSheet';
 import { useTopUp } from '@/screens/esim/useTopUp';
 
 function daysSuffix(days: number, word: string) {
@@ -74,6 +75,7 @@ export default function TopUp() {
           <PayStep vm={vm} esimIso={esim.iso} />
         )}
       </ScrollView>
+      <FibPaymentSheet sheet={vm.fibSheet} />
     </SafeAreaView>
   );
 }

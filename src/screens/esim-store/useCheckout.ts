@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert, Linking } from 'react-native';
+import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useIqdAmount } from '@/lib/pricing';
@@ -12,7 +12,7 @@ import { useDeviceStore } from '@/state/deviceStore';
 import { useIsWideWeb } from '@/lib/responsive';
 import { PAYMENT_METHODS } from '@/data/esim';
 import { createManagedOrder } from '@/services/esim';
-import { createFibPayment, pollFibPayment, isPaid, fibOutcome } from '@/services/payments';
+import { useFibPayment } from '@/screens/payment/useFibPayment';
 
 export function useCheckout() {
   const router = useRouter();
@@ -35,6 +35,7 @@ export function useCheckout() {
   const [method, setMethod] = useState<'fib' | 'loyalty'>('fib');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const fib = useFibPayment();
 
   const planLabel = bundle
     ? bundle.type === 'unlimited'
@@ -81,26 +82,18 @@ export function useCheckout() {
         return;
       }
 
-      // FIB: create payment, open the FIB app, poll for confirmation, then book.
+      // FIB: open the QR + "pay by phone" sheet. It polls for confirmation and
+      // shows cancel/decline/expiry/timeout itself; we only book once it's paid.
       const amountIqd = iqdAmount(bundle.usd, bundle.saleIqdMinor);
-      const payment = await createFibPayment({
-        amount: amountIqd,
-        currency: 'IQD',
-        description: `${place.name} eSIM`,
-        metadata: { packageCode: bundle.packageCode, place: place.name },
-      });
-      if (payment.redirectUrl) {
-        Linking.openURL(payment.redirectUrl).catch(() => {});
-      }
-      const final = await pollFibPayment(payment.paymentId, { timeoutMs: 180000 });
-      if (isPaid(final)) {
-        await placeOrder({ method: 'fib', status: 'paid', transactionId: payment.paymentId });
-      } else {
-        // Distinguish cancel / decline / expiry / timeout so the user knows
-        // whether to retry or just wait for the eSIM to appear.
-        const oc = fibOutcome(final);
-        setError(tr(`checkout.fib${oc.charAt(0).toUpperCase()}${oc.slice(1)}`));
-      }
+      await fib.start(
+        {
+          amount: amountIqd,
+          currency: 'IQD',
+          description: `${place.name} eSIM`,
+          metadata: { packageCode: bundle.packageCode, place: place.name },
+        },
+        { onPaid: (p) => placeOrder({ method: 'fib', status: 'paid', transactionId: p.paymentId }) },
+      );
     } catch (e: any) {
       setError(e?.message || tr('checkout.failed'));
     } finally {
@@ -146,6 +139,7 @@ export function useCheckout() {
     setMethod,
     busy,
     error,
+    fibSheet: fib.sheet,
     goBack,
     onPay,
     browseEsims: () => router.replace('/esim-store'),

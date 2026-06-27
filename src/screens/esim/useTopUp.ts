@@ -7,7 +7,6 @@
 // existing FIB/Loyalty flow, and only call applyTopUp once the payment is
 // confirmed. No backend changes — applyTopUp hits the existing provider top-up.
 import { useCallback, useEffect, useState } from 'react';
-import { Linking } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useIqdAmount } from '@/lib/pricing';
@@ -19,7 +18,7 @@ import { useOrderStore } from '@/state/orderStore';
 import { PAYMENT_METHODS, type Bundle } from '@/data/esim';
 import { packageToBundle } from '@/lib/catalog';
 import { findTopUpPackages, applyTopUp } from '@/services/esim';
-import { createFibPayment, pollFibPayment, isPaid, fibOutcome } from '@/services/payments';
+import { useFibPayment } from '@/screens/payment/useFibPayment';
 
 export type TopUpStep = 'choose' | 'pay';
 
@@ -56,6 +55,7 @@ export function useTopUp() {
   const [method, setMethod] = useState<'fib' | 'loyalty'>('fib');
   const [busy, setBusy] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
+  const fib = useFibPayment();
 
   const load = useCallback(async () => {
     if (!iccid) {
@@ -139,25 +139,18 @@ export function useTopUp() {
         await apply();
         return;
       }
-      // FIB: create the payment, open the FIB app, poll for confirmation, then
-      // apply the top-up only once the charge is confirmed paid.
+      // FIB: open the QR + "pay by phone" sheet. It polls and shows its own
+      // cancel/decline/expiry/timeout state; we only apply the top-up once paid.
       const amountIqd = iqdAmount(selected.usd, selected.saleIqdMinor);
-      const payment = await createFibPayment({
-        amount: amountIqd,
-        currency: 'IQD',
-        description: `${esim?.country ?? 'eSIM'} top-up`,
-        metadata: { packageCode: selected.packageCode, iccid, kind: 'topup' },
-      });
-      if (payment.redirectUrl) {
-        Linking.openURL(payment.redirectUrl).catch(() => {});
-      }
-      const final = await pollFibPayment(payment.paymentId, { timeoutMs: 180000 });
-      if (isPaid(final)) {
-        await apply();
-      } else {
-        const oc = fibOutcome(final);
-        setPayError(tr(`checkout.fib${oc.charAt(0).toUpperCase()}${oc.slice(1)}`));
-      }
+      await fib.start(
+        {
+          amount: amountIqd,
+          currency: 'IQD',
+          description: `${esim?.country ?? 'eSIM'} top-up`,
+          metadata: { packageCode: selected.packageCode, iccid, kind: 'topup' },
+        },
+        { onPaid: () => apply() },
+      );
     } catch (e: any) {
       setPayError(e?.message || tr('checkout.failed'));
     } finally {
@@ -190,6 +183,7 @@ export function useTopUp() {
     availableMethods,
     busy,
     payError,
+    fibSheet: fib.sheet,
     money,
     iqdNote,
     planLabel,
