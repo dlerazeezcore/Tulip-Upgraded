@@ -70,7 +70,7 @@ export function CountryPhoneField({
         <Pressable onPress={() => closePicker()} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '78%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>Select country</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('phone.selectCountry')}</Text>
               <Pressable
                 onPress={() => closePicker()}
                 accessibilityRole="button"
@@ -84,7 +84,7 @@ export function CountryPhoneField({
               <TextInput
                 value={query}
                 onChangeText={setQuery}
-                placeholder="Search country or code"
+                placeholder={tr('phone.searchPlaceholder')}
                 placeholderTextColor={t.fgFaint}
                 autoCapitalize="none"
                 style={{ flex: 1, paddingVertical: 12, fontSize: 14, color: t.fg, fontFamily: t.font.body }}

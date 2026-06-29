@@ -3,7 +3,8 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
-import { ChevronLeft, Search, Star, X, Ban, ShieldCheck, Trash2 } from 'lucide-react-native';
+import { Search, Star, X, Ban, ShieldCheck, Trash2 } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { useAdminUsers } from '@/screens/admin/useAdminUsers';
@@ -29,7 +30,7 @@ export default function AdminUsers() {
           accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
           {tr('admin.users.title')}{loading ? '' : ` · ${rows.length}`}

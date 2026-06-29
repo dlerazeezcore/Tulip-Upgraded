@@ -16,6 +16,7 @@ export default {
     somethingWrong: 'Something went wrong. Please try again.',
     pleaseTryAgain: 'Please try again.',
     restartRequired: 'Please restart the app to fully apply the new layout direction.',
+    soon: 'Soon',
   },
   onboarding: {
     welcome: 'Welcome to Tulip',
@@ -105,6 +106,7 @@ export default {
     createPasswordPlaceholder: 'Create a password (min 8 chars)',
     newPasswordPlaceholder: 'New password (min 8 chars)',
     confirmPasswordPlaceholder: 'Confirm password',
+    otpTooShort: 'Enter the full code we sent you.',
   },
   serviceNames: {
     flights: 'Flights',
@@ -261,6 +263,9 @@ export default {
     fibCodeLabel: 'Code',
     fibClose: 'Close',
     fibCheckAgain: 'Try again',
+    fibBookingFailed:
+      "Your payment went through, but we couldn't finish setting up your eSIM. Tap below to try again — you won't be charged twice. If it keeps failing, please contact support.",
+    fibRetryBooking: 'Finish setup',
   },
   topup: {
     title: 'Add on a data plan',
@@ -362,6 +367,21 @@ export default {
     noOrdersSub: 'Your purchases will appear here.',
     esimOrder: 'eSIM order',
     countryEsim: '{{country}} eSIM',
+    total: 'Total',
+    confirmed: 'Order confirmed',
+    manageEsim: 'Manage eSIM',
+  },
+  trip: {
+    title: 'Trip',
+    comingSoonTitle: 'Trips coming soon',
+    comingSoonBody: "Trip planning isn't live yet. eSIMs are available today from the eSIM store.",
+  },
+  hotel: {
+    from: 'From',
+  },
+  phone: {
+    selectCountry: 'Select country',
+    searchPlaceholder: 'Search country or code',
   },
   travelers: {
     title: 'Saved travelers',
@@ -478,6 +498,9 @@ export default {
       displayName: 'Display name',
       sortOrder: 'Sort order',
       saving: 'Saving…',
+      countryPlaceholder: 'United States',
+      hideFromFeatured: 'Hide from featured',
+      showInFeatured: 'Show in featured',
     },
     notif: {
       title: 'Push notifications',
@@ -511,6 +534,8 @@ export default {
       symbolAfterAmount: 'Symbol after amount',
       enabledVisible: 'Enabled (visible to customers)',
       saveCurrency: 'Save currency',
+      codePlaceholder: 'EUR',
+      namePlaceholder: 'Euro',
     },
     pricing: {
       title: 'eSIM pricing rules',
@@ -632,5 +657,9 @@ export default {
     increase: 'Increase',
     decrease: 'Decrease',
     menu: 'Menu',
+    delete: 'Delete',
+    saveToFavorites: 'Save to favorites',
+    swapOriginDestination: 'Swap origin and destination',
+    removeSelectedUser: 'Remove selected user',
   },
 } as const;

@@ -68,6 +68,10 @@ export type Theme = typeof shared & {
   warning: string;
   danger: string;
   info: string;
+  // Semantic info-surface tokens (tinted content cards). Unlike the fixed
+  // brand.blue50 these adapt to dark mode instead of glowing bright white.
+  infoBg: string;
+  infoFg: string;
   gradHero: readonly [string, string, string];
   shadow1: object;
   shadow2: object;
@@ -95,6 +99,8 @@ export const light: Theme = {
   warning: '#F59E0B',
   danger: '#DC2626',
   info: '#1967D2',
+  infoBg: '#EFF5FE',
+  infoFg: '#1557B0',
   gradHero: ['#1967D2', '#1557B0', '#114A99'] as const as readonly [string, string, string],
   shadow1: {
     shadowColor: '#0F172A',
@@ -146,6 +152,8 @@ export const dark: Theme = {
   warning: '#F59E0B',
   danger: '#DC2626',
   info: '#3B82F6',
+  infoBg: '#15243B',
+  infoFg: '#7CAEF1',
   gradHero: ['#1E3A8A', '#1557B0', '#1967D2'] as const as readonly [string, string, string],
   shadow1: {
     shadowColor: '#000',

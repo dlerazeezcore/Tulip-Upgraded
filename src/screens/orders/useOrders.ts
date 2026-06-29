@@ -1,6 +1,7 @@
 import { useEffect, useMemo } from 'react';
 import { useRouter } from 'expo-router';
 import { useOrderStore } from '@/state/orderStore';
+import { useAuthStore } from '@/state/authStore';
 import type { OrderSummary } from '@/services/types';
 
 function orderDate(o: OrderSummary): string {
@@ -16,10 +17,13 @@ export function useOrders() {
   const loading = useOrderStore((s) => s.loading);
   const loaded = useOrderStore((s) => s.loaded);
   const refresh = useOrderStore((s) => s.refresh);
+  // FE-6: re-fetch when the signed-in account changes (e.g. in-place sign-in),
+  // not only on mount. A stable scalar avoids object-identity refresh loops.
+  const authUserKey = useAuthStore((s) => s.user?.phone ?? null);
 
   useEffect(() => {
     refresh();
-  }, [refresh]);
+  }, [refresh, authUserKey]);
 
   const groups = useMemo(() => {
     const out: { label: string; items: OrderSummary[] }[] = [];

@@ -20,6 +20,9 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
   const big = size === 'lg';
   const small = size === 'sm';
   const placeholder = (svc as any).placeholder;
+  // UX-4: services that aren't shippable yet are badged "Soon" so the tap isn't a
+  // surprise dead-end. `live` is undefined on the placeholder slot — treat as live.
+  const live = (svc as any).live ?? true;
   const Icon = svc.Icon;
 
   const onPress = () => {
@@ -99,6 +102,23 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
         ...t.shadow1,
       }}
     >
+      {!live && (
+        <View
+          style={{
+            position: 'absolute',
+            top: 8,
+            end: 8,
+            backgroundColor: t.bgSunken,
+            borderRadius: 999,
+            paddingHorizontal: 8,
+            paddingVertical: 3,
+          }}
+        >
+          <Text style={{ fontSize: 9, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+            {tr('common.soon')}
+          </Text>
+        </View>
+      )}
       {content}
     </PressableScale>
   );

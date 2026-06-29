@@ -3,7 +3,8 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Archive, ChevronRight, Smartphone } from 'lucide-react-native';
+import { Archive, Smartphone } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { formatEsimDataLabel } from '@/state/esimStore';
 import { formatRemainingData, formatTimeRemaining } from '@/lib/esimUsage';
@@ -65,7 +66,7 @@ function HistoryCard({ count, onPress }: { count: number; onPress: () => void })
           {tr('manage.historyDesc', { count, unit: count === 1 ? tr('manage.bundle') : tr('manage.bundles') })}
         </Text>
       </View>
-      <ChevronRight size={18} color={t.fgFaint} />
+      <DirectionalChevron direction="forward" size={18} color={t.fgFaint} />
     </PressableScale>
   );
 }
@@ -188,7 +189,7 @@ export default function ManageService() {
           accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {svc && <svc.Icon size={20} color={svc.color} strokeWidth={2} />}

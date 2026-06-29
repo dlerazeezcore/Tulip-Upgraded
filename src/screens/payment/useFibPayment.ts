@@ -9,7 +9,16 @@ import { useTranslation } from 'react-i18next';
 import { createFibPayment, pollFibPayment, fibOutcome } from '@/services/payments';
 import type { FibPayment } from '@/services/types';
 
-export type FibSheetStatus = 'waiting' | 'paid' | 'cancelled' | 'failed' | 'expired' | 'timeout';
+export type FibSheetStatus =
+  | 'waiting'
+  | 'paid'
+  | 'cancelled'
+  | 'failed'
+  | 'expired'
+  | 'timeout'
+  // Charge confirmed by FIB, but placing the order afterwards failed. Distinct
+  // from 'failed' so we never tell a paying user their payment failed.
+  | 'bookingFailed';
 
 export type FibCreateArgs = {
   amount: number | string;
@@ -60,6 +69,9 @@ export function useFibPayment() {
   const cancelledRef = useRef(false);
   const onPaidRef = useRef<null | ((p: FibPayment) => void | Promise<void>)>(null);
   const lastArgsRef = useRef<FibCreateArgs | null>(null);
+  // The confirmed payment, kept so a post-payment booking failure can be retried
+  // WITHOUT creating (and charging) a second FIB payment.
+  const paidPaymentRef = useRef<FibPayment | null>(null);
 
   // Stop any in-flight poll if the screen unmounts mid-payment.
   useEffect(() => () => { cancelledRef.current = true; }, []);
@@ -75,9 +87,22 @@ export function useFibPayment() {
     // Always honor a confirmed payment — even if the sheet was just closed —
     // so the user never pays without getting the order placed.
     if (oc === 'paid') {
-      setVisible(false);
+      paidPaymentRef.current = final;
       const cb = onPaidRef.current;
-      if (cb) await cb(final);
+      if (cb) {
+        // The charge is confirmed. If booking now fails we must NOT report a
+        // generic failure (which reads as "payment failed") — surface a distinct
+        // state so the user knows the money went through and can retry the
+        // booking (or contact support) without paying twice.
+        try {
+          await cb(final);
+        } catch {
+          setStatus('bookingFailed');
+          return;
+        }
+      }
+      setVisible(false);
+      setStatus('paid');
       return;
     }
     // Otherwise, a closed/unmounted sheet stops silently; live ones show why.
@@ -98,8 +123,23 @@ export function useFibPayment() {
     [runPoll],
   );
 
-  // "Try again" creates a brand-new FIB payment (new paymentId + deeplink + QR).
+  // "Try again" creates a brand-new FIB payment (new paymentId + deeplink + QR)
+  // — EXCEPT after a confirmed charge whose booking failed, where it re-attempts
+  // the booking with the SAME payment so the user is never charged twice.
   const retry = useCallback(async () => {
+    if (status === 'bookingFailed' && paidPaymentRef.current) {
+      const cb = onPaidRef.current;
+      if (!cb) return;
+      setStatus('waiting');
+      try {
+        await cb(paidPaymentRef.current);
+        setVisible(false);
+        setStatus('paid');
+      } catch {
+        setStatus('bookingFailed');
+      }
+      return;
+    }
     const args = lastArgsRef.current;
     if (!args) return;
     try {
@@ -109,7 +149,7 @@ export function useFibPayment() {
     } catch {
       setStatus('failed');
     }
-  }, [runPoll]);
+  }, [runPoll, status]);
 
   const close = useCallback(() => {
     cancelledRef.current = true;
@@ -143,7 +183,8 @@ export function useFibPayment() {
     waitingLabel: tr('checkout.fibWaiting'),
     codeLabel: tr('checkout.fibCodeLabel'),
     closeLabel: tr('checkout.fibClose'),
-    retryLabel: tr('checkout.fibCheckAgain'),
+    retryLabel:
+      status === 'bookingFailed' ? tr('checkout.fibRetryBooking') : tr('checkout.fibCheckAgain'),
     payByPhone,
     close,
     retry,

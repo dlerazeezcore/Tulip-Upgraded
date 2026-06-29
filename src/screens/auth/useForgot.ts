@@ -47,7 +47,13 @@ export function useForgot() {
     });
 
   const onContinueOtp = () => {
-    if (code.replace(/\D/g, '').length >= 4) setStep('reset');
+    setError(null);
+    if (code.replace(/\D/g, '').length >= 4) {
+      setStep('reset');
+    } else {
+      // FE-3: give feedback instead of silently doing nothing on a short code.
+      setError(tr('auth.otpTooShort'));
+    }
   };
 
   const onResetPassword = () =>

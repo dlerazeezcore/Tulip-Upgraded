@@ -4,7 +4,8 @@ import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Bell, Check } from 'lucide-react-native';
+import { Bell, Check } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useUpdateNotification } from '@/screens/admin/notifications/useUpdateNotification';
@@ -22,7 +23,7 @@ export default function AdminSendUpdateNotification() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Bell size={20} color={t.primary} strokeWidth={2} />

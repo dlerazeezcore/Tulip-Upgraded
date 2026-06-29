@@ -4,7 +4,8 @@ import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Bell } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
 import { useNotificationsLanding } from '@/screens/admin/notifications/useNotificationsLanding';
@@ -26,7 +27,7 @@ export default function AdminNotificationsLanding() {
           accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <Bell size={20} color={t.primary} strokeWidth={2} />
@@ -61,7 +62,7 @@ export default function AdminNotificationsLanding() {
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{c.title}</Text>
               <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{c.subtitle}</Text>
             </View>
-            <ChevronRight size={18} color={t.fgFaint} />
+            <DirectionalChevron direction="forward" size={18} color={t.fgFaint} />
           </PressableScale>
         ))}
       </ScrollView>

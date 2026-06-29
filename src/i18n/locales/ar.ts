@@ -16,6 +16,7 @@ export default {
     somethingWrong: 'حدث خطأ ما. يرجى المحاولة مرة أخرى.',
     pleaseTryAgain: 'يرجى المحاولة مرة أخرى.',
     restartRequired: 'يرجى إعادة تشغيل التطبيق لتطبيق اتجاه الواجهة بالكامل.',
+    soon: 'قريباً',
   },
   onboarding: {
     welcome: 'مرحباً بك في Tulip',
@@ -105,6 +106,7 @@ export default {
     createPasswordPlaceholder: 'أنشئ كلمة مرور (8 أحرف على الأقل)',
     newPasswordPlaceholder: 'كلمة مرور جديدة (8 أحرف على الأقل)',
     confirmPasswordPlaceholder: 'تأكيد كلمة المرور',
+    otpTooShort: 'أدخل الرمز الكامل الذي أرسلناه إليك.',
   },
   serviceNames: {
     flights: 'الطيران',
@@ -261,6 +263,9 @@ export default {
     fibCodeLabel: 'الرمز',
     fibClose: 'إغلاق',
     fibCheckAgain: 'حاول مرة أخرى',
+    fibBookingFailed:
+      'تمت عملية الدفع، لكن تعذّر علينا إكمال إعداد شريحتك الإلكترونية. اضغط أدناه للمحاولة مرة أخرى — لن يتم خصم المبلغ مرتين. إذا استمر الفشل، يرجى التواصل مع الدعم.',
+    fibRetryBooking: 'إكمال الإعداد',
   },
   topup: {
     title: 'إضافة باقة بيانات',
@@ -362,6 +367,21 @@ export default {
     noOrdersSub: 'ستظهر مشترياتك هنا.',
     esimOrder: 'طلب شريحة',
     countryEsim: 'شريحة {{country}}',
+    total: 'الإجمالي',
+    confirmed: 'تم تأكيد الطلب',
+    manageEsim: 'إدارة الشريحة',
+  },
+  trip: {
+    title: 'الرحلة',
+    comingSoonTitle: 'الرحلات قريباً',
+    comingSoonBody: 'تخطيط الرحلات غير متاح بعد. الشرائح الإلكترونية متاحة اليوم من متجر الشرائح.',
+  },
+  hotel: {
+    from: 'من',
+  },
+  phone: {
+    selectCountry: 'اختر الدولة',
+    searchPlaceholder: 'ابحث عن دولة أو رمز',
   },
   travelers: {
     title: 'المسافرون المحفوظون',
@@ -477,6 +497,9 @@ export default {
       displayName: 'الاسم المعروض',
       sortOrder: 'ترتيب الفرز',
       saving: 'جارٍ الحفظ…',
+      countryPlaceholder: 'الولايات المتحدة',
+      hideFromFeatured: 'إخفاء من المميّزة',
+      showInFeatured: 'إظهار في المميّزة',
     },
     notif: {
       title: 'الإشعارات الفورية',
@@ -510,6 +533,8 @@ export default {
       symbolAfterAmount: 'العلامة بعد المبلغ',
       enabledVisible: 'مُفعَّل (ظاهر للعملاء)',
       saveCurrency: 'حفظ العملة',
+      codePlaceholder: 'EUR',
+      namePlaceholder: 'يورو',
     },
     pricing: {
       title: 'قواعد تسعير eSIM',
@@ -631,5 +656,9 @@ export default {
     increase: 'زيادة',
     decrease: 'إنقاص',
     menu: 'القائمة',
+    delete: 'حذف',
+    saveToFavorites: 'حفظ في المفضلة',
+    swapOriginDestination: 'تبديل نقطة الانطلاق والوجهة',
+    removeSelectedUser: 'إزالة المستخدم المحدد',
   },
 };

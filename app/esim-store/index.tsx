@@ -3,7 +3,8 @@ import React, { useCallback } from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, FlatList } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Search, Globe } from 'lucide-react-native';
+import { Search, Globe } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
@@ -39,7 +40,7 @@ export default function EsimStore() {
       >
         <Flag iso={item.code} size={28} />
         <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 14, color: t.fg }}>{item.name}</Text>
-        <ChevronRight size={16} color={t.fgFaint} />
+        <DirectionalChevron direction="forward" size={16} color={t.fgFaint} />
       </Pressable>
     ),
     [filteredCountries.length, t.border, t.fg, t.fgFaint, t.font.displayMedium, vm.openPlace],
@@ -54,7 +55,7 @@ export default function EsimStore() {
         accessibilityLabel={tr('a11y.back')}
         style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
       >
-        <ChevronLeft size={18} color={t.fg} />
+        <DirectionalChevron direction="back" size={18} color={t.fg} />
       </Pressable>
       <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Globe size={20} color={t.accent.emerald} strokeWidth={2} />
@@ -172,7 +173,7 @@ export default function EsimStore() {
                       >
                         <Flag iso={c.code} size={34} />
                         <Text style={{ flex: 1, fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{full}</Text>
-                        <ChevronRight size={20} color={t.fgFaint} />
+                        <DirectionalChevron direction="forward" size={20} color={t.fgFaint} />
                       </PressableScale>
                     </View>
                   );

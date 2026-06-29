@@ -50,7 +50,7 @@ export default function Services() {
                     style={{
                       position: 'absolute',
                       top: -30,
-                      right: -30,
+                      end: -30,
                       width: 140,
                       height: 140,
                       borderRadius: 70,
@@ -140,7 +140,7 @@ export default function Services() {
 
         {/* Bundle promo */}
         <LinearGradient
-          colors={[t.brand.blue50, t.brand.blue100]}
+          colors={[t.infoBg, t.infoBg]}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 0 }}
           style={{
@@ -164,10 +164,10 @@ export default function Services() {
             <Star size={26} color="#fff" strokeWidth={2.2} fill="#fff" />
           </View>
           <View style={{ flex: 1 }}>
-            <Text style={{ fontFamily: t.font.display, fontSize: 17, fontWeight: '800', color: t.brand.blue800 }}>
+            <Text style={{ fontFamily: t.font.display, fontSize: 17, fontWeight: '800', color: t.infoFg }}>
               {tr('servicesScreen.bundleTitle')}
             </Text>
-            <Text style={{ fontSize: 12, color: t.brand.blue700, marginTop: 3 }}>
+            <Text style={{ fontSize: 12, color: t.infoFg, marginTop: 3 }}>
               {tr('servicesScreen.bundleSub')}
             </Text>
           </View>

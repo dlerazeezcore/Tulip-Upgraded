@@ -3,6 +3,7 @@ import { View, Text, Pressable } from 'react-native';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Star, Heart } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { Hotel } from '@/data/hotels';
 import { PressableScale } from './PressableScale';
@@ -12,6 +13,7 @@ const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 
 export function HotelCard({ hotel, onPress }: { hotel: Hotel; onPress?: () => void }) {
   const t = useTheme();
+  const { t: tr } = useTranslation();
   const money = useMoney();
   return (
     <PressableScale
@@ -63,7 +65,7 @@ export function HotelCard({ hotel, onPress }: { hotel: Hotel; onPress?: () => vo
         </View>
         <Pressable
           accessibilityRole="button"
-          accessibilityLabel="Save to favorites"
+          accessibilityLabel={tr('a11y.saveToFavorites')}
           style={{
             position: 'absolute',
             top: 8,
@@ -98,7 +100,7 @@ export function HotelCard({ hotel, onPress }: { hotel: Hotel; onPress?: () => vo
           </View>
         </View>
         <View style={{ alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 11, color: t.fgMuted }}>From</Text>
+          <Text style={{ fontSize: 11, color: t.fgMuted }}>{tr('hotel.from')}</Text>
           <Text
             style={{
               fontFamily: t.font.display,

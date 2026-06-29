@@ -3,7 +3,8 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Plus, Signal, Clock, RefreshCw, AlertTriangle } from 'lucide-react-native';
+import { Plus, Signal, Clock, RefreshCw, AlertTriangle } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { UsageRing } from '@/components/UsageRing';
@@ -235,7 +236,7 @@ export default function EsimDetail() {
           accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>{tr('esim.details')}</Text>
         <Pressable onPress={() => vm.refreshUsage()} accessibilityRole="button" accessibilityLabel={tr('a11y.refresh')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>

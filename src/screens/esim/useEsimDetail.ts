@@ -224,7 +224,9 @@ export function useEsimDetail() {
 
   // Use raw MB for the fraction so the ring reflects byte-level usage.
   const planMb = esim ? esim.planGb * 1024 : 0;
-  const fraction = esim && planMb > 0 ? esim.remainingMb / planMb : 0;
+  // FE-2: when the plan size isn't GB-denominated (planGb 0, e.g. unlimited) we
+  // can't compute a fraction — show a full ring if data remains rather than empty.
+  const fraction = esim && planMb > 0 ? esim.remainingMb / planMb : esim && esim.remainingMb > 0 ? 1 : 0;
   const smdp = profile?.manualEntry?.smdpAddress ?? profile?.smdpAddress ?? null;
 
   const onRefresh = async () => {

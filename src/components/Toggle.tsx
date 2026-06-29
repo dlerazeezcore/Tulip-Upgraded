@@ -50,11 +50,8 @@ export function Toggle({ value, onChange }: { value: boolean; onChange: (v: bool
               height: THUMB,
               borderRadius: THUMB / 2,
               backgroundColor: t.onPrimary,
-              shadowColor: '#000',
-              shadowOpacity: 0.2,
-              shadowRadius: 2,
-              shadowOffset: { width: 0, height: 1 },
-              elevation: 2,
+              // CONV-19: use the token shadow instead of a hardcoded '#000'.
+              ...t.shadow1,
             },
             thumbStyle,
           ]}

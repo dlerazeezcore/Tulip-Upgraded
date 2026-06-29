@@ -2,7 +2,8 @@
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Globe, Check } from 'lucide-react-native';
+import { Globe, Check } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
@@ -33,7 +34,7 @@ export default function OrderDetail() {
           accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
           Order detail
@@ -84,18 +85,18 @@ export default function OrderDetail() {
 
           <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-              <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 15, color: t.fg }}>Total</Text>
+              <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 15, color: t.fg }}>{tr('orders.total')}</Text>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.fg }}>{formatIqd(order.totalMinor ?? 0)}</Text>
             </View>
             {completed && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
                 <Check size={14} color={t.success} strokeWidth={2.5} />
-                <Text style={{ fontSize: 12, color: t.success, fontWeight: '600' }}>Order confirmed</Text>
+                <Text style={{ fontSize: 12, color: t.success, fontWeight: '600' }}>{tr('orders.confirmed')}</Text>
               </View>
             )}
           </View>
 
-          <PrimaryButton label="Manage eSIM" onPress={vm.goManageEsim} />
+          <PrimaryButton label={tr('orders.manageEsim')} onPress={vm.goManageEsim} />
         </ScrollView>
       )}
     </SafeAreaView>

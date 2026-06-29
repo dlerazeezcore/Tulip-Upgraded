@@ -4,7 +4,8 @@ import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-nati
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Globe, ChevronDown, RefreshCw, Check, AlertCircle } from 'lucide-react-native';
+import { Globe, ChevronDown, RefreshCw, Check, AlertCircle } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import type { AdminOrder } from '@/services/types';
@@ -51,7 +52,7 @@ export default function AdminOrders() {
           accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
           {tr('admin.orders.title')}{month !== null && !loading ? ` · ${orders.length}` : ''}
@@ -162,7 +163,7 @@ export default function AdminOrders() {
                     </View>
                   </Pressable>
                   {open && (
-                    <View style={{ paddingHorizontal: 14, paddingBottom: 14, paddingLeft: 60, gap: 8 }}>
+                    <View style={{ paddingHorizontal: 14, paddingBottom: 14, paddingStart: 60, gap: 8 }}>
                       <Text style={{ fontSize: 10, fontWeight: '800', color: t.fgMuted, letterSpacing: 0.4 }}>
                         {tr('admin.orders.bundleHeader', { count: o.items.length })} · {tr('admin.orders.orderLabel', { number: o.orderNumber })}
                       </Text>

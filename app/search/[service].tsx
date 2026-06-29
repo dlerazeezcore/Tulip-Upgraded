@@ -5,13 +5,12 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowUpDown,
-  Calendar,
-  ChevronLeft,
   Minus,
   Plus,
   Search as SearchIcon,
   User,
 } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { MultiServiceTabs } from '@/components/MultiServiceTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -138,7 +137,7 @@ export default function SearchScreen() {
           <Pressable
             onPress={vm.swap}
             accessibilityRole="button"
-            accessibilityLabel="Swap origin and destination"
+            accessibilityLabel={tr('a11y.swapOriginDestination')}
             style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center', marginHorizontal: 8 }}
           >
             <ArrowUpDown size={16} color={t.fgMuted} />
@@ -160,26 +159,27 @@ export default function SearchScreen() {
     </View>
   );
 
+  // UX-1: the flights/hotels search isn't live yet and these dates have no picker.
+  // Render them as plain read-only labels (no input card chrome / calendar icon)
+  // so they don't masquerade as interactive fields.
   const datesRow = (
-    <View style={{ flexDirection: 'row', gap: 10 }}>
-      <View style={{ flex: 1, padding: 14, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16 }}>
+    <View style={{ flexDirection: 'row', gap: 10, paddingHorizontal: 2 }}>
+      <View style={{ flex: 1 }}>
         <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>
           {svc.id === 'hotels' ? tr('search.checkIn') : tr('search.depart')}
         </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-          <Calendar size={14} color={t.fgMuted} />
-          <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 15, color: t.fg }}>{vm.departDate}</Text>
-        </View>
+        <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 15, color: t.fgMuted, marginTop: 4 }}>
+          {vm.departDate}
+        </Text>
       </View>
       {(svc.id !== 'flights' || vm.tripType === 'roundtrip') && (
-        <View style={{ flex: 1, padding: 14, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16 }}>
+        <View style={{ flex: 1 }}>
           <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>
             {svc.id === 'hotels' ? tr('search.checkOut') : tr('search.return')}
           </Text>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-            <Calendar size={14} color={t.fgMuted} />
-            <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 15, color: t.fg }}>{vm.returnDate}</Text>
-          </View>
+          <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 15, color: t.fgMuted, marginTop: 4 }}>
+            {vm.returnDate}
+          </Text>
         </View>
       )}
     </View>
@@ -228,7 +228,7 @@ export default function SearchScreen() {
             justifyContent: 'center',
           }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 22, fontWeight: '700', color: t.fg }}>
           {tr('search.title')}

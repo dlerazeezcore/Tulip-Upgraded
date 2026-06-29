@@ -3,7 +3,7 @@ import React from 'react';
 import { ScrollView, View, Text } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { ChevronRight } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES } from '@/data/services';
 import { ScreenHeader } from '@/components/ScreenHeader';
@@ -61,7 +61,7 @@ export default function Bookings() {
                       <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{title}</Text>
                       <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{sub}</Text>
                     </View>
-                    <ChevronRight size={18} color={t.fgFaint} />
+                    <DirectionalChevron direction="forward" size={18} color={t.fgFaint} />
                   </PressableScale>
                 </View>
               );

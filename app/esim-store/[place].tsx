@@ -2,7 +2,8 @@
 import React from 'react';
 import { ScrollView, View, Text, Pressable, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { ChevronLeft, Globe, Check, Infinity as InfinityIcon, X, ArrowRight, Clock } from 'lucide-react-native';
+import { Globe, Check, Infinity as InfinityIcon, X, ArrowRight, Clock } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
@@ -27,7 +28,7 @@ export default function PlaceDetail() {
           accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
           {iso ? <Flag iso={iso} size={30} /> : <Globe size={24} color={t.primary} strokeWidth={2} />}
@@ -43,14 +44,14 @@ export default function PlaceDetail() {
           <PressableScale
             onPress={() => vm.setCoverageOpen(true)}
             scaleTo={0.98}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.brand.blue50, borderWidth: 1, borderColor: t.brand.blue100 }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.infoBg, borderWidth: 1, borderColor: t.border }}
           >
             <Globe size={20} color={t.primary} strokeWidth={2} />
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.brand.blue800 }}>
+              <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.infoFg }}>
                 {tr('esimStore.coverageCount', { count: vm.coverage.length })}
               </Text>
-              <Text style={{ fontSize: 12, color: t.brand.blue700, marginTop: 1 }}>{tr('esimStore.coverageHint')}</Text>
+              <Text style={{ fontSize: 12, color: t.infoFg, marginTop: 1 }}>{tr('esimStore.coverageHint')}</Text>
             </View>
             <Check size={18} color={t.primary} />
           </PressableScale>
@@ -83,7 +84,7 @@ export default function PlaceDetail() {
                   style={{
                     flexDirection: 'row', alignItems: 'center', gap: 6,
                     paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999,
-                    backgroundColor: t.brand.blue50, borderWidth: 1, borderColor: t.brand.blue100,
+                    backgroundColor: t.infoBg, borderWidth: 1, borderColor: t.border,
                   }}
                 >
                   <Clock size={13} color={t.primary} strokeWidth={2.4} />

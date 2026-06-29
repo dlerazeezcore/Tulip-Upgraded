@@ -4,7 +4,8 @@ import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, ChevronRight, Users, Bell, Coins, ShieldCheck, MapPin, Receipt, Percent } from 'lucide-react-native';
+import { Users, Bell, Coins, ShieldCheck, MapPin, Receipt, Percent } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
 import { useAdminHome } from '@/screens/admin/useAdminHome';
@@ -35,7 +36,7 @@ export default function AdminHome() {
           accessibilityLabel={tr('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <ShieldCheck size={20} color={t.primary} strokeWidth={2} />
@@ -70,7 +71,7 @@ export default function AdminHome() {
                 <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{c.title}</Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{c.sub}</Text>
               </View>
-              {!isWide && <ChevronRight size={18} color={t.fgFaint} />}
+              {!isWide && <DirectionalChevron direction="forward" size={18} color={t.fgFaint} />}
             </PressableScale>
             </View>
           ))}

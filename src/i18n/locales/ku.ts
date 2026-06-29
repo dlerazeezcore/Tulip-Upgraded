@@ -16,6 +16,7 @@ export default {
     somethingWrong: 'هەڵەیەک ڕوویدا. تکایە دووبارە هەوڵ بدە.',
     pleaseTryAgain: 'تکایە دووبارە هەوڵ بدە.',
     restartRequired: 'تکایە ئەپەکە دووبارە بکەرەوە بۆ جێبەجێکردنی تەواوی ئاراستەی ڕووکار.',
+    soon: 'بەزووترین',
   },
   onboarding: {
     welcome: 'بەخێربێیت بۆ Tulip',
@@ -105,6 +106,7 @@ export default {
     createPasswordPlaceholder: 'وشەیەکی نهێنی دروست بکە (لانیکەم ٨ پیت)',
     newPasswordPlaceholder: 'وشەی نهێنی نوێ (لانیکەم ٨ پیت)',
     confirmPasswordPlaceholder: 'دڵنیاکردنەوەی وشەی نهێنی',
+    otpTooShort: 'کۆدە تەواوەکە بنووسە کە بۆمان ناردیت.',
   },
   serviceNames: {
     flights: 'فڕۆکە',
@@ -261,6 +263,9 @@ export default {
     fibCodeLabel: 'کۆد',
     fibClose: 'داخستن',
     fibCheckAgain: 'دووبارە هەوڵ بدە',
+    fibBookingFailed:
+      'پارەکەت درا، بەڵام نەمانتوانی ڕێکخستنی ئیسیمەکەت تەواو بکەین. لێرە دابگرە بۆ هەوڵدانەوە — دوو جار پارەت لێ ناکرێتەوە. ئەگەر بەردەوام شکستی هێنا، تکایە پەیوەندی بە پشتگیریەوە بکە.',
+    fibRetryBooking: 'تەواوکردنی ڕێکخستن',
   },
   topup: {
     title: 'زیادکردنی پلانی داتا',
@@ -362,6 +367,21 @@ export default {
     noOrdersSub: 'کڕینەکانت لێرە دەردەکەون.',
     esimOrder: 'داواکاری eSIM',
     countryEsim: 'eSIM ـی {{country}}',
+    total: 'کۆی گشتی',
+    confirmed: 'داواکاری پشتڕاستکرایەوە',
+    manageEsim: 'بەڕێوەبردنی eSIM',
+  },
+  trip: {
+    title: 'گەشت',
+    comingSoonTitle: 'گەشتەکان بەزووترین کات',
+    comingSoonBody: 'پلانی گەشت هێشتا چالاک نییە. eSIM ئەمڕۆ لە فرۆشگای eSIM بەردەستە.',
+  },
+  hotel: {
+    from: 'لە',
+  },
+  phone: {
+    selectCountry: 'وڵات هەڵبژێرە',
+    searchPlaceholder: 'گەڕان بۆ وڵات یان کۆد',
   },
   travelers: {
     title: 'گەشتیارە پاشەکەوتکراوەکان',
@@ -477,6 +497,9 @@ export default {
       displayName: 'ناوی پیشاندان',
       sortOrder: 'ڕیزبەندی',
       saving: 'پاشەکەوت دەکرێت…',
+      countryPlaceholder: 'ویلایەتە یەکگرتووەکان',
+      hideFromFeatured: 'شاردنەوە لە تایبەتەکان',
+      showInFeatured: 'پیشاندان لە تایبەتەکان',
     },
     notif: {
       title: 'ئاگادارکردنەوە فۆریەکان',
@@ -510,6 +533,8 @@ export default {
       symbolAfterAmount: 'هێما دوای بڕەکە',
       enabledVisible: 'چالاککراو (بۆ کڕیاران دیارە)',
       saveCurrency: 'پاشەکەوتکردنی دراو',
+      codePlaceholder: 'EUR',
+      namePlaceholder: 'یۆرۆ',
     },
     pricing: {
       title: 'یاساکانی نرخی eSIM',
@@ -631,5 +656,9 @@ export default {
     increase: 'زیادکردن',
     decrease: 'کەمکردنەوە',
     menu: 'مێنیو',
+    delete: 'سڕینەوە',
+    saveToFavorites: 'پاشەکەوت لە دڵخوازەکان',
+    swapOriginDestination: 'گۆڕینی خاڵی دەستپێک و مەنزڵ',
+    removeSelectedUser: 'لابردنی بەکارهێنەری هەڵبژێردراو',
   },
 };

@@ -157,7 +157,7 @@ export default function Home() {
             >
               {tr('home.services')}
             </Text>
-            <Pressable onPress={vm.openServices}>
+            <Pressable onPress={vm.openServices} hitSlop={8} accessibilityRole="button">
               <Text style={{ fontSize: 12, color: t.primary, fontWeight: '600' }}>{tr('home.seeAll')}</Text>
             </Pressable>
           </View>

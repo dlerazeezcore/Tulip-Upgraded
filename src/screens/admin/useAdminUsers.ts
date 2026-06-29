@@ -40,11 +40,18 @@ export function useAdminUsers(): AdminUsersViewModel {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
+    // FE-4: only fetch once we know the actor is an admin (matches sibling admin
+    // hooks). Avoids firing an admin request that the backend will reject.
+    if (!isAdmin) {
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
     getUsers({ limit: 200 })
       .then(setRows)
       .catch((e: any) => setError(e?.message || 'Failed to load users'))
       .finally(() => setLoading(false));
-  }, []);
+  }, [isAdmin]);
 
   const users = useMemo(
     () => rows.filter((u) => `${u.name} ${u.phone}`.toLowerCase().includes(q.trim().toLowerCase())),

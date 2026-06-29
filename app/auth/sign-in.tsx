@@ -59,7 +59,7 @@ export default function SignIn() {
             onChangeText={vm.setPassword}
             placeholder={tr('auth.passwordPlaceholder')}
           />
-          <Pressable onPress={vm.goForgot} style={{ alignSelf: 'flex-end' }}>
+          <Pressable onPress={vm.goForgot} hitSlop={8} accessibilityRole="button" style={{ alignSelf: 'flex-end' }}>
             <Text style={{ fontSize: 12, color: t.primary, fontWeight: '700' }}>{tr('auth.forgotPassword')}</Text>
           </Pressable>
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
@@ -91,7 +91,7 @@ export default function SignIn() {
           <OtpInput value={vm.code} onChange={vm.setCode} />
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton label={vm.busy ? tr('auth.verifying') : tr('auth.verifyAndSignIn')} onPress={vm.onVerify} />
-          <Pressable onPress={() => vm.setOtpSent(false)} style={{ alignSelf: 'center' }}>
+          <Pressable onPress={() => vm.setOtpSent(false)} hitSlop={8} accessibilityRole="button" style={{ alignSelf: 'center' }}>
             <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.changeNumber')}</Text>
           </Pressable>
         </>
@@ -99,9 +99,7 @@ export default function SignIn() {
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 4 }}>
         <Text style={{ fontSize: 13, color: t.fgMuted }}>{tr('auth.newToTulip')}</Text>
-        <Pressable
-          onPress={vm.goSignUp}
-        >
+        <Pressable onPress={vm.goSignUp} hitSlop={8} accessibilityRole="button">
           <Text style={{ fontSize: 13, color: t.primary, fontWeight: '700' }}>{tr('auth.createAccount')}</Text>
         </Pressable>
       </View>

@@ -4,7 +4,8 @@ import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, User, X, Check, Copy } from 'lucide-react-native';
+import { User, X, Check, Copy } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useSendToUser } from '@/screens/admin/notifications/useSendToUser';
@@ -32,7 +33,7 @@ export default function AdminSendToUser() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <User size={20} color={t.primary} strokeWidth={2} />
@@ -64,7 +65,7 @@ export default function AdminSendToUser() {
                 <Text style={{ fontWeight: '700', color: t.fg }}>{vm.selectedUser.name}</Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted }}>{vm.selectedUser.phone}</Text>
               </View>
-              <Pressable onPress={() => vm.selectUser(null)} accessibilityRole="button" accessibilityLabel="Remove selected user" style={{ padding: 8 }}>
+              <Pressable onPress={() => vm.selectUser(null)} accessibilityRole="button" accessibilityLabel={tr('a11y.removeSelectedUser')} style={{ padding: 8 }}>
                 <X size={18} color={t.fgMuted} />
               </Pressable>
             </View>

@@ -2,7 +2,8 @@ import React from 'react';
 import { View, Text } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Signal, ChevronRight } from 'lucide-react-native';
+import { Signal } from 'lucide-react-native';
+import { DirectionalChevron } from './DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimStore } from '@/state/esimStore';
 import { formatRemainingData, formatTimeRemaining, formatUsedData } from '@/lib/esimUsage';
@@ -44,7 +45,9 @@ export function ActiveEsimCard() {
         // Use raw MB for the fraction so the bar reflects byte-level usage,
         // not the floored display-GB (974 MB must not read as a full 1 GB).
         const planMb = e.planGb * 1024;
-        const frac = e.unlimited ? 1 : planMb > 0 ? e.remainingMb / planMb : 0;
+        // FE-2: when the plan isn't GB-denominated (planGb 0) we can't compute a
+        // fraction — show a full bar if data remains rather than a misleading empty one.
+        const frac = e.unlimited ? 1 : planMb > 0 ? e.remainingMb / planMb : e.remainingMb > 0 ? 1 : 0;
         const low = !e.unlimited && (frac <= 0.2 || e.hoursLeft <= 48);
         const barColor = low ? t.warning : t.success;
         return (
@@ -77,7 +80,7 @@ export function ActiveEsimCard() {
                 </Text>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>{e.unlimited ? tr('home.unlimitedShort') : tr('home.left')}</Text>
               </View>
-              <ChevronRight size={18} color={t.fgFaint} />
+              <DirectionalChevron direction="forward" size={18} color={t.fgFaint} />
             </View>
 
             <View style={{ marginTop: 12 }}>

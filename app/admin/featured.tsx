@@ -4,7 +4,8 @@ import { ScrollView, View, Text, Pressable, TextInput, Modal, ActivityIndicator 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Plus, Trash2, X, Eye, EyeOff } from 'lucide-react-native';
+import { Plus, Trash2, X, Eye, EyeOff } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -26,7 +27,7 @@ export default function AdminFeatured() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>{tr('admin.featured.title')}</Text>
         <Pressable onPress={() => vm.setAdding(true)} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: t.primary }}>
@@ -47,10 +48,10 @@ export default function AdminFeatured() {
                   <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>{r.name}</Text>
                   <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{tr('admin.featured.codeOrder', { code: r.code, order: r.sort_order ?? 0 })}</Text>
                 </View>
-                <Pressable onPress={() => vm.toggleEnabled(r)} accessibilityRole="button" accessibilityLabel={(r.enabled ?? true) ? 'Hide from featured' : 'Show in featured'} accessibilityState={{ selected: (r.enabled ?? true) }} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => vm.toggleEnabled(r)} accessibilityRole="button" accessibilityLabel={(r.enabled ?? true) ? tr('admin.featured.hideFromFeatured') : tr('admin.featured.showInFeatured')} accessibilityState={{ selected: (r.enabled ?? true) }} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                   {(r.enabled ?? true) ? <Eye size={15} color={t.fg} /> : <EyeOff size={15} color={t.fgMuted} />}
                 </Pressable>
-                <Pressable onPress={() => vm.onDelete(r)} accessibilityRole="button" accessibilityLabel="Delete" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
+                <Pressable onPress={() => vm.onDelete(r)} accessibilityRole="button" accessibilityLabel={tr('a11y.delete')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
                   <Trash2 size={15} color={t.danger} />
                 </Pressable>
               </View>
@@ -92,7 +93,7 @@ export default function AdminFeatured() {
             </View>
             <View style={{ gap: 6 }}>
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>{tr('admin.featured.displayName')}</Text>
-              <TextInput value={vm.name} onChangeText={vm.setName} placeholder="United States" placeholderTextColor={t.fgFaint} style={numStyle} />
+              <TextInput value={vm.name} onChangeText={vm.setName} placeholder={tr('admin.featured.countryPlaceholder')} placeholderTextColor={t.fgFaint} style={numStyle} />
             </View>
             <View style={{ gap: 6 }}>
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>{tr('admin.featured.sortOrder')}</Text>

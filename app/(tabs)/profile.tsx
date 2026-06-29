@@ -7,9 +7,10 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import {
-  Star, ChevronRight, User, Moon, Globe, Bell,
+  Star, User, Moon, Globe, Bell,
   Coins, MessageCircle, Receipt, ShieldCheck, UserCog, X, Trash2,
 } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
@@ -136,7 +137,7 @@ export default function Profile() {
         sub={`${vm.travelerCount} ${vm.travelerCount === 1 ? tr('profile.person') : tr('profile.people')} · ${tr('profile.travelersSub')}`}
         onPress={vm.goTravelers}
         last
-        right={<ChevronRight size={16} color={t.fgFaint} />}
+        right={<DirectionalChevron direction="forward" size={16} color={t.fgFaint} />}
       />
     </Section>
   );
@@ -155,7 +156,7 @@ export default function Profile() {
           vm.user ? (
             <Toggle value={vm.notificationsOn} onChange={vm.setNotifications} />
           ) : (
-            <ChevronRight size={16} color={t.fgFaint} />
+            <DirectionalChevron direction="forward" size={16} color={t.fgFaint} />
           )
         }
       />
@@ -165,13 +166,13 @@ export default function Profile() {
   const accountSection = (
     <Section label={tr('profile.accountSupport')}>
       {vm.user && (
-        <Row icon={<UserCog size={16} color={t.fgMuted} />} title={tr('profile.editProfile')} sub={tr('profile.editProfileSub')} onPress={vm.openEdit} right={<ChevronRight size={16} color={t.fgFaint} />} />
+        <Row icon={<UserCog size={16} color={t.fgMuted} />} title={tr('profile.editProfile')} sub={tr('profile.editProfileSub')} onPress={vm.openEdit} right={<DirectionalChevron direction="forward" size={16} color={t.fgFaint} />} />
       )}
       {vm.isAdmin && (
-        <Row icon={<ShieldCheck size={16} color={t.primary} />} title={tr('profile.adminPanel')} sub={tr('profile.adminPanelSub')} onPress={vm.goAdmin} right={<ChevronRight size={16} color={t.fgFaint} />} />
+        <Row icon={<ShieldCheck size={16} color={t.primary} />} title={tr('profile.adminPanel')} sub={tr('profile.adminPanelSub')} onPress={vm.goAdmin} right={<DirectionalChevron direction="forward" size={16} color={t.fgFaint} />} />
       )}
-      <Row icon={<Receipt size={16} color={t.fgMuted} />} title={tr('profile.orderHistory')} sub={tr('profile.orderHistorySub')} onPress={vm.goOrders} right={<ChevronRight size={16} color={t.fgFaint} />} />
-      <Row icon={<MessageCircle size={16} color={t.fgMuted} />} title={tr('profile.support')} sub={tr('profile.supportSub')} onPress={vm.openSupport} right={<ChevronRight size={16} color={t.fgFaint} />} last />
+      <Row icon={<Receipt size={16} color={t.fgMuted} />} title={tr('profile.orderHistory')} sub={tr('profile.orderHistorySub')} onPress={vm.goOrders} right={<DirectionalChevron direction="forward" size={16} color={t.fgFaint} />} />
+      <Row icon={<MessageCircle size={16} color={t.fgMuted} />} title={tr('profile.support')} sub={tr('profile.supportSub')} onPress={vm.openSupport} right={<DirectionalChevron direction="forward" size={16} color={t.fgFaint} />} last />
     </Section>
   );
 

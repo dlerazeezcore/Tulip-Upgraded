@@ -3,7 +3,8 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { ChevronLeft, Plus, Pencil, Trash2, User, X } from 'lucide-react-native';
+import { Plus, Pencil, Trash2, User, X } from 'lucide-react-native';
+import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useTravelers } from '@/screens/travelers/useTravelers';
@@ -40,7 +41,7 @@ export default function Travelers() {
           accessibilityLabel={tt('a11y.back')}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <ChevronLeft size={18} color={t.fg} />
+          <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
           {tt('travelers.title')}
@@ -92,10 +93,10 @@ export default function Travelers() {
                   {tt(`travelers.relations.${tr.relation}`, { defaultValue: tr.relation })}{tr.dob ? ` · ${tr.dob}` : ''}
                 </Text>
               </View>
-              <Pressable onPress={() => openEdit(tr)} accessibilityRole="button" accessibilityLabel="Edit traveler" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => openEdit(tr)} accessibilityRole="button" accessibilityLabel={tt('travelers.editTraveler')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                 <Pencil size={15} color={t.fg} />
               </Pressable>
-              <Pressable onPress={() => onRemove(tr.id)} accessibilityRole="button" accessibilityLabel="Remove traveler" style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => onRemove(tr.id)} accessibilityRole="button" accessibilityLabel={tt('travelers.removeTitle')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
                 <Trash2 size={15} color={t.danger} />
               </Pressable>
             </View>

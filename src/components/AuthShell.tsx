@@ -3,7 +3,8 @@ import { ScrollView, View, Text, Pressable, KeyboardAvoidingView, Platform, Text
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, Eye, EyeOff } from 'lucide-react-native';
+import { Eye, EyeOff } from 'lucide-react-native';
+import { DirectionalChevron } from './DirectionalChevron';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { TulipLogo } from './TulipLogo';
@@ -49,7 +50,7 @@ export function AuthShell({
                   marginBottom: 14,
                 }}
               >
-                <ChevronLeft size={20} color="#fff" />
+                <DirectionalChevron direction="back" size={20} color="#fff" />
               </Pressable>
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
