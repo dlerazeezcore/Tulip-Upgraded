@@ -221,6 +221,11 @@ export default {
     noPlans: 'لا توجد باقات متاحة لـ {{name}}',
     noPlansSub: 'جرّب دولة أو منطقة أخرى — نضيف باقات بيانات جديدة باستمرار.',
     unlimited: 'غير محدود',
+    deviceCompatible: 'جهازك متوافق',
+    deviceIncompatible: 'قد لا يدعم جهازك eSIM',
+    deviceUnknown: 'تعذّر التعرّف على جهازك — معظم الهواتف الحديثة تدعم eSIM',
+    howToCheck: 'كيف تتحقق',
+    howToCheckBody: 'افتح إعدادات هاتفك وابحث عن "إضافة eSIM" أو "خطة الجوال". يمكنك أيضًا طلب ‎*#06#‎ — إذا ظهر رقم EID فإن هاتفك يدعم eSIM.',
   },
   checkout: {
     title: 'الدفع',

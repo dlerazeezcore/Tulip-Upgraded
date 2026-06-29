@@ -15,6 +15,7 @@ import { Skeleton } from '@/components/Skeleton';
 // by design so the Regions grid looks polished without a photo per region.
 import type { LocationCountry } from '@/services/esim';
 import { useEsimStore, TABS } from '@/screens/esim-store/useEsimStore';
+import { EsimCompatibilityBanner } from '@/components/EsimCompatibilityBanner';
 
 export default function EsimStore() {
   const t = useTheme();
@@ -107,6 +108,9 @@ export default function EsimStore() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
         {header}
+        <View style={{ paddingHorizontal: isWide ? 28 : 20, paddingTop: 8, maxWidth: isWide ? 1120 : 900, width: '100%', alignSelf: 'center' }}>
+          <EsimCompatibilityBanner />
+        </View>
         {loadingCountries ? (
           <>
             {listHeader}
@@ -148,6 +152,9 @@ export default function EsimStore() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       {header}
+      <View style={{ paddingHorizontal: isWide ? 28 : 20, paddingTop: 8, maxWidth: isWide ? 1120 : 900, width: '100%', alignSelf: 'center' }}>
+        <EsimCompatibilityBanner />
+      </View>
       <ScrollView
         contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, gap: 16, maxWidth: isWide ? 1120 : 900, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}

@@ -221,6 +221,11 @@ export default {
     noPlans: 'No plans available for {{name}}',
     noPlansSub: "Try another country or region — we're adding new data plans all the time.",
     unlimited: 'Unlimited',
+    deviceCompatible: 'Your device is compatible',
+    deviceIncompatible: 'Your device may not support eSIM',
+    deviceUnknown: "We couldn't detect your device — most modern phones support eSIM",
+    howToCheck: 'How to check',
+    howToCheckBody: 'Open your phone Settings and look for "Add eSIM" or "Mobile/Cellular plan". You can also dial *#06# — if an EID number appears, your phone supports eSIM.',
   },
   checkout: {
     title: 'Checkout',
