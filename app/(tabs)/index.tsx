@@ -15,7 +15,6 @@ import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
 import { PressableScale } from '@/components/PressableScale';
 import { SERVICES } from '@/data/services';
-import { EsimSupportBanner } from '@/components/EsimSupportBanner';
 import { useHome } from '@/screens/home/useHome';
 
 const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
@@ -132,9 +131,6 @@ export default function Home() {
 
         {/* Active eSIM (real data from the user's profiles) */}
         <ActiveEsimCard />
-
-        {/* eSIM hardware advisory — only shown when the OS definitively says no. */}
-        <EsimSupportBanner />
 
         {/* Services grid */}
         <View>
