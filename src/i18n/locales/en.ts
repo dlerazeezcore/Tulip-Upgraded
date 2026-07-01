@@ -223,7 +223,7 @@ export default {
     unlimited: 'Unlimited',
     deviceCompatible: 'Your device is compatible',
     deviceIncompatible: 'Your device may not support eSIM',
-    deviceUnknown: "We couldn't detect your device — most modern phones support eSIM",
+    deviceUnknown: "We couldn't confirm eSIM on your device — please check before you buy",
     howToCheck: 'How to check',
     howToCheckBody: 'Open your phone Settings and look for "Add eSIM" or "Mobile/Cellular plan". You can also dial *#06# — if an EID number appears, your phone supports eSIM.',
   },

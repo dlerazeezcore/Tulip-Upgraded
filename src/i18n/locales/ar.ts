@@ -223,7 +223,7 @@ export default {
     unlimited: 'غير محدود',
     deviceCompatible: 'جهازك متوافق',
     deviceIncompatible: 'قد لا يدعم جهازك eSIM',
-    deviceUnknown: 'تعذّر التعرّف على جهازك — معظم الهواتف الحديثة تدعم eSIM',
+    deviceUnknown: 'تعذّر تأكيد دعم eSIM على جهازك — يُرجى التحقق قبل الشراء',
     howToCheck: 'كيف تتحقق',
     howToCheckBody: 'افتح إعدادات هاتفك وابحث عن "إضافة eSIM" أو "خطة الجوال". يمكنك أيضًا طلب ‎*#06#‎ — إذا ظهر رقم EID فإن هاتفك يدعم eSIM.',
   },

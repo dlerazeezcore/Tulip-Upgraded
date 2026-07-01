@@ -2,15 +2,14 @@
 // Hydrated once at app launch (from app/_layout.tsx) so every screen can read
 // the result synchronously without re-running the native check.
 //
-// Three possible states for esimSupport:
-//   'supported'    — native check returned true (iOS hardware OR Android EuiccManager)
-//   'unsupported'  — native check returned false (definitely no eSIM hardware)
-//   'unknown'      — native module not present (web, Expo Go, simulator). UI
-//                    must NOT block purchases in this state — we cannot be sure.
+// The tri-state decision (supported / unsupported / unknown) is made by the pure
+// policy in src/lib/esimPolicy.ts from the RAW native signals — see that file for
+// why GREEN requires a positive OS signal and the model heuristic never grants it.
 import { create } from 'zustand';
-import { checkEsimSupport } from '@/services/device';
+import { getEsimSignals } from '@/services/device';
+import { classifyEsim, type EsimSupportState } from '@/lib/esimPolicy';
 
-export type EsimSupportState = 'supported' | 'unsupported' | 'unknown';
+export type { EsimSupportState };
 
 type DeviceState = {
   esimSupport: EsimSupportState;
@@ -24,12 +23,8 @@ export const useDeviceStore = create<DeviceState>((set, get) => ({
   hydrate: async () => {
     if (get().hydrated) return;
     try {
-      const result = await checkEsimSupport();
-      let next: EsimSupportState;
-      if (result.source === 'native' && result.supported === true) next = 'supported';
-      else if (result.source === 'native' && result.supported === false) next = 'unsupported';
-      else next = 'unknown';
-      set({ esimSupport: next });
+      const signals = await getEsimSignals();
+      set({ esimSupport: classifyEsim(signals) });
     } catch {
       set({ esimSupport: 'unknown' });
     } finally {
