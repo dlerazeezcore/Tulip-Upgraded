@@ -115,7 +115,7 @@ export default function Home() {
               >
                 <Text
                   style={{
-                    color: '#fff',
+                    color: t.onPrimary,
                     fontSize: 12,
                     fontWeight: '700',
                     fontFamily: t.font.displayMedium,
@@ -123,7 +123,7 @@ export default function Home() {
                 >
                   {tr('common.search')}
                 </Text>
-                <ArrowRight size={12} color="#fff" strokeWidth={2.4} />
+                <ArrowRight size={12} color={t.onPrimary} strokeWidth={2.4} />
               </View>
             </PressableScale>
           </BlurView>

@@ -34,7 +34,10 @@ export function useMoney() {
       const iqd = saleIqdOverride != null ? saleIqdOverride : saleIqd(providerUsd, iqdPerUsd);
       const meta = metaFor(currencies, code);
       if (!meta) return `${Math.round(iqd).toLocaleString('en-US')} IQD`;
-      const rate = meta.code === 'IQD' ? 1 : fx[meta.code] || 1;
+      // No (or nonsensical) FX rate for this currency → converting at 1 would
+      // show the raw IQD number as the foreign amount. Fall back to IQD.
+      const rate = meta.code === 'IQD' ? 1 : fx[meta.code];
+      if (!rate || rate <= 0) return `${Math.round(iqd).toLocaleString('en-US')} IQD`;
       return formatAmount(iqd / rate, meta);
     },
     [code, iqdPerUsd, fx, currencies],

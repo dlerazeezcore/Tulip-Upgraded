@@ -33,6 +33,7 @@ export default function EsimHistoryScreen() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
+          hitSlop={4}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />

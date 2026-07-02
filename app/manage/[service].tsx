@@ -187,7 +187,7 @@ export default function ManageService() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+          hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
@@ -202,7 +202,7 @@ export default function ManageService() {
             onPress={vm.goBookNew}
             style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: svc.color }}
           >
-            <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
+            <Text style={{ color: t.onPrimary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
               {tr('manage.bookNew')}
             </Text>
           </Pressable>

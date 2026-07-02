@@ -54,7 +54,7 @@ export default function EsimStore() {
         onPress={vm.goBack}
         accessibilityRole="button"
         accessibilityLabel={tr('a11y.back')}
-        style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+        hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
       >
         <DirectionalChevron direction="back" size={18} color={t.fg} />
       </Pressable>
@@ -216,10 +216,10 @@ export default function EsimStore() {
                         style={{ borderRadius: 16, padding: 14, minHeight: 116, justifyContent: 'space-between', ...t.shadow1 }}
                       >
                         <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-                          <Globe size={20} color="#fff" strokeWidth={2.2} />
+                          <Globe size={20} color={t.onPrimary} strokeWidth={2.2} />
                         </View>
                         <View style={{ marginTop: 10 }}>
-                          <Text numberOfLines={2} style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: '#fff' }}>{r.name}</Text>
+                          <Text numberOfLines={2} style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: t.onPrimary }}>{r.name}</Text>
                           <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>{tr('esimStore.multiCountry')}</Text>
                         </View>
                       </LinearGradient>

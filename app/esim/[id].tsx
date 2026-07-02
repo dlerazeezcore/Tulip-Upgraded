@@ -15,6 +15,7 @@ import { isDefinitelyUnsupported } from '@/services/device';
 import { formatRemainingData, formatTimeRemaining, formatUsedData } from '@/lib/esimUsage';
 import { useEsimDetail } from '@/screens/esim/useEsimDetail';
 import { useIsWideWeb } from '@/lib/responsive';
+import { useIsRTL } from '@/lib/rtl';
 
 function Stat({ label, value }: { label: string; value: string }) {
   const t = useTheme();
@@ -28,10 +29,11 @@ function Stat({ label, value }: { label: string; value: string }) {
 
 function Row({ label, value }: { label: string; value: string }) {
   const t = useTheme();
+  const isRTL = useIsRTL();
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 14, gap: 12 }}>
       <Text style={{ fontSize: 13, color: t.fgMuted }}>{label}</Text>
-      <Text selectable style={{ flex: 1, textAlign: 'right', fontSize: 12, color: t.fg, fontWeight: '600', fontFamily: t.font.bodyMedium }}>
+      <Text selectable style={{ flex: 1, textAlign: isRTL ? 'left' : 'right', fontSize: 12, color: t.fg, fontWeight: '600', fontFamily: t.font.bodyMedium }}>
         {value}
       </Text>
     </View>
@@ -79,7 +81,7 @@ export default function EsimDetail() {
 
   const deviceAdvisory =
     vm.support && (isDefinitelyUnsupported(vm.support) || vm.support.supported === null) ? (
-      <View style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 14, backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.4)' }}>
+      <View style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 14, backgroundColor: t.warningBg, borderWidth: 1, borderColor: `${t.warning}66` }}>
         <AlertTriangle size={18} color={t.warning} />
         <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>
           {isDefinitelyUnsupported(vm.support) ? tr('esim.deviceUnsupported') : tr('esim.deviceCheck')}
@@ -107,7 +109,7 @@ export default function EsimDetail() {
         </>
       ) : esim.status === 'provider_waiting' ? (
         <>
-          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(245,158,11,0.14)', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: t.warningBg, alignItems: 'center', justifyContent: 'center' }}>
             <Signal size={32} color={t.warning} strokeWidth={2} />
           </View>
           <View style={{ alignItems: 'center' }}>
@@ -119,7 +121,7 @@ export default function EsimDetail() {
         </>
       ) : esim.status === 'inactive' ? (
         <>
-          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(245,158,11,0.14)', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: t.warningBg, alignItems: 'center', justifyContent: 'center' }}>
             <Signal size={32} color={t.warning} strokeWidth={2} />
           </View>
           <View style={{ alignItems: 'center' }}>
@@ -131,7 +133,7 @@ export default function EsimDetail() {
         </>
       ) : (
         <>
-          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: 'rgba(220,38,38,0.12)', alignItems: 'center', justifyContent: 'center' }}>
+          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: t.dangerBg, alignItems: 'center', justifyContent: 'center' }}>
             <Clock size={32} color={t.danger} strokeWidth={2} />
           </View>
           <View style={{ alignItems: 'center' }}>
@@ -174,7 +176,7 @@ export default function EsimDetail() {
   );
 
   const detectingBanner = vm.detectingInstall ? (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: 'rgba(25,103,210,0.12)', borderWidth: 1, borderColor: 'rgba(25,103,210,0.35)' }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: t.infoBg, borderWidth: 1, borderColor: `${t.info}59` }}>
       <ActivityIndicator size="small" color={t.primary} />
       <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>{tr('esim.detecting')}</Text>
     </View>
@@ -183,7 +185,7 @@ export default function EsimDetail() {
   // Took longer than the ~3 min poll budget — tell the user what to do.
   const timeoutBanner =
     vm.detectTimedOut && !vm.detectingInstall && esim.status !== 'active' ? (
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, backgroundColor: 'rgba(245,158,11,0.12)', borderWidth: 1, borderColor: 'rgba(245,158,11,0.35)' }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, backgroundColor: t.warningBg, borderWidth: 1, borderColor: `${t.warning}59` }}>
         <AlertTriangle size={18} color={t.warning} />
         <Text style={{ flex: 1, fontSize: 12, color: t.fg, lineHeight: 18 }}>
           {tr('esim.takingLonger', { country: esim.country })}
@@ -216,7 +218,7 @@ export default function EsimDetail() {
 
   const topUpButton =
     esim.status === 'active' || esim.status === 'expired' ? (
-      <PrimaryButton label={tr('esim.topUp')} icon={<Plus size={16} color="#fff" strokeWidth={2.4} />} onPress={vm.topUp} />
+      <PrimaryButton label={tr('esim.topUp')} icon={<Plus size={16} color={t.onPrimary} strokeWidth={2.4} />} onPress={vm.topUp} />
     ) : null;
 
   const technicalDetails = (
@@ -234,12 +236,13 @@ export default function EsimDetail() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
+          hitSlop={4}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>{tr('esim.details')}</Text>
-        <Pressable onPress={() => vm.refreshUsage()} accessibilityRole="button" accessibilityLabel={tr('a11y.refresh')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={() => vm.refreshUsage()} accessibilityRole="button" accessibilityLabel={tr('a11y.refresh')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <RefreshCw size={16} color={t.fg} />
         </Pressable>
       </View>

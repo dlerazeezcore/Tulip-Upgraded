@@ -89,10 +89,10 @@ export default function Services() {
                       borderRadius: 999,
                     }}
                   >
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
+                    <Text style={{ color: t.onPrimary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
                       {tr('servicesScreen.open')}
                     </Text>
-                    <ArrowRight size={12} color="#fff" strokeWidth={2.4} />
+                    <ArrowRight size={12} color={t.onPrimary} strokeWidth={2.4} />
                   </View>
                 </Pressable>
               </View>
@@ -161,7 +161,7 @@ export default function Services() {
               justifyContent: 'center',
             }}
           >
-            <Star size={26} color="#fff" strokeWidth={2.2} fill="#fff" />
+            <Star size={26} color={t.onPrimary} strokeWidth={2.2} fill={t.onPrimary} />
           </View>
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: t.font.display, fontSize: 17, fontWeight: '800', color: t.infoFg }}>

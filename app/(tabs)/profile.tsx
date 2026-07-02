@@ -99,14 +99,14 @@ export default function Profile() {
         {vm.user ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
             <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.28)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)' }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: '#fff', letterSpacing: -0.4 }}>{vm.user.initials}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: t.onPrimary, letterSpacing: -0.4 }}>{vm.user.initials}</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: '#fff', letterSpacing: -0.4 }}>{vm.user.name}</Text>
-              <Text style={{ fontSize: 12, color: '#fff', opacity: 0.88 }}>{vm.user.email ?? vm.user.phone}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.onPrimary, letterSpacing: -0.4 }}>{vm.user.name}</Text>
+              <Text style={{ fontSize: 12, color: t.onPrimary, opacity: 0.88 }}>{vm.user.email ?? vm.user.phone}</Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 999 }}>
-                <Star size={11} color="#fff" fill="#fff" />
-                <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
+                <Star size={11} color={t.onPrimary} fill={t.onPrimary} />
+                <Text style={{ color: t.onPrimary, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
                   {tierLabel}{vm.memberSince ? ` · ${tr('profile.memberSince', { year: vm.memberSince })}` : ''}
                 </Text>
               </View>
@@ -115,8 +115,8 @@ export default function Profile() {
         ) : (
           <View style={{ gap: 16 }}>
             <View>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: '#fff', letterSpacing: -0.4 }}>{tr('profile.welcomeTitle')}</Text>
-              <Text style={{ fontSize: 13, color: '#fff', opacity: 0.88, marginTop: 2 }}>{tr('profile.welcomeSub')}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: t.onPrimary, letterSpacing: -0.4 }}>{tr('profile.welcomeTitle')}</Text>
+              <Text style={{ fontSize: 13, color: t.onPrimary, opacity: 0.88, marginTop: 2 }}>{tr('profile.welcomeSub')}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 10, maxWidth: 420 }}>
               <PrimaryButton label={tr('common.signIn')} onPress={vm.goSignIn} style={{ flex: 1 }} />

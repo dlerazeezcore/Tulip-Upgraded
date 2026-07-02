@@ -25,10 +25,10 @@ export default function Onboarding() {
             <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' }}>
               <TulipLogo size={34} color={t.primary} />
             </View>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 26, color: '#fff', letterSpacing: -0.6, textAlign: 'center' }}>
+            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 26, color: t.onPrimary, letterSpacing: -0.6, textAlign: 'center' }}>
               {tr('onboarding.welcome')}
             </Text>
-            <Text style={{ fontSize: 14, color: '#fff', opacity: 0.9, textAlign: 'center' }}>
+            <Text style={{ fontSize: 14, color: t.onPrimary, opacity: 0.9, textAlign: 'center' }}>
               {tr('onboarding.subtitle')}
             </Text>
           </View>
@@ -116,7 +116,7 @@ export default function Onboarding() {
 
         <PrimaryButton
           label={tr('onboarding.getStarted')}
-          icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />}
+          icon={<ArrowRight size={16} color={t.onPrimary} strokeWidth={2.2} />}
           onPress={vm.onStart}
         />
       </ScrollView>
@@ -139,7 +139,7 @@ function Selected({ on }: { on: boolean }) {
         justifyContent: 'center',
       }}
     >
-      {on && <Check size={14} color="#fff" strokeWidth={3} />}
+      {on && <Check size={14} color={t.onPrimary} strokeWidth={3} />}
     </View>
   );
 }

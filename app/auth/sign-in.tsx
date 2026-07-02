@@ -65,7 +65,7 @@ export default function SignIn() {
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton
             label={vm.busy ? tr('auth.signingIn') : tr('common.signIn')}
-            icon={<LogIn size={16} color="#fff" strokeWidth={2.2} />}
+            icon={<LogIn size={16} color={t.onPrimary} strokeWidth={2.2} />}
             onPress={vm.onPasswordSignIn}
           />
         </>
@@ -81,7 +81,7 @@ export default function SignIn() {
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton
             label={vm.busy ? tr('auth.sending') : tr('auth.sendCode')}
-            icon={<MessageCircle size={16} color="#fff" strokeWidth={2.2} />}
+            icon={<MessageCircle size={16} color={t.onPrimary} strokeWidth={2.2} />}
             onPress={vm.onSendCode}
           />
         </>

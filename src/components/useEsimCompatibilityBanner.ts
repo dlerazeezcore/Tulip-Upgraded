@@ -43,9 +43,9 @@ export function useEsimCompatibilityBanner(): EsimCompatibilityVM {
   if (esimSupport === 'supported') {
     return {
       tone: 'compatible',
-      bg: 'rgba(22,163,74,0.12)',
-      borderColor: 'rgba(22,163,74,0.40)',
-      fg: t.success,
+      bg: t.successBg,
+      borderColor: `${t.success}66`,
+      fg: t.successFg,
       Icon: CheckCircle2,
       title: tr('esimStore.deviceCompatible'),
       showHelp: false,
@@ -58,9 +58,9 @@ export function useEsimCompatibilityBanner(): EsimCompatibilityVM {
   if (esimSupport === 'unsupported') {
     return {
       tone: 'incompatible',
-      bg: 'rgba(220,38,38,0.12)',
-      borderColor: 'rgba(220,38,38,0.40)',
-      fg: t.danger,
+      bg: t.dangerBg,
+      borderColor: `${t.danger}66`,
+      fg: t.dangerFg,
       Icon: AlertTriangle,
       title: tr('esimStore.deviceIncompatible'),
       showHelp: true,

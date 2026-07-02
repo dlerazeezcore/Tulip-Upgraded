@@ -46,7 +46,7 @@ export default function SignUp() {
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton
             label={vm.busy ? tr('auth.creating') : tr('auth.createAccount')}
-            icon={<UserPlus size={16} color="#fff" strokeWidth={2.2} />}
+            icon={<UserPlus size={16} color={t.onPrimary} strokeWidth={2.2} />}
             onPress={vm.onPasswordSignUp}
           />
         </>
@@ -56,7 +56,7 @@ export default function SignUp() {
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton
             label={vm.busy ? tr('auth.sending') : tr('auth.sendCode')}
-            icon={<MessageCircle size={16} color="#fff" strokeWidth={2.2} />}
+            icon={<MessageCircle size={16} color={t.onPrimary} strokeWidth={2.2} />}
             onPress={vm.onSendCode}
           />
         </>

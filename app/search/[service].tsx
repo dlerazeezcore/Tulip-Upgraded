@@ -66,6 +66,7 @@ function Stepper({
           onPress={onDec}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.decrease')}
+          hitSlop={6}
           style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <Minus size={14} color={t.fg} />
@@ -77,9 +78,10 @@ function Stepper({
           onPress={onInc}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.increase')}
+          hitSlop={6}
           style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.primary, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Plus size={14} color="#fff" />
+          <Plus size={14} color={t.onPrimary} />
         </Pressable>
       </View>
     </View>
@@ -109,7 +111,7 @@ export default function SearchScreen() {
               accessibilityState={{ selected: on }}
               style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}
             >
-              <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? '#fff' : t.fgMuted }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? t.onPrimary : t.fgMuted }}>
                 {tr(tt.labelKey)}
               </Text>
             </Pressable>
@@ -138,6 +140,7 @@ export default function SearchScreen() {
             onPress={vm.swap}
             accessibilityRole="button"
             accessibilityLabel={tr('a11y.swapOriginDestination')}
+            hitSlop={4}
             style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center', marginHorizontal: 8 }}
           >
             <ArrowUpDown size={16} color={t.fgMuted} />
@@ -201,7 +204,7 @@ export default function SearchScreen() {
   );
 
   const searchButton = (
-    <PrimaryButton label={tr('search.searchButton')} onPress={vm.onSearch} icon={<SearchIcon size={16} color="#fff" strokeWidth={2.2} />} style={{ marginTop: 6 }} />
+    <PrimaryButton label={tr('search.searchButton')} onPress={vm.onSearch} icon={<SearchIcon size={16} color={t.onPrimary} strokeWidth={2.2} />} style={{ marginTop: 6 }} />
   );
 
   return (
@@ -219,6 +222,7 @@ export default function SearchScreen() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
+          hitSlop={4}
           style={{
             width: 36,
             height: 36,

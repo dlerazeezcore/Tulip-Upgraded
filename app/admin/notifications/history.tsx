@@ -7,6 +7,7 @@ import { useTranslation } from 'react-i18next';
 import { History } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
+import { useIsRTL } from '@/lib/rtl';
 import { useNotificationHistory } from '@/screens/admin/notifications/useNotificationHistory';
 
 function statusColor(t: any, status: string): string {
@@ -32,6 +33,7 @@ export default function AdminNotificationHistory() {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const vm = useNotificationHistory();
+  const isRTL = useIsRTL();
 
   const statusLabel = (status: string): string => {
     const s = status.toLowerCase();
@@ -43,7 +45,7 @@ export default function AdminNotificationHistory() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -113,7 +115,7 @@ export default function AdminNotificationHistory() {
                         {tr('admin.notifications.history.invalid', { count: row.invalidTokenCount })}
                       </Text>
                     )}
-                    <Text style={{ flex: 1, textAlign: 'right', fontSize: 11, color: t.fgFaint }}>
+                    <Text style={{ flex: 1, textAlign: isRTL ? 'left' : 'right', fontSize: 11, color: t.fgFaint }}>
                       {row.recipientScope}
                     </Text>
                   </View>

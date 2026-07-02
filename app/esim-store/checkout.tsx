@@ -47,7 +47,7 @@ export default function Checkout() {
         onPress={vm.goBack}
         accessibilityRole="button"
         accessibilityLabel={tr('a11y.back')}
-        style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+        hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
       >
         <DirectionalChevron direction="back" size={18} color={t.fg} />
       </Pressable>
@@ -141,7 +141,7 @@ export default function Checkout() {
                         <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{tr(`checkout.methodDesc.${p.id}`)}</Text>
                       </View>
                       <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: on ? t.primary : t.borderStrong, backgroundColor: on ? t.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                        {on && <Check size={13} color="#fff" strokeWidth={3} />}
+                        {on && <Check size={13} color={t.onPrimary} strokeWidth={3} />}
                       </View>
                     </Pressable>
                   );
@@ -167,7 +167,7 @@ export default function Checkout() {
             )}
             <PrimaryButton
               label={vm.busy ? tr('checkout.processing') : tr('checkout.pay', { amount: vm.money(bundle.usd, bundle.saleIqdMinor) })}
-              icon={<Lock size={15} color="#fff" strokeWidth={2.2} />}
+              icon={<Lock size={15} color={t.onPrimary} strokeWidth={2.2} />}
               onPress={vm.onPay}
             />
             {!!vm.iqdNote(bundle.usd, bundle.saleIqdMinor) && (

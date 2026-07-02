@@ -28,7 +28,7 @@ export default function AdminUsers() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+          hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
@@ -64,7 +64,7 @@ export default function AdminUsers() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>{u.name}</Text>
                     {u.isLoyalty && (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: 'rgba(25,103,210,0.12)' }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: t.infoBg }}>
                         <Star size={9} color={t.primary} fill={t.primary} />
                         <Text style={{ fontSize: 9, fontWeight: '800', color: t.primary }}>{tr('admin.users.loyaltyBadge')}</Text>
                       </View>
@@ -120,7 +120,7 @@ export default function AdminUsers() {
 
                 <Pressable
                   onPress={() => onDelete(selected)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: 'rgba(220,38,38,0.1)' }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.dangerBg }}
                 >
                   <Trash2 size={18} color={t.danger} />
                   <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.danger }}>

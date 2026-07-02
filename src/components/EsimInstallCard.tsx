@@ -18,6 +18,7 @@ import QRCode from 'react-native-qrcode-svg';
 import { useTranslation } from 'react-i18next';
 import { Smartphone, Share2, Download, AlertCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
+import { useIsRTL } from '@/lib/rtl';
 import { TulipLogo } from './TulipLogo';
 import { useEsimInstallCard } from './useEsimInstallCard';
 
@@ -39,10 +40,11 @@ type Props = {
 
 function Row({ label, value }: { label: string; value: string }) {
   const t = useTheme();
+  const isRTL = useIsRTL();
   return (
     <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', paddingVertical: 13, paddingHorizontal: 14, gap: 12 }}>
       <Text style={{ fontSize: 13, color: t.fgMuted }}>{label}</Text>
-      <Text selectable style={{ flex: 1, textAlign: 'right', fontSize: 12, color: t.fg, fontWeight: '600', fontFamily: t.font.bodyMedium }}>
+      <Text selectable style={{ flex: 1, textAlign: isRTL ? 'left' : 'right', fontSize: 12, color: t.fg, fontWeight: '600', fontFamily: t.font.bodyMedium }}>
         {value}
       </Text>
     </View>

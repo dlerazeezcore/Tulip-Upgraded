@@ -11,6 +11,7 @@ import { StatusPill } from '@/components/StatusPill';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { formatIqd } from '@/lib/pricing';
 import { useOrderDetail } from '@/screens/orders/useOrderDetail';
+import { useIsRTL } from '@/lib/rtl';
 
 function fmtDateTime(iso?: string | null) {
   if (!iso) return '—';
@@ -23,6 +24,7 @@ export default function OrderDetail() {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const vm = useOrderDetail();
+  const isRTL = useIsRTL();
   const { order, item, completed } = vm;
 
   return (
@@ -32,6 +34,7 @@ export default function OrderDetail() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
+          hitSlop={4}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
@@ -78,7 +81,7 @@ export default function OrderDetail() {
                 }}
               >
                 <Text style={{ fontSize: 13, color: t.fgMuted }}>{k}</Text>
-                <Text style={{ fontSize: 13, color: t.fg, fontWeight: '600', fontFamily: t.font.bodyMedium, maxWidth: '60%', textAlign: 'right' }}>{v}</Text>
+                <Text style={{ fontSize: 13, color: t.fg, fontWeight: '600', fontFamily: t.font.bodyMedium, maxWidth: '60%', textAlign: isRTL ? 'left' : 'right' }}>{v}</Text>
               </View>
             ))}
           </View>

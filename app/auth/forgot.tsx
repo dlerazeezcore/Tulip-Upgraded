@@ -71,7 +71,7 @@ export default function Forgot() {
                 width: 64,
                 height: 64,
                 borderRadius: 32,
-                backgroundColor: 'rgba(22,163,74,0.14)',
+                backgroundColor: t.successBg,
                 alignItems: 'center',
                 justifyContent: 'center',
               }}

@@ -39,7 +39,7 @@ export default function Travelers() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tt('a11y.back')}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+          hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
@@ -50,8 +50,8 @@ export default function Travelers() {
           onPress={openNew}
           style={{ flexDirection: 'row', alignItems: 'center', gap: 5, paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: t.primary }}
         >
-          <Plus size={14} color="#fff" strokeWidth={2.6} />
-          <Text style={{ color: '#fff', fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>{tt('travelers.add')}</Text>
+          <Plus size={14} color={t.onPrimary} strokeWidth={2.6} />
+          <Text style={{ color: t.onPrimary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>{tt('travelers.add')}</Text>
         </Pressable>
       </View>
 
@@ -64,7 +64,7 @@ export default function Travelers() {
             </View>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{tt('travelers.noTravelersTitle')}</Text>
             <Text style={{ fontSize: 13, color: t.fgMuted }}>{tt('travelers.noTravelersSub')}</Text>
-            <PrimaryButton label={tt('travelers.addTraveler')} icon={<Plus size={15} color="#fff" strokeWidth={2.4} />} onPress={openNew} />
+            <PrimaryButton label={tt('travelers.addTraveler')} icon={<Plus size={15} color={t.onPrimary} strokeWidth={2.4} />} onPress={openNew} />
           </View>
         ) : (
           travelers.map((tr) => (
@@ -93,10 +93,10 @@ export default function Travelers() {
                   {tt(`travelers.relations.${tr.relation}`, { defaultValue: tr.relation })}{tr.dob ? ` · ${tr.dob}` : ''}
                 </Text>
               </View>
-              <Pressable onPress={() => openEdit(tr)} accessibilityRole="button" accessibilityLabel={tt('travelers.editTraveler')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => openEdit(tr)} accessibilityRole="button" accessibilityLabel={tt('travelers.editTraveler')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                 <Pencil size={15} color={t.fg} />
               </Pressable>
-              <Pressable onPress={() => onRemove(tr.id)} accessibilityRole="button" accessibilityLabel={tt('travelers.removeTitle')} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: 'rgba(220,38,38,0.1)', alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => onRemove(tr.id)} accessibilityRole="button" accessibilityLabel={tt('travelers.removeTitle')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.dangerBg, alignItems: 'center', justifyContent: 'center' }}>
                 <Trash2 size={15} color={t.danger} />
               </Pressable>
             </View>
@@ -137,7 +137,7 @@ export default function Travelers() {
                       accessibilityState={{ selected: on }}
                       style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}
                     >
-                      <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? '#fff' : t.fgMuted }}>{tt(`travelers.relations.${r}`, { defaultValue: r })}</Text>
+                      <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? t.onPrimary : t.fgMuted }}>{tt(`travelers.relations.${r}`, { defaultValue: r })}</Text>
                     </Pressable>
                   );
                 })}

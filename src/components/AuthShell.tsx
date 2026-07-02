@@ -40,6 +40,7 @@ export function AuthShell({
                 onPress={() => router.back()}
                 accessibilityRole="button"
                 accessibilityLabel={tr('a11y.back')}
+                hitSlop={4}
                 style={{
                   width: 38,
                   height: 38,
@@ -50,7 +51,7 @@ export function AuthShell({
                   marginBottom: 14,
                 }}
               >
-                <DirectionalChevron direction="back" size={20} color="#fff" />
+                <DirectionalChevron direction="back" size={20} color={t.onPrimary} />
               </Pressable>
             )}
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
@@ -66,15 +67,15 @@ export function AuthShell({
               >
                 <TulipLogo size={26} color={t.primary} />
               </View>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: '#fff' }}>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.onPrimary }}>
                 {tr('common.appName')}
               </Text>
             </View>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 28, color: '#fff', letterSpacing: -0.6 }}>
+            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 28, color: t.onPrimary, letterSpacing: -0.6 }}>
               {title}
             </Text>
             {subtitle && (
-              <Text style={{ fontSize: 13, color: '#fff', opacity: 0.9, marginTop: 4 }}>{subtitle}</Text>
+              <Text style={{ fontSize: 13, color: t.onPrimary, opacity: 0.9, marginTop: 4 }}>{subtitle}</Text>
             )}
           </View>
         </SafeAreaView>

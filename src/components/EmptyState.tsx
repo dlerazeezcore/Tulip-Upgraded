@@ -24,7 +24,7 @@ export function EmptyState({
 }) {
   const t = useTheme();
   const accent = tone === 'primary' ? t.primary : t.fgFaint;
-  const badgeBg = tone === 'primary' ? 'rgba(25,103,210,0.10)' : t.bgSunken;
+  const badgeBg = tone === 'primary' ? t.infoBg : t.bgSunken;
   return (
     <View style={{ alignItems: 'center', paddingVertical: 44, paddingHorizontal: 28, gap: 12 }}>
       <View

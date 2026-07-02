@@ -9,12 +9,12 @@ export function StatusPill({ kind, label }: { kind: PillKind; label?: string }) 
   const t = useTheme();
   const { t: tr } = useTranslation();
   const map: Record<PillKind, { bg: string; fg: string; text: string }> = {
-    active:    { bg: 'rgba(22,163,74,0.14)',  fg: t.success, text: tr('status.active') },
-    upcoming:  { bg: 'rgba(25,103,210,0.14)', fg: t.primary, text: tr('status.upcoming') },
-    inactive:  { bg: 'rgba(245,158,11,0.16)', fg: t.warning, text: tr('status.inactive') },
-    expired:   { bg: 'rgba(220,38,38,0.14)',  fg: t.danger,  text: tr('status.expired') },
-    completed: { bg: t.bgSunken,              fg: t.fgMuted, text: tr('status.completed') },
-    cancelled: { bg: 'rgba(220,38,38,0.14)',  fg: t.danger,  text: tr('status.cancelled') },
+    active:    { bg: t.successBg, fg: t.successFg, text: tr('status.active') },
+    upcoming:  { bg: t.infoBg,    fg: t.infoFg,    text: tr('status.upcoming') },
+    inactive:  { bg: t.warningBg, fg: t.warningFg, text: tr('status.inactive') },
+    expired:   { bg: t.dangerBg,  fg: t.dangerFg,  text: tr('status.expired') },
+    completed: { bg: t.bgSunken,  fg: t.fgMuted,   text: tr('status.completed') },
+    cancelled: { bg: t.dangerBg,  fg: t.dangerFg,  text: tr('status.cancelled') },
   };
   const s = map[kind];
   return (

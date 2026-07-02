@@ -72,6 +72,14 @@ export type Theme = typeof shared & {
   // brand.blue50 these adapt to dark mode instead of glowing bright white.
   infoBg: string;
   infoFg: string;
+  // Status-surface tokens for pills/banners/advisories (success/warning/danger
+  // tints + readable foregrounds). Same contract as infoBg/infoFg.
+  successBg: string;
+  successFg: string;
+  warningBg: string;
+  warningFg: string;
+  dangerBg: string;
+  dangerFg: string;
   gradHero: readonly [string, string, string];
   shadow1: object;
   shadow2: object;
@@ -101,6 +109,12 @@ export const light: Theme = {
   info: '#1967D2',
   infoBg: '#EFF5FE',
   infoFg: '#1557B0',
+  successBg: '#E8F6ED',
+  successFg: '#15803D',
+  warningBg: '#FDF3E1',
+  warningFg: '#B45309',
+  dangerBg: '#FCEAEA',
+  dangerFg: '#B91C1C',
   gradHero: ['#1967D2', '#1557B0', '#114A99'] as const as readonly [string, string, string],
   shadow1: {
     shadowColor: '#0F172A',
@@ -154,6 +168,12 @@ export const dark: Theme = {
   info: '#3B82F6',
   infoBg: '#15243B',
   infoFg: '#7CAEF1',
+  successBg: '#12291C',
+  successFg: '#4ADE80',
+  warningBg: '#2E2412',
+  warningFg: '#FBBF24',
+  dangerBg: '#321619',
+  dangerFg: '#F87171',
   gradHero: ['#1E3A8A', '#1557B0', '#1967D2'] as const as readonly [string, string, string],
   shadow1: {
     shadowColor: '#000',

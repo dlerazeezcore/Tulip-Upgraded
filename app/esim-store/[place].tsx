@@ -26,7 +26,7 @@ export default function PlaceDetail() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+          hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
@@ -122,7 +122,7 @@ export default function PlaceDetail() {
                         </View>
                         <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{money(b.usd, b.saleIqdMinor)}</Text>
                         <View style={{ width: 22, height: 22, borderRadius: 11, borderWidth: 2, borderColor: isSelected ? t.primary : t.borderStrong, backgroundColor: isSelected ? t.primary : 'transparent', alignItems: 'center', justifyContent: 'center' }}>
-                          {isSelected && <Check size={13} color="#fff" strokeWidth={3} />}
+                          {isSelected && <Check size={13} color={t.onPrimary} strokeWidth={3} />}
                         </View>
                       </PressableScale>
                     </View>
@@ -143,7 +143,7 @@ export default function PlaceDetail() {
               </Text>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(vm.selected.usd, vm.selected.saleIqdMinor)}</Text>
             </View>
-            <PrimaryButton label={tr('common.continue')} icon={<ArrowRight size={16} color="#fff" strokeWidth={2.2} />} onPress={vm.onContinue} style={{ flex: 1 }} />
+            <PrimaryButton label={tr('common.continue')} icon={<ArrowRight size={16} color={t.onPrimary} strokeWidth={2.2} />} onPress={vm.onContinue} style={{ flex: 1 }} />
           </View>
         </View>
       )}

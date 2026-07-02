@@ -26,13 +26,13 @@ export function EsimSupportBanner({ message }: Props) {
         gap: 10,
         padding: 12,
         borderRadius: 12,
-        backgroundColor: 'rgba(245,158,11,0.12)',
+        backgroundColor: t.warningBg,
         borderWidth: 1,
-        borderColor: 'rgba(245,158,11,0.4)',
+        borderColor: `${t.warning}66`,
         alignItems: 'flex-start',
       }}
     >
-      <AlertTriangle size={16} color={t.warning ?? '#F59E0B'} />
+      <AlertTriangle size={16} color={t.warning} />
       <Text style={{ flex: 1, fontSize: 12, color: t.fg, lineHeight: 17 }}>
         {message ?? tr('checkout.bannerUnsupported')}
       </Text>

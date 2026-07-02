@@ -39,7 +39,7 @@ export default function AdminOrders() {
   const labelStyle = { fontSize: 11, fontWeight: '700' as const, color: t.fgMuted, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
   const Chip = ({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) => (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}>
-      <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 12, color: on ? '#fff' : t.fgMuted }}>{label}</Text>
+      <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 12, color: on ? t.onPrimary : t.fgMuted }}>{label}</Text>
     </Pressable>
   );
 
@@ -50,7 +50,7 @@ export default function AdminOrders() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+          hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
@@ -81,7 +81,7 @@ export default function AdminOrders() {
       </View>
 
       {refreshSummary && (
-        <View style={{ marginHorizontal: 20, marginTop: 4, padding: 10, borderRadius: 12, backgroundColor: refreshSummary.errorCount > 0 ? 'rgba(245,158,11,0.10)' : 'rgba(22,163,74,0.10)', borderWidth: 1, borderColor: refreshSummary.errorCount > 0 ? 'rgba(245,158,11,0.35)' : 'rgba(22,163,74,0.35)', flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ marginHorizontal: 20, marginTop: 4, padding: 10, borderRadius: 12, backgroundColor: refreshSummary.errorCount > 0 ? t.warningBg : t.successBg, borderWidth: 1, borderColor: refreshSummary.errorCount > 0 ? `${t.warning}59` : `${t.success}59`, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {refreshSummary.errorCount > 0 ? (
             <AlertCircle size={14} color={t.warning} />
           ) : (
