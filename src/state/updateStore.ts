@@ -3,10 +3,14 @@
 // On launch and on AppState transition to active, the app calls GET /api/v1/app/version-info,
 // compares the server-side `latestVersion` and `minSupportedVersion` to the running
 // app's native version (`Constants.expoConfig.version` / `Application.nativeApplicationVersion`),
-// and surfaces one of three statuses:
-//   - 'idle'     — up to date, no modal
-//   - 'optional' — below latest but above min; dismissible modal
-//   - 'forced'   — below min; non-dismissible modal (user MUST update)
+// and surfaces a status:
+//   - 'idle'   — up to date, no modal
+//   - 'forced' — behind `latestVersion`; non-dismissible modal (user MUST update)
+//
+// Product decision (2026-07-02): ANY available update is mandatory — the app is
+// blocked until the user updates. The admin publishes `latestVersion` from the
+// admin panel's update screen. The 'optional' tier and its dismissal machinery
+// are kept in the types as the one-line revert path but are never derived.
 //
 // The UI component reads this store and renders the modal. The wiring hook
 // (useUpdateAvailableModal) projects this into ready-to-render props.
@@ -51,7 +55,8 @@ export function compareVersions(a: string, b: string): number {
 
 function deriveStatus(current: string, info: AppVersionInfo): UpdateStatus {
   if (compareVersions(current, info.minSupportedVersion) < 0) return 'forced';
-  if (compareVersions(current, info.latestVersion) < 0) return 'optional';
+  // Every update is mandatory: being behind latest blocks the app.
+  if (compareVersions(current, info.latestVersion) < 0) return 'forced';
   return 'idle';
 }
 

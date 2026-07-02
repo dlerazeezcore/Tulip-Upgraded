@@ -1,6 +1,6 @@
 // THIN UI — wiring lives in src/screens/admin/notifications/useUpdateNotification.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -37,6 +37,36 @@ export default function AdminSendUpdateNotification() {
         <Text style={{ fontSize: 12, color: t.fgMuted, lineHeight: 18 }}>
           {tr('admin.notifications.update.intro')}
         </Text>
+
+        {/* Latest version — publishing this BLOCKS every older app build */}
+        <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 8, ...t.shadow1 }}>
+          <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>
+            {tr('admin.notifications.update.latestVersionLabel')}
+          </Text>
+          <TextInput
+            value={vm.latestVersion}
+            onChangeText={vm.setLatestVersion}
+            placeholder="1.0.0"
+            placeholderTextColor={t.fgFaint}
+            autoCapitalize="none"
+            autoCorrect={false}
+            keyboardType="numbers-and-punctuation"
+            style={{
+              fontSize: 16,
+              fontFamily: t.font.displayMedium,
+              color: t.fg,
+              borderWidth: 1,
+              borderColor: t.border,
+              borderRadius: 12,
+              paddingHorizontal: 12,
+              paddingVertical: 10,
+              backgroundColor: t.bgSunken,
+            }}
+          />
+          <Text style={{ fontSize: 11, color: t.warningFg, lineHeight: 16 }}>
+            {tr('admin.notifications.update.latestVersionHint')}
+          </Text>
+        </View>
 
         {/* Language preview tabs */}
         <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -120,7 +150,7 @@ export default function AdminSendUpdateNotification() {
         ) : null}
 
         <PrimaryButton
-          label={vm.sending ? tr('auth.sending') : tr('admin.notifications.update.sendToAll')}
+          label={vm.sending ? tr('auth.sending') : tr('admin.notifications.update.publishAndSend')}
           onPress={vm.send}
         />
       </ScrollView>
