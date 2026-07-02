@@ -3,9 +3,9 @@
 // apply the top-up with the provider. Replaces the old one-tap instant top-up
 // (which silently charged for the cheapest plan with no plan choice or payment).
 //
-// Payment is gated entirely on the client (decided product-side): we run the
-// existing FIB/Loyalty flow, and only call applyTopUp once the payment is
-// confirmed. No backend changes — applyTopUp hits the existing provider top-up.
+// Payment is verified server-side: applyTopUp sends the payment method and FIB
+// paymentId, and the backend re-verifies the charge (amount, ownership,
+// single-use) against FIB before spending provider credit.
 import { useCallback, useEffect, useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -116,13 +116,15 @@ export function useTopUp() {
   /** Human label for a bundle, e.g. "10 GB" or "Unlimited data". */
   const planLabel = (b: Bundle) => (b.type === 'unlimited' ? tr('esim.unlimitedData') : `${b.gb} GB`);
 
-  const apply = async () => {
+  const apply = async (payment: { method: 'fib' | 'loyalty'; providerPaymentId?: string }) => {
     if (!selected?.packageCode || !iccid) return;
     await applyTopUp({
       iccid,
       esimTranNo: profile?.esimTranNo ?? undefined,
       packageCode: selected.packageCode,
       transactionId: `TOPUP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      paymentMethod: payment.method,
+      paymentProviderPaymentId: payment.providerPaymentId,
     });
     await refreshEsims();
     await refreshOrders();
@@ -136,7 +138,7 @@ export function useTopUp() {
     setPayError(null);
     try {
       if (method === 'loyalty') {
-        await apply();
+        await apply({ method: 'loyalty' });
         return;
       }
       // FIB: open the QR + "pay by phone" sheet. It polls and shows its own
@@ -149,7 +151,7 @@ export function useTopUp() {
           description: `${esim?.country ?? 'eSIM'} top-up`,
           metadata: { packageCode: selected.packageCode, iccid, kind: 'topup' },
         },
-        { onPaid: () => apply() },
+        { onPaid: (p) => apply({ method: 'fib', providerPaymentId: p.paymentId }) },
       );
     } catch (e: any) {
       setPayError(e?.message || tr('checkout.failed'));

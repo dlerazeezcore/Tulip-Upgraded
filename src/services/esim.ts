@@ -245,6 +245,10 @@ export function applyTopUp(input: {
   esimTranNo?: string;
   packageCode: string;
   transactionId: string;
+  // The backend re-verifies payment server-side before spending provider
+  // credit: FIB needs the provider paymentId; loyalty is comp-gated by account.
+  paymentMethod: 'fib' | 'loyalty';
+  paymentProviderPaymentId?: string;
 }): Promise<any> {
   return apiFetch(`${BASE}/topups/managed`, {
     method: 'POST',
@@ -258,6 +262,8 @@ export function applyTopUp(input: {
       platformCode: 'tulip-mobile-app',
       platformName: 'Tulip Mobile App',
       syncAfterTopup: true,
+      paymentMethod: input.paymentMethod,
+      paymentProviderPaymentId: input.paymentProviderPaymentId,
     },
   });
 }
