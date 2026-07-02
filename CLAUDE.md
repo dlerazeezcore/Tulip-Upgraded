@@ -63,9 +63,12 @@ contract (see `SYNC-STRATEGY.md` §5b).
   error-correction `H` — on-screen (`EsimInstallCard`) and in the shared/downloaded PNG.
 
 ## CI/CD actions — do NOT break these
-Three GitHub Actions are the release pipeline. Any change or edit must keep all three green:
-1. **Android Build APK** — `tulip-booking/.github/workflows/android-build.yml`
+These GitHub Actions are the release pipeline. Any change or edit must keep them green:
+1. **Android Build APK** — `tulip-booking/.github/workflows/android-build.yml` (debug-signed APK for sideload testing only)
 2. **Deploy web → GitHub Pages** — `tulip-booking/.github/workflows/deploy.yml`
-3. **iOS App Store Connect** — `tulip-booking/.github/workflows/ios-appstoreconnect.yml`
+3. **iOS App Store Connect** — `tulip-booking/.github/workflows/ios-appstoreconnect.yml` (builds + uploads to TestFlight)
+4. **Android Play release (AAB)** — `tulip-booking/.github/workflows/android-play-release.yml` (signed AAB → Google Play; needs the `ANDROID_KEYSTORE_*` + `PLAY_SERVICE_ACCOUNT_JSON` secrets)
 
-A fourth, separate check workflow runs typecheck on PRs: `tulip-booking/.github/workflows/check.yml` (`tsc --noEmit`). Add any new checks (typecheck / tests) as SEPARATE jobs or workflows like it. Never modify the three release workflows in a way that alters or breaks their build/deploy behavior.
+A separate check workflow runs typecheck on PRs: `tulip-booking/.github/workflows/check.yml` (`tsc --noEmit`). Add any new checks (typecheck / tests) as SEPARATE jobs or workflows like it. Never modify the release workflows in a way that alters or breaks their build/deploy behavior.
+
+Version bumps: `app.json` `expo.version` is the marketing version (compared against the backend's `latestVersion` for the mandatory-update gate). The iOS build number and the Android `versionCode` are auto-set to a fresh unix timestamp in CI, so they are always unique/increasing — you only bump `expo.version` per release.
