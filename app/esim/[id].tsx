@@ -10,8 +10,9 @@ import { Flag } from '@/components/Flag';
 import { UsageRing } from '@/components/UsageRing';
 import { StatusPill } from '@/components/StatusPill';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { EmptyState } from '@/components/EmptyState';
+import { Skeleton } from '@/components/Skeleton';
 import { EsimInstallCard } from '@/components/EsimInstallCard';
-import { isDefinitelyUnsupported } from '@/services/device';
 import { useEsimUsageFormatters } from '@/lib/esimUsage';
 import { useEsimDetail } from '@/screens/esim/useEsimDetail';
 import { useIsWideWeb } from '@/lib/responsive';
@@ -48,21 +49,55 @@ export default function EsimDetail() {
   const esim = vm.esim;
   const isWide = useIsWideWeb();
 
+  const screenHeader = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
+      <Pressable
+        onPress={vm.goBack}
+        accessibilityRole="button"
+        accessibilityLabel={tr('a11y.back')}
+        hitSlop={4}
+        style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+      >
+        <DirectionalChevron direction="back" size={18} color={t.fg} />
+      </Pressable>
+      <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>{tr('esim.details')}</Text>
+      <Pressable onPress={() => vm.refreshUsage()} accessibilityRole="button" accessibilityLabel={tr('a11y.refresh')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <RefreshCw size={16} color={t.fg} />
+      </Pressable>
+    </View>
+  );
+
   if (!esim) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-        {vm.refreshing ? <ActivityIndicator color={t.primary} /> : <Text style={{ color: t.fgMuted }}>{tr('esim.notFound')}</Text>}
-        <PrimaryButton label={tr('common.back')} onPress={vm.goBack} />
+      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+        {screenHeader}
+        {vm.refreshing ? (
+          <View style={{ padding: 20, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
+            {/* Shaped like the usage card so the loaded screen doesn't jump. */}
+            <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 20, padding: 24, alignItems: 'center', gap: 18, ...t.shadow1 }}>
+              <Skeleton width={180} height={180} radius={90} />
+              <View style={{ flexDirection: 'row', width: '100%' }}>
+                {[0, 1, 2].map((i) => (
+                  <View key={i} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+                    <Skeleton width={48} height={18} />
+                    <Skeleton width={56} height={11} />
+                  </View>
+                ))}
+              </View>
+            </View>
+          </View>
+        ) : (
+          <View style={{ flex: 1, justifyContent: 'center' }}>
+            <EmptyState
+              icon={Signal}
+              title={tr('esim.notFound')}
+              action={<PrimaryButton label={tr('common.back')} onPress={vm.goBack} />}
+            />
+          </View>
+        )}
       </SafeAreaView>
     );
   }
-
-  const ringColor = esim.status === 'active' ? t.success : esim.status === 'expired' ? t.danger : t.warning;
-  const pillKind = esim.status === 'provider_waiting' ? 'inactive' : esim.status;
-  const pillLabel = esim.status === 'provider_waiting' ? tr('status.provider_waiting') : undefined;
-  const dataLabel = esim.unlimited
-    ? `${tr('esim.unlimited')} · ${esim.planDays} ${tr('esim.days')}`
-    : `${esim.planGb} GB · ${esim.planDays} ${tr('esim.days')}`;
 
   // Content blocks defined once. On mobile/native they stack in the original
   // order (unchanged). On desktop web (≥1024) they split into two columns —
@@ -76,19 +111,18 @@ export default function EsimDetail() {
           {esim.unlimited ? tr('esim.unlimitedData') : `${esim.planGb} GB`}{esim.planDays ? ` · ${esim.planDays} ${tr('esim.days')}` : ''}
         </Text>
       </View>
-      <StatusPill kind={pillKind} label={pillLabel} />
+      <StatusPill kind={vm.pillKind} label={vm.pillLabel} />
     </View>
   );
 
-  const deviceAdvisory =
-    vm.support && (isDefinitelyUnsupported(vm.support) || vm.support.supported === null) ? (
-      <View style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 14, backgroundColor: t.warningBg, borderWidth: 1, borderColor: `${t.warning}66` }}>
-        <AlertTriangle size={18} color={t.warning} />
-        <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>
-          {isDefinitelyUnsupported(vm.support) ? tr('esim.deviceUnsupported') : tr('esim.deviceCheck')}
-        </Text>
-      </View>
-    ) : null;
+  const deviceAdvisory = vm.advisoryKind ? (
+    <View style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 14, backgroundColor: t.warningBg, borderWidth: 1, borderColor: `${t.warning}66` }}>
+      <AlertTriangle size={18} color={t.warning} />
+      <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>
+        {vm.advisoryKind === 'unsupported' ? tr('esim.deviceUnsupported') : tr('esim.deviceCheck')}
+      </Text>
+    </View>
+  ) : null;
 
   const usageCard = (
     <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 20, padding: 24, alignItems: 'center', gap: 18, ...t.shadow1 }}>
@@ -96,7 +130,7 @@ export default function EsimDetail() {
         <>
           <UsageRing
             fraction={esim.unlimited ? 1 : vm.fraction}
-            color={ringColor}
+            color={vm.ringColor}
             centerTop={esim.unlimited ? '∞' : fmt.dataAmount(esim.remainingMb)}
             centerSub={esim.unlimited ? tr('esim.unlimitedShort') : tr('esim.remaining')}
           />
@@ -158,7 +192,7 @@ export default function EsimDetail() {
           smdp={vm.smdp}
           activationCode={vm.activationCode}
           country={esim.country}
-          dataLabel={dataLabel}
+          dataLabel={vm.dataLabel}
           onActivateTapped={vm.onActivateTapped}
         />
       )}
@@ -232,21 +266,7 @@ export default function EsimDetail() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable
-          onPress={vm.goBack}
-          accessibilityRole="button"
-          accessibilityLabel={tr('a11y.back')}
-          hitSlop={4}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <DirectionalChevron direction="back" size={18} color={t.fg} />
-        </Pressable>
-        <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>{tr('esim.details')}</Text>
-        <Pressable onPress={() => vm.refreshUsage()} accessibilityRole="button" accessibilityLabel={tr('a11y.refresh')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-          <RefreshCw size={16} color={t.fg} />
-        </Pressable>
-      </View>
+      {screenHeader}
 
       <ScrollView
         contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, gap: 18, maxWidth: isWide ? 1100 : 720, width: '100%', alignSelf: 'center' }}

@@ -43,6 +43,21 @@ export function useDateFormatters() {
     [language],
   );
 
+  /** "Jun 12" style — compact per-row dates inside a month group. */
+  const formatShortDay = useCallback(
+    (iso?: string | null): string => {
+      if (!iso) return '—';
+      const d = new Date(iso);
+      if (!Number.isFinite(d.getTime())) return '—';
+      try {
+        return d.toLocaleDateString(tags(language), { month: 'short', day: 'numeric' });
+      } catch {
+        return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+      }
+    },
+    [language],
+  );
+
   /** "June 2026" style — order-history month groups. */
   const formatMonthYear = useCallback(
     (iso?: string | null): string => {
@@ -58,5 +73,5 @@ export function useDateFormatters() {
     [language],
   );
 
-  return { formatDateTime, formatMonthYear };
+  return { formatDateTime, formatShortDay, formatMonthYear };
 }

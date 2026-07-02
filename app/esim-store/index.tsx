@@ -11,17 +11,15 @@ import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
 import { Skeleton } from '@/components/Skeleton';
 
-// Region card gradients live in the design tokens (theme.gradients) — vibrant
-// by design so the Regions grid looks polished without a photo per region.
 import type { LocationCountry } from '@/services/esim';
-import { useEsimStore, TABS } from '@/screens/esim-store/useEsimStore';
+import { useEsimStore } from '@/screens/esim-store/useEsimStore';
 import { EsimCompatibilityBanner } from '@/components/EsimCompatibilityBanner';
 
 export default function EsimStore() {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const vm = useEsimStore();
-  const { isWide, tab, q, popular, regions, loadingCountries, filteredCountries, nameByCode } = vm;
+  const { isWide, tab, tabs, q, popular, regions, loadingCountries, filteredCountries } = vm;
 
   // Memoized renderItem for the countries FlatList — prevents recreating closures
   // on every re-render, lets RN bail out of re-rendering rows whose data unchanged.
@@ -68,7 +66,7 @@ export default function EsimStore() {
   // Tab switcher — used by all three tabs (as ScrollView child OR FlatList ListHeader).
   const tabSwitcher = (
     <View style={{ flexDirection: 'row', backgroundColor: t.bgSunken, borderRadius: 12, padding: 4 }}>
-      {TABS.map((tb) => {
+      {tabs.map((tb) => {
         const on = tb.id === tab;
         return (
           <Pressable
@@ -77,7 +75,7 @@ export default function EsimStore() {
             style={{ flex: 1, paddingVertical: 9, borderRadius: 9, alignItems: 'center', backgroundColor: on ? t.bgElev : 'transparent', ...(on ? t.shadow1 : {}) }}
           >
             <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 13, color: on ? t.fg : t.fgMuted }}>
-              {tr(`esimStore.tab${tb.id.charAt(0).toUpperCase()}${tb.id.slice(1)}`)}
+              {tb.label}
             </Text>
           </Pressable>
         );
@@ -168,23 +166,19 @@ export default function EsimStore() {
               <Text style={{ fontSize: 13, color: t.fgMuted }}>{tr('esimStore.noPopular')}</Text>
             ) : (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
-                {popular.map((c) => {
-                  const isCode = /^[A-Za-z]{2}$/.test((c.name ?? '').trim());
-                  const full = isCode ? (nameByCode[c.code.toUpperCase()] ?? c.name) : c.name;
-                  return (
-                    <View key={c.code} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
-                      <PressableScale
-                        onPress={() => vm.openPlace(c.code, full)}
-                        scaleTo={0.98}
-                        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
-                      >
-                        <Flag iso={c.code} size={34} />
-                        <Text style={{ flex: 1, fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{full}</Text>
-                        <DirectionalChevron direction="forward" size={20} color={t.fgFaint} />
-                      </PressableScale>
-                    </View>
-                  );
-                })}
+                {popular.map((c) => (
+                  <View key={c.code} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
+                    <PressableScale
+                      onPress={() => vm.openPlace(c.code, c.displayName)}
+                      scaleTo={0.98}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
+                    >
+                      <Flag iso={c.code} size={34} />
+                      <Text style={{ flex: 1, fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{c.displayName}</Text>
+                      <DirectionalChevron direction="forward" size={20} color={t.fgFaint} />
+                    </PressableScale>
+                  </View>
+                ))}
               </View>
             )}
           </View>
@@ -201,32 +195,29 @@ export default function EsimStore() {
             </View>
           ) : (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
-              {regions.map((r, idx) => {
-                const g = t.gradients[idx % t.gradients.length];
-                return (
-                  <View key={r.code} style={{ width: isWide ? '33.333%' : '50%', padding: 5 }}>
-                    <PressableScale
-                      onPress={() => vm.openRegion(r.code, r.name)}
-                      scaleTo={0.97}
+              {regions.map((r) => (
+                <View key={r.code} style={{ width: isWide ? '33.333%' : '50%', padding: 5 }}>
+                  <PressableScale
+                    onPress={() => vm.openRegion(r.code, r.name)}
+                    scaleTo={0.97}
+                  >
+                    <LinearGradient
+                      colors={r.gradient}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 1 }}
+                      style={{ borderRadius: 16, padding: 14, minHeight: 116, justifyContent: 'space-between', ...t.shadow1 }}
                     >
-                      <LinearGradient
-                        colors={g}
-                        start={{ x: 0, y: 0 }}
-                        end={{ x: 1, y: 1 }}
-                        style={{ borderRadius: 16, padding: 14, minHeight: 116, justifyContent: 'space-between', ...t.shadow1 }}
-                      >
-                        <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-                          <Globe size={20} color={t.onPrimary} strokeWidth={2.2} />
-                        </View>
-                        <View style={{ marginTop: 10 }}>
-                          <Text numberOfLines={2} style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: t.onPrimary }}>{r.name}</Text>
-                          <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>{tr('esimStore.multiCountry')}</Text>
-                        </View>
-                      </LinearGradient>
-                    </PressableScale>
-                  </View>
-                );
-              })}
+                      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
+                        <Globe size={20} color={t.onPrimary} strokeWidth={2.2} />
+                      </View>
+                      <View style={{ marginTop: 10 }}>
+                        <Text numberOfLines={2} style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: t.onPrimary }}>{r.name}</Text>
+                        <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>{tr('esimStore.multiCountry')}</Text>
+                      </View>
+                    </LinearGradient>
+                  </PressableScale>
+                </View>
+              ))}
             </View>
           )
         )}

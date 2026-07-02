@@ -1,11 +1,35 @@
 // Wiring for the admin "order history" screen.
 // Owns: year/month/eSIM filters, server-side order loading, provider refresh,
-// row expand state, and the eSIM-status filtered list.
+// row expand state, and the eSIM-status filtered list pre-shaped for render.
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { getAdminOrders, refreshOrdersFromProvider, type RefreshOrdersResult } from '@/services/admin';
+import { formatIqd } from '@/lib/pricing';
 import type { AdminOrder } from '@/services/types';
+
+export type AdminOrderLineVM = {
+  id: number;
+  countryCode: string | null;
+  specLabel: string;
+  priceLabel: string;
+};
+
+export type AdminOrderRowVM = {
+  id: number;
+  countryCode: string | null;
+  userName: string;
+  userPhone: string;
+  subLabel: string;
+  statusLabel: string;
+  paymentMethod: string | null;
+  totalLabel: string;
+  expanded: boolean;
+  itemCount: number;
+  orderNumber: string;
+  lines: AdminOrderLineVM[];
+};
 
 export type AdminOrdersViewModel = {
   isAdmin: boolean;
@@ -19,11 +43,10 @@ export type AdminOrdersViewModel = {
   setEsim: (id: string) => void;
   // data
   orders: AdminOrder[];
-  filtered: AdminOrder[];
+  filtered: AdminOrderRowVM[];
   loading: boolean;
   error: string | null;
   // row expand
-  expanded: Record<number, boolean>;
   toggle: (id: number) => void;
   // provider refresh
   refreshing: boolean;
@@ -31,8 +54,13 @@ export type AdminOrdersViewModel = {
   onRefreshFromProvider: () => Promise<void>;
 };
 
+function orderDate(o: AdminOrder): string {
+  return o.bookedAt || o.createdAt || '';
+}
+
 export function useAdminOrders(): AdminOrdersViewModel {
   const router = useRouter();
+  const { t: tr } = useTranslation();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
   const [year, setYear] = useState<number>(new Date().getFullYear());
   const [month, setMonth] = useState<number | null>(null); // 1-12; null = nothing selected yet
@@ -92,10 +120,42 @@ export function useAdminOrders(): AdminOrdersViewModel {
     return () => { cancelled = true; };
   }, [year, month]);
 
-  const filtered = useMemo(
-    () => orders.filter((o) => esim === 'all' || o.esimStatus === esim),
-    [orders, esim],
-  );
+  // Pre-shape each visible row (labels, spec lines, expand flag) so the list
+  // renders fields only.
+  const filtered = useMemo<AdminOrderRowVM[]>(() => {
+    const esimLabel = (id: string) => tr(`admin.orders.esimStatus.${id}`, { defaultValue: id });
+    return orders
+      .filter((o) => esim === 'all' || o.esimStatus === esim)
+      .map((o) => {
+        const it = o.items[0];
+        const date = orderDate(o);
+        return {
+          id: o.id,
+          countryCode: it?.countryCode ?? null,
+          userName: o.user?.name || tr('admin.orders.unknownUser'),
+          userPhone: o.user?.phone || '',
+          subLabel: `${it?.countryName || it?.countryCode || tr('admin.orders.esim')}${date ? ` · ${new Date(date).toLocaleDateString()}` : ''}`,
+          statusLabel: esimLabel(o.esimStatus).toUpperCase(),
+          paymentMethod: o.paymentMethod ?? null,
+          totalLabel: formatIqd(o.totalMinor ?? 0),
+          expanded: !!expanded[o.id],
+          itemCount: o.items.length,
+          orderNumber: o.orderNumber,
+          lines: o.items.map((item) => {
+            const data = item.unlimited ? tr('admin.orders.unlimited') : item.dataGb ? `${item.dataGb} GB` : null;
+            return {
+              id: item.id,
+              countryCode: item.countryCode ?? null,
+              specLabel:
+                [data, item.validityDays ? tr('admin.orders.daysCount', { count: item.validityDays }) : null]
+                  .filter(Boolean)
+                  .join(' · ') || tr('admin.orders.esimBundle'),
+              priceLabel: formatIqd(item.salePriceMinor ?? 0),
+            };
+          }),
+        };
+      });
+  }, [orders, esim, expanded, tr]);
 
   return {
     isAdmin,
@@ -110,7 +170,6 @@ export function useAdminOrders(): AdminOrdersViewModel {
     filtered,
     loading,
     error,
-    expanded,
     toggle,
     refreshing,
     refreshSummary,

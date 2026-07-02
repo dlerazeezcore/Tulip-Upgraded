@@ -3,11 +3,12 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Check, Lock, Landmark, Gift, Globe } from 'lucide-react-native';
+import { Check, Lock, Landmark, Gift, Globe, ShoppingBag } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { EmptyState } from '@/components/EmptyState';
 import { EsimSupportBanner } from '@/components/EsimSupportBanner';
 import { FibPaymentSheet } from '@/components/FibPaymentSheet';
 import { useCheckout } from '@/screens/esim-store/useCheckout';
@@ -62,9 +63,12 @@ export default function Checkout() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
         {header}
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
-          <Text style={{ color: t.fgMuted }}>{tr('checkout.nothingSelected')}</Text>
-          <PrimaryButton label={tr('checkout.browseEsims')} onPress={vm.browseEsims} />
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <EmptyState
+            icon={ShoppingBag}
+            title={tr('checkout.nothingSelected')}
+            action={<PrimaryButton label={tr('checkout.browseEsims')} onPress={vm.browseEsims} />}
+          />
         </View>
       </SafeAreaView>
     );
@@ -78,22 +82,19 @@ export default function Checkout() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
         {header}
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 16 }}>
-          <View style={{ width: 72, height: 72, borderRadius: 36, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-            <Lock size={30} color={t.primary} strokeWidth={2} />
-          </View>
-          <View style={{ alignItems: 'center', gap: 4 }}>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.fg }}>
-              {tr('checkout.signInToContinue')}
-            </Text>
-            <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center' }}>
-              {tr('checkout.signInSub')}
-            </Text>
-          </View>
-          <View style={{ flexDirection: 'row', gap: 10, width: '100%', maxWidth: 360 }}>
-            <PrimaryButton label={tr('common.signIn')} onPress={vm.goSignIn} style={{ flex: 1 }} />
-            <PrimaryButton label={tr('common.signUp')} variant="ghost" onPress={vm.goSignUp} style={{ flex: 1 }} />
-          </View>
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <EmptyState
+            icon={Lock}
+            tone="primary"
+            title={tr('checkout.signInToContinue')}
+            subtitle={tr('checkout.signInSub')}
+            action={
+              <View style={{ flexDirection: 'row', gap: 10, width: 300 }}>
+                <PrimaryButton label={tr('common.signIn')} onPress={vm.goSignIn} style={{ flex: 1 }} />
+                <PrimaryButton label={tr('common.signUp')} variant="ghost" onPress={vm.goSignUp} style={{ flex: 1 }} />
+              </View>
+            }
+          />
         </View>
       </SafeAreaView>
     );
@@ -131,7 +132,7 @@ export default function Checkout() {
                     <Pressable
                       key={p.id}
                       onPress={() => vm.setMethod(p.id)}
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.bgElev, borderWidth: 1.5, borderColor: on ? t.primary : t.border }}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: on ? t.infoBg : t.bgElev, borderWidth: on ? 2 : 1.5, borderColor: on ? t.primary : t.border }}
                     >
                       <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                         <Icon size={20} color={on ? t.primary : t.fgMuted} strokeWidth={2} />

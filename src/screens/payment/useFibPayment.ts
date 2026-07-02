@@ -39,6 +39,10 @@ export type FibPaymentSheetVM = {
   canPayByPhone: boolean;
   /** Localized message for a non-paid terminal outcome (else null). */
   statusMessage: string | null;
+  /** Tone of the terminal outcome — only true failures read as danger. */
+  statusTone: 'danger' | 'warning' | 'neutral' | null;
+  /** Localized "expires in mm:ss" countdown while waiting (null if unknown). */
+  expiresInLabel: string | null;
   title: string;
   scanHint: string;
   payByPhoneLabel: string;
@@ -75,6 +79,23 @@ export function useFibPayment() {
 
   // Stop any in-flight poll if the screen unmounts mid-payment.
   useEffect(() => () => { cancelledRef.current = true; }, []);
+
+  // Live countdown to the payment's expiry (when FIB exposes one). Ticks every
+  // second only while the sheet is visibly waiting; the interval is cleared on
+  // close/unmount and whenever the payment or status changes.
+  const [expiresLeftSec, setExpiresLeftSec] = useState<number | null>(null);
+  const expiresAt = payment?.expiresAt ?? null;
+  useEffect(() => {
+    const target = expiresAt ? Date.parse(expiresAt) : NaN;
+    if (!visible || status !== 'waiting' || Number.isNaN(target)) {
+      setExpiresLeftSec(null);
+      return;
+    }
+    const tick = () => setExpiresLeftSec(Math.max(0, Math.round((target - Date.now()) / 1000)));
+    tick();
+    const timer = setInterval(tick, 1000);
+    return () => clearInterval(timer);
+  }, [visible, status, expiresAt]);
 
   const runPoll = useCallback(async (p: FibPayment) => {
     cancelledRef.current = false;
@@ -164,6 +185,18 @@ export function useFibPayment() {
   const isWeb = Platform.OS === 'web';
   const qrUri = normalizeQrUri(payment?.qrCode);
   const isTerminalNonPaid = status !== 'waiting' && status !== 'paid';
+  // Only a decline/refund is a true failure. Cancelled is the user's own
+  // action (neutral); expired / timeout / bookingFailed are recoverable
+  // situations, not "your payment failed" (warning).
+  const statusTone: FibPaymentSheetVM['statusTone'] = !isTerminalNonPaid
+    ? null
+    : status === 'failed'
+      ? 'danger'
+      : status === 'cancelled'
+        ? 'neutral'
+        : 'warning';
+  const mm = expiresLeftSec != null ? String(Math.floor(expiresLeftSec / 60)).padStart(2, '0') : '';
+  const ss = expiresLeftSec != null ? String(expiresLeftSec % 60).padStart(2, '0') : '';
 
   const sheet: FibPaymentSheetVM = {
     visible,
@@ -176,6 +209,9 @@ export function useFibPayment() {
     statusMessage: isTerminalNonPaid
       ? tr(`checkout.fib${status.charAt(0).toUpperCase()}${status.slice(1)}`)
       : null,
+    statusTone,
+    expiresInLabel:
+      expiresLeftSec != null ? tr('checkout.fibExpiresIn', { time: `${mm}:${ss}` }) : null,
     title: tr('checkout.fibPayTitle'),
     scanHint: tr('checkout.fibScanHint'),
     payByPhoneLabel: tr('checkout.fibPayByPhone'),

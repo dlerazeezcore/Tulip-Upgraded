@@ -84,7 +84,7 @@ export default function Travelers() {
             >
               <View style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                 <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 15, color: t.fg }}>
-                  {tr.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                  {tr.initials}
                 </Text>
               </View>
               <View style={{ flex: 1 }}>

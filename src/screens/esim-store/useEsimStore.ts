@@ -1,15 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/theme/ThemeContext';
 import { useIsWideWeb } from '@/lib/responsive';
 import { getFeaturedLocations, getCountries, getRegions, cachedCountries, type LocationCountry, type ProviderRegion } from '@/services/esim';
 import type { FeaturedLocation } from '@/services/types';
 
 export type Tab = 'popular' | 'countries' | 'regions';
-export const TABS: { id: Tab; label: string }[] = [
-  { id: 'popular', label: 'Popular' },
-  { id: 'countries', label: 'Countries' },
-  { id: 'regions', label: 'Regions' },
-];
+const TAB_IDS: Tab[] = ['popular', 'countries', 'regions'];
 
 // Fixed-height rows let FlatList skip layout measurement → faster scroll.
 const COUNTRY_ROW_HEIGHT = 52;
@@ -18,13 +16,13 @@ export interface EsimStoreVM {
   isWide: boolean;
   tab: Tab;
   setTab: (tab: Tab) => void;
+  tabs: { id: Tab; label: string }[];
   q: string;
   setQ: (q: string) => void;
-  popular: FeaturedLocation[];
-  regions: ProviderRegion[];
+  popular: (FeaturedLocation & { displayName: string })[];
+  regions: (ProviderRegion & { gradient: [string, string] })[];
   loadingCountries: boolean;
   filteredCountries: LocationCountry[];
-  nameByCode: Record<string, string>;
   getCountryItemLayout: (_: unknown, index: number) => { length: number; offset: number; index: number };
   goBack: () => void;
   openPlace: (code: string, name: string) => void;
@@ -33,6 +31,8 @@ export interface EsimStoreVM {
 
 export function useEsimStore(): EsimStoreVM {
   const router = useRouter();
+  const { t: tr } = useTranslation();
+  const t = useTheme();
   const isWide = useIsWideWeb();
   const [tab, setTab] = useState<Tab>('popular');
   const [q, setQ] = useState('');
@@ -66,6 +66,29 @@ export function useEsimStore(): EsimStoreVM {
     return m;
   }, [countries]);
 
+  // Popular rows arrive from the backend sometimes carrying a bare ISO code as
+  // the name — resolve it to the provider's full country name for display.
+  const popularView = useMemo(
+    () =>
+      popular.map((c) => {
+        const isCode = /^[A-Za-z]{2}$/.test((c.name ?? '').trim());
+        return { ...c, displayName: isCode ? (nameByCode[c.code.toUpperCase()] ?? c.name) : c.name };
+      }),
+    [popular, nameByCode],
+  );
+
+  // Region card gradients live in the design tokens (theme.gradients) — vibrant
+  // by design so the Regions grid looks polished without a photo per region.
+  const regionsView = useMemo(
+    () => regions.map((r, idx) => ({ ...r, gradient: t.gradients[idx % t.gradients.length] })),
+    [regions, t.gradients],
+  );
+
+  const tabs = TAB_IDS.map((id) => ({
+    id,
+    label: tr(`esimStore.tab${id.charAt(0).toUpperCase()}${id.slice(1)}`),
+  }));
+
   const query = q.trim().toLowerCase();
   const filteredCountries = useMemo(
     () =>
@@ -85,13 +108,13 @@ export function useEsimStore(): EsimStoreVM {
     isWide,
     tab,
     setTab,
+    tabs,
     q,
     setQ,
-    popular,
-    regions,
+    popular: popularView,
+    regions: regionsView,
     loadingCountries,
     filteredCountries,
-    nameByCode,
     getCountryItemLayout,
     goBack,
     openPlace,

@@ -4,12 +4,16 @@ import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTravelersStore, type Traveler } from '@/state/travelersStore';
 import { useIsWideWeb } from '@/lib/responsive';
+import { initials } from '@/lib/initials';
 
 export function useTravelers() {
   const { t: tt } = useTranslation();
   const router = useRouter();
   const isWide = useIsWideWeb();
   const { travelers, add, update, remove, refresh } = useTravelersStore();
+
+  // Pre-shape rows with avatar initials so the list renders fields only.
+  const rows = travelers.map((tr) => ({ ...tr, initials: initials(tr.name) }));
 
   const [editing, setEditing] = useState<Traveler | 'new' | null>(null);
   const [name, setName] = useState('');
@@ -57,7 +61,7 @@ export function useTravelers() {
 
   return {
     isWide,
-    travelers,
+    travelers: rows,
     editing,
     setEditing,
     name,

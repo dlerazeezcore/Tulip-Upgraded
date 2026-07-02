@@ -4,6 +4,7 @@ import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plane } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { EmptyState } from '@/components/EmptyState';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { useIsRTL } from '@/lib/rtl';
@@ -39,14 +40,13 @@ export default function FlightResults() {
         </View>
       </View>
 
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
-        <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-          <Plane size={28} color={t.primary} strokeWidth={2} />
-        </View>
-        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('results.flightsComingSoon')}</Text>
-        <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center', maxWidth: 320 }}>
-          {tr('results.flightsBody')}
-        </Text>
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <EmptyState
+          icon={Plane}
+          tone="primary"
+          title={tr('results.flightsComingSoon')}
+          subtitle={tr('results.flightsBody')}
+        />
       </View>
     </SafeAreaView>
   );

@@ -1,15 +1,26 @@
 // Wiring for the admin "notification history" screen.
-// Owns: paged list of past sends + pull-to-refresh.
-import { useCallback, useEffect, useState } from 'react';
+// Owns: paged list of past sends + pull-to-refresh, with each row pre-shaped
+// (status color/label + localized date) so the screen renders fields only.
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
+import { useTheme } from '@/theme/ThemeContext';
+import { useDateFormatters } from '@/lib/dates';
 import { listPushNotifications } from '@/services/admin';
 import type { PushNotificationRow } from '@/services/types';
+
+export type NotificationHistoryRowVM = PushNotificationRow & {
+  statusFg: string;
+  statusBg: string;
+  statusLabel: string;
+  dateLabel: string;
+};
 
 export type NotificationHistoryViewModel = {
   isAdmin: boolean;
   goBack: () => void;
-  rows: PushNotificationRow[];
+  rows: NotificationHistoryRowVM[];
   loading: boolean;
   refreshing: boolean;
   error: string | null;
@@ -18,6 +29,9 @@ export type NotificationHistoryViewModel = {
 
 export function useNotificationHistory(): NotificationHistoryViewModel {
   const router = useRouter();
+  const { t: tr } = useTranslation();
+  const t = useTheme();
+  const { formatDateTime } = useDateFormatters();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
   const [rows, setRows] = useState<PushNotificationRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -44,10 +58,30 @@ export function useNotificationHistory(): NotificationHistoryViewModel {
     load('initial');
   }, [isAdmin, load]);
 
+  const shapedRows = useMemo<NotificationHistoryRowVM[]>(() => {
+    const statusColor = (status: string): string => {
+      const s = status.toLowerCase();
+      if (s === 'sent') return t.success;
+      if (s === 'partial') return t.warning;
+      if (s === 'failed') return t.danger;
+      return t.fgMuted; // dry_run and anything unknown
+    };
+    return rows.map((row) => {
+      const sc = statusColor(row.status);
+      return {
+        ...row,
+        statusFg: sc,
+        statusBg: `${sc}20`,
+        statusLabel: tr(`admin.notifications.history.status.${row.status.toLowerCase()}`, { defaultValue: row.status }),
+        dateLabel: formatDateTime(row.sentAt || row.createdAt),
+      };
+    });
+  }, [rows, t, tr, formatDateTime]);
+
   return {
     isAdmin,
     goBack: () => (router.canGoBack() ? router.back() : router.replace('/admin/notifications')),
-    rows,
+    rows: shapedRows,
     loading,
     refreshing,
     error,

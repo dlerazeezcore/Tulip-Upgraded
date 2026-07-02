@@ -1,13 +1,18 @@
 import { useEffect, useRef, useState } from 'react';
 import { AppState } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
+import { useTheme } from '@/theme/ThemeContext';
 import { useEsimStore } from '@/state/esimStore';
-import { checkEsimSupport, type EsimSupportResult } from '@/services/device';
+import { checkEsimSupport, isDefinitelyUnsupported, type EsimSupportResult } from '@/services/device';
 import { recoverProfile } from '@/services/esim';
+import type { PillKind } from '@/components/StatusPill';
 
 export function useEsimDetail() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { t: tr } = useTranslation();
+  const t = useTheme();
   const esims = useEsimStore((s) => s.esims);
   const byId = useEsimStore((s) => s.byId);
   const history = useEsimStore((s) => s.history);
@@ -231,6 +236,24 @@ export function useEsimDetail() {
   const fraction = esim && planMb > 0 ? esim.remainingMb / planMb : esim && esim.remainingMb > 0 ? 1 : 0;
   const smdp = profile?.manualEntry?.smdpAddress ?? profile?.smdpAddress ?? null;
 
+  // Status-driven display fields (only rendered when `esim` exists).
+  const ringColor = esim?.status === 'active' ? t.success : esim?.status === 'expired' ? t.danger : t.warning;
+  const pillKind: PillKind = !esim || esim.status === 'provider_waiting' ? 'inactive' : esim.status;
+  const pillLabel = esim?.status === 'provider_waiting' ? tr('status.provider_waiting') : undefined;
+  const dataLabel = !esim
+    ? ''
+    : esim.unlimited
+      ? `${tr('esim.unlimited')} · ${esim.planDays} ${tr('esim.days')}`
+      : `${esim.planGb} GB · ${esim.planDays} ${tr('esim.days')}`;
+  // Device advisory: hard "unsupported" only on positive native evidence;
+  // soft "check compatibility" when we genuinely can't tell.
+  const advisoryKind: 'unsupported' | 'check' | null =
+    support && isDefinitelyUnsupported(support)
+      ? 'unsupported'
+      : support && support.supported === null
+        ? 'check'
+        : null;
+
   const onRefresh = async () => {
     // Pull-to-refresh: also force a per-profile provider recover so status,
     // GB usage, and days remaining catch up to whatever the provider knows.
@@ -248,7 +271,11 @@ export function useEsimDetail() {
   return {
     esim,
     installed: !!profile?.installed,
-    support,
+    ringColor,
+    pillKind,
+    pillLabel,
+    dataLabel,
+    advisoryKind,
     refreshing,
     detectingInstall,
     detectTimedOut,

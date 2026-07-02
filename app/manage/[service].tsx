@@ -6,7 +6,6 @@ import { useTranslation } from 'react-i18next';
 import { Archive, Smartphone } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
-import { useEsimUsageFormatters } from '@/lib/esimUsage';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
@@ -73,7 +72,6 @@ function HistoryCard({ count, onPress }: { count: number; onPress: () => void })
 function EsimList({ vm }: { vm: ReturnType<typeof useManageService> }) {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const fmt = useEsimUsageFormatters();
   const esims = vm.esims;
   const refreshing = vm.refreshing;
   const loaded = vm.loaded;
@@ -97,65 +95,51 @@ function EsimList({ vm }: { vm: ReturnType<typeof useManageService> }) {
 
   return (
     <View style={{ gap: 10 }}>
-      {esims.map((e) => {
-        // Show remaining GB on EVERY card the backend gave us data for, not
-        // just active. A PROVIDER_WAITING bundle already has total/remaining
-        // populated (the user paid for it), so showing it reassures them
-        // that the plan exists even before the carrier reports IN_USE.
-        // Use raw MB for the fraction so the bar reflects byte-level usage,
-        // not the floored display-GB.
-        const planMb = e.planGb * 1024;
-        const frac = planMb > 0 ? e.remainingMb / planMb : 0;
-        const barColor = e.status === 'active' ? t.success : e.status === 'expired' ? t.danger : t.warning;
-        const pillKind = e.status === 'provider_waiting' ? 'inactive' : e.status;
-        const pillLabel = e.status === 'provider_waiting' ? tr('status.provider_waiting') : undefined;
-        const hasUsageRow = e.planGb > 0 && (e.status === 'active' || e.status === 'provider_waiting');
-        return (
-          <Card key={e.id} onPress={() => vm.goEsim(e.id)}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Flag iso={e.iso} size={40} />
-              <View style={{ flex: 1 }}>
-                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
-                  {e.country}
-                </Text>
-                <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                  {fmt.dataLabel(e.dataLabel)}{e.planDays > 0 ? ` · ${fmt.planDays(e.planDays)}` : ''}
-                </Text>
-              </View>
-              <StatusPill kind={pillKind} label={pillLabel} />
+      {esims.map((e) => (
+        <Card key={e.id} onPress={() => vm.goEsim(e.id)}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Flag iso={e.iso} size={40} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
+                {e.country}
+              </Text>
+              <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
+                {e.planLine}
+              </Text>
             </View>
+            <StatusPill kind={e.pillKind} label={e.pillLabel} />
+          </View>
 
-            {hasUsageRow && (
-              <View style={{ marginTop: 12 }}>
-                <View style={{ height: 6, borderRadius: 3, backgroundColor: t.bgSunken, overflow: 'hidden' }}>
-                  <View style={{ width: e.unlimited ? '100%' : `${Math.max(0, Math.min(frac, 1)) * 100}%`, height: 6, borderRadius: 3, backgroundColor: barColor }} />
-                </View>
-                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
-                  <Text style={{ fontSize: 11, color: t.fg, fontWeight: '600' }}>
-                    {fmt.dataRemaining(e.remainingMb, e.unlimited)}
-                  </Text>
-                  <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                    {e.status === 'active' ? fmt.timeRemaining(e.hoursLeft) : tr('manage.waitingFirstConnection')}
-                  </Text>
-                </View>
+          {e.hasUsageRow && (
+            <View style={{ marginTop: 12 }}>
+              <View style={{ height: 6, borderRadius: 3, backgroundColor: t.bgSunken, overflow: 'hidden' }}>
+                <View style={{ width: `${e.barPct}%`, height: 6, borderRadius: 3, backgroundColor: e.barColor }} />
               </View>
-            )}
-
-            {e.status === 'inactive' && (
-              // Don't render a separate Activate button here — tapping the
-              // whole card takes the user to the detail page, where the full
-              // install flow lives (Activate + QR + Share). A duplicate
-              // button on the list calls the wrong backend action and
-              // confuses users about "did I install or not?".
-              <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
+                <Text style={{ fontSize: 11, color: t.fg, fontWeight: '600' }}>
+                  {e.remainingLabel}
+                </Text>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                  {tr('manage.tapToInstall')}
+                  {e.timeLabel}
                 </Text>
               </View>
-            )}
-          </Card>
-        );
-      })}
+            </View>
+          )}
+
+          {e.showTapToInstall && (
+            // Don't render a separate Activate button here — tapping the
+            // whole card takes the user to the detail page, where the full
+            // install flow lives (Activate + QR + Share). A duplicate
+            // button on the list calls the wrong backend action and
+            // confuses users about "did I install or not?".
+            <View style={{ marginTop: 10, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontSize: 11, color: t.fgMuted }}>
+                {tr('manage.tapToInstall')}
+              </Text>
+            </View>
+          )}
+        </Card>
+      ))}
       <HistoryCard count={vm.historyCount} onPress={vm.goHistory} />
     </View>
   );

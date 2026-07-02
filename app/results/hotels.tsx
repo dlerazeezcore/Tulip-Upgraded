@@ -4,6 +4,7 @@ import { View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { BedDouble } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { EmptyState } from '@/components/EmptyState';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { useHotelResults } from '@/screens/results/useHotelResults';
@@ -28,14 +29,13 @@ export default function HotelResults() {
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>{tr('results.staysTitle')}</Text>
       </View>
 
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
-        <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-          <BedDouble size={28} color={t.primary} strokeWidth={2} />
-        </View>
-        <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('results.staysComingSoon')}</Text>
-        <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center', maxWidth: 320 }}>
-          {tr('results.staysBody')}
-        </Text>
+      <View style={{ flex: 1, justifyContent: 'center' }}>
+        <EmptyState
+          icon={BedDouble}
+          tone="primary"
+          title={tr('results.staysComingSoon')}
+          subtitle={tr('results.staysBody')}
+        />
       </View>
     </SafeAreaView>
   );

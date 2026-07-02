@@ -4,12 +4,17 @@
 import React from 'react';
 import { Modal, View, Text, Pressable, Image, ActivityIndicator } from 'react-native';
 import QRCode from 'react-native-qrcode-svg';
-import { Smartphone, X } from 'lucide-react-native';
+import { AlertTriangle, Info, Smartphone, X, XCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import type { FibPaymentSheetVM } from '@/screens/payment/useFibPayment';
 
 export function FibPaymentSheet({ sheet }: { sheet: FibPaymentSheetVM }) {
   const t = useTheme();
+  // Icon + color always travel together so color is never the only signal.
+  const OutcomeIcon =
+    sheet.statusTone === 'danger' ? XCircle : sheet.statusTone === 'warning' ? AlertTriangle : Info;
+  const outcomeColor =
+    sheet.statusTone === 'danger' ? t.danger : sheet.statusTone === 'warning' ? t.warningFg : t.fgMuted;
 
   return (
     <Modal visible={sheet.visible} transparent animationType="fade" onRequestClose={sheet.close}>
@@ -75,12 +80,15 @@ export function FibPaymentSheet({ sheet }: { sheet: FibPaymentSheetVM }) {
             </>
           ) : null}
 
-          {/* Status: spinner while waiting; outcome message + retry otherwise. */}
+          {/* Status: spinner + countdown while waiting; outcome + retry otherwise. */}
           {sheet.statusMessage ? (
             <>
-              <Text style={{ fontSize: 12, color: t.danger, textAlign: 'center', lineHeight: 18 }}>
-                {sheet.statusMessage}
-              </Text>
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start', paddingHorizontal: 4 }}>
+                <OutcomeIcon size={16} color={outcomeColor} style={{ marginTop: 1 }} />
+                <Text style={{ flex: 1, fontSize: 12, color: outcomeColor, lineHeight: 18 }}>
+                  {sheet.statusMessage}
+                </Text>
+              </View>
               <Pressable
                 onPress={sheet.retry}
                 style={({ pressed }) => ({
@@ -94,9 +102,18 @@ export function FibPaymentSheet({ sheet }: { sheet: FibPaymentSheetVM }) {
               </Pressable>
             </>
           ) : (
-            <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
-              <ActivityIndicator color={t.primary} size="small" />
-              <Text style={{ fontSize: 13, color: t.fgMuted, fontFamily: t.font.body }}>{sheet.waitingLabel}</Text>
+            <View style={{ alignItems: 'center', gap: 6 }}>
+              <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                <ActivityIndicator color={t.primary} size="small" />
+                <Text style={{ fontSize: 13, color: t.fgMuted, fontFamily: t.font.body, flexShrink: 1, textAlign: 'center' }}>
+                  {sheet.waitingLabel}
+                </Text>
+              </View>
+              {sheet.expiresInLabel ? (
+                <Text style={{ fontSize: 12, color: t.fgFaint, fontFamily: t.font.bodyMedium }}>
+                  {sheet.expiresInLabel}
+                </Text>
+              ) : null}
             </View>
           )}
         </View>

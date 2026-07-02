@@ -1,10 +1,9 @@
+// THIN UI — wiring lives in useServiceTile.ts.
 import React from 'react';
 import { View, Text } from 'react-native';
-import { useRouter } from 'expo-router';
-import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
-import { SERVICES, SERVICE_SLOT, Service, serviceRoute } from '@/data/services';
-import { useSearchStore } from '@/state/searchStore';
+import { SERVICE_SLOT, Service } from '@/data/services';
+import { useServiceTile } from './useServiceTile';
 import { PressableScale } from './PressableScale';
 
 type TileProps = {
@@ -14,22 +13,9 @@ type TileProps = {
 
 export function ServiceTile({ svc, size = 'md' }: TileProps) {
   const t = useTheme();
-  const { t: tr } = useTranslation();
-  const router = useRouter();
-  const setActive = useSearchStore((s) => s.setActive);
+  const { placeholder, live, Icon, color, tint, name, verb, soonLabel, onPress } = useServiceTile(svc);
   const big = size === 'lg';
   const small = size === 'sm';
-  const placeholder = (svc as any).placeholder;
-  // UX-4: services that aren't shippable yet are badged "Soon" so the tap isn't a
-  // surprise dead-end. `live` is undefined on the placeholder slot — treat as live.
-  const live = (svc as any).live ?? true;
-  const Icon = svc.Icon;
-
-  const onPress = () => {
-    if (placeholder) return;
-    setActive(svc.id as Service['id']);
-    router.push(serviceRoute(svc.id) as any);
-  };
 
   const content = (
     <>
@@ -38,7 +24,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
           width: big ? 44 : small ? 34 : 38,
           height: big ? 44 : small ? 34 : 38,
           borderRadius: 12,
-          backgroundColor: placeholder ? 'transparent' : svc.tint,
+          backgroundColor: placeholder ? 'transparent' : tint,
           alignItems: 'center',
           justifyContent: 'center',
           borderWidth: placeholder ? 1.5 : 0,
@@ -46,7 +32,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
           borderStyle: 'dashed',
         }}
       >
-        <Icon size={big ? 22 : small ? 16 : 18} color={svc.color} strokeWidth={2} />
+        <Icon size={big ? 22 : small ? 16 : 18} color={color} strokeWidth={2} />
       </View>
       <View>
         <Text
@@ -59,10 +45,10 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
             letterSpacing: -0.2,
           }}
         >
-          {placeholder ? svc.label : tr(`serviceNames.${svc.id}`)}
+          {name}
         </Text>
         <Text numberOfLines={2} style={{ fontSize: 11, color: t.fgMuted, marginTop: 2 }}>
-          {placeholder ? tr('servicesScreen.moreComing') : tr(`serviceVerbs.${svc.id}`)}
+          {verb}
         </Text>
       </View>
     </>
@@ -115,7 +101,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
           }}
         >
           <Text style={{ fontSize: 9, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
-            {tr('common.soon')}
+            {soonLabel}
           </Text>
         </View>
       )}

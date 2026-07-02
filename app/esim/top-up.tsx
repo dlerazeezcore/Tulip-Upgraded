@@ -3,7 +3,7 @@
 //   1) "choose" — pick a top-up data plan (mirrors the provider's list).
 //   2) "pay"    — the same loyalty/FIB payment window used at checkout.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Check, Lock, Landmark, Gift, Plus } from 'lucide-react-native';
@@ -12,6 +12,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { EmptyState } from '@/components/EmptyState';
+import { Skeleton } from '@/components/Skeleton';
 import { FibPaymentSheet } from '@/components/FibPaymentSheet';
 import { useTopUp } from '@/screens/esim/useTopUp';
 
@@ -86,10 +87,14 @@ function ChooseStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso:
   const { t: tr } = useTranslation();
 
   if (vm.loading) {
+    // Skeletons shaped like the plan rows below (same pattern as the store's
+    // package list) so the screen keeps its layout while plans load.
     return (
-      <View style={{ paddingVertical: 48, alignItems: 'center', gap: 12 }}>
-        <ActivityIndicator color={t.primary} size="large" />
-        <Text style={{ fontSize: 13, color: t.fgMuted }}>{tr('topup.loading')}</Text>
+      <View style={{ gap: 10 }}>
+        <Skeleton width={96} height={26} radius={t.radius.pill} />
+        {[0, 1, 2, 3].map((i) => (
+          <Skeleton key={i} height={72} radius={16} />
+        ))}
       </View>
     );
   }
@@ -166,7 +171,7 @@ function PayStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso: st
               <Pressable
                 key={p.id}
                 onPress={() => vm.setMethod(p.id)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.bgElev, borderWidth: 1.5, borderColor: on ? t.primary : t.border }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: on ? t.infoBg : t.bgElev, borderWidth: on ? 2 : 1.5, borderColor: on ? t.primary : t.border }}
               >
                 <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                   <Icon size={20} color={on ? t.primary : t.fgMuted} strokeWidth={2} />

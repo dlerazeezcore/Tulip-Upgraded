@@ -88,3 +88,35 @@ export function EsimListSkeleton({ count = 3 }: { count?: number }) {
     </View>
   );
 }
+
+/** A skeleton shaped like the orders list — a group label above a card of
+ *  order rows (flag circle, two text lines, price + status pill). */
+export function OrderListSkeleton({ rows = 4 }: { rows?: number }) {
+  const t = useTheme();
+  return (
+    <View style={{ gap: 10 }}>
+      <Skeleton width={90} height={11} style={{ marginHorizontal: 4 }} />
+      <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
+        {Array.from({ length: rows }).map((_, i) => (
+          <View
+            key={i}
+            style={{
+              flexDirection: 'row', alignItems: 'center', gap: 14, padding: 14,
+              borderBottomWidth: i === rows - 1 ? 0 : 1, borderBottomColor: t.border,
+            }}
+          >
+            <Skeleton width={38} height={38} radius={19} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Skeleton width="55%" height={14} />
+              <Skeleton width="35%" height={11} />
+            </View>
+            <View style={{ alignItems: 'flex-end', gap: 6 }}>
+              <Skeleton width={64} height={14} />
+              <Skeleton width={72} height={22} radius={t.radius.pill} />
+            </View>
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
