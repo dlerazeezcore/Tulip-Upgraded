@@ -248,4 +248,10 @@ jobs:
           api-key-id: ${{ vars.APPSTORE_API_KEY_ID }}
           api-private-key: ${{ secrets.APPSTORE_API_PRIVATE_KEY }}
           app-type: ios
-          wait-for-processing: true
+          # The upload itself is the deploy step and succeeds in seconds. Do NOT
+          # poll for Apple-side processing here: App Store Connect API JWTs are
+          # capped at 20 min, and when Apple's build "visibility"/processing is
+          # slow the polling outlives the token and fails with a 401 — even
+          # though the build uploaded fine. Track processing in App Store Connect
+          # / TestFlight instead. (Same deploy behaviour: the build is uploaded.)
+          wait-for-processing: false
