@@ -1,11 +1,17 @@
 // Wiring for the admin "users" screen.
-// Owns: user list load, search query, edit-modal selection, and the
-// loyalty/block/delete mutations.
+// Owns: user list load, search query, edit-modal selection, the
+// loyalty/block/delete mutations, and the per-user app-version state
+// (on latest / outdated / unknown vs the published latestVersion).
 import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
-import { getUsers, updateUser, deleteUser } from '@/services/admin';
+import { getUsers, updateUser, deleteUser, getAppVersionInfo } from '@/services/admin';
+import { compareVersions } from '@/state/updateStore';
+import { initials } from '@/lib/initials';
 import type { AdminUserRow } from '@/services/types';
+
+export type UserVersionKind = 'latest' | 'outdated' | 'unknown';
 
 export type AdminUsersViewModel = {
   isAdmin: boolean;
@@ -15,7 +21,7 @@ export type AdminUsersViewModel = {
   setQ: (q: string) => void;
   // data
   rows: AdminUserRow[];
-  users: AdminUserRow[];
+  users: (AdminUserRow & { initials: string; versionKind: UserVersionKind; versionLabel: string })[];
   loading: boolean;
   error: string | null;
   // edit modal
@@ -31,9 +37,11 @@ export type AdminUsersViewModel = {
 
 export function useAdminUsers(): AdminUsersViewModel {
   const router = useRouter();
+  const { t: tr } = useTranslation();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
   const [q, setQ] = useState('');
   const [rows, setRows] = useState<AdminUserRow[]>([]);
+  const [latestVersion, setLatestVersion] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<AdminUserRow | null>(null);
@@ -51,11 +59,34 @@ export function useAdminUsers(): AdminUsersViewModel {
       .then(setRows)
       .catch((e: any) => setError(e?.message || 'Failed to load users'))
       .finally(() => setLoading(false));
+    // Best-effort: the published latest version powers the per-user
+    // "on latest?" pill; without it every user shows as unknown.
+    getAppVersionInfo()
+      .then((info) => setLatestVersion(info.latestVersion || ''))
+      .catch(() => {});
   }, [isAdmin]);
 
   const users = useMemo(
-    () => rows.filter((u) => `${u.name} ${u.phone}`.toLowerCase().includes(q.trim().toLowerCase())),
-    [rows, q],
+    () =>
+      rows
+        .filter((u) => `${u.name} ${u.phone}`.toLowerCase().includes(q.trim().toLowerCase()))
+        .map((u) => {
+          const reported = (u.appVersion || '').trim();
+          const versionKind: UserVersionKind =
+            !reported || !latestVersion
+              ? 'unknown'
+              : compareVersions(reported, latestVersion) >= 0
+                ? 'latest'
+                : 'outdated';
+          const versionLabel =
+            versionKind === 'latest'
+              ? tr('admin.users.onLatest')
+              : versionKind === 'outdated'
+                ? `v${reported}`
+                : '—';
+          return { ...u, initials: initials(u.name), versionKind, versionLabel };
+        }),
+    [rows, q, latestVersion, tr],
   );
 
   const applyLocal = (u: AdminUserRow) => {

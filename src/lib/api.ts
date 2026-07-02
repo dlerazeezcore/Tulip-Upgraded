@@ -1,6 +1,14 @@
 // The single place the app talks HTTP to the backend. Services build on this;
 // UI never calls fetch directly.
+import Constants from 'expo-constants';
+import * as Application from 'expo-application';
 import { API_BASE_URL } from './config';
+
+// The running app build, reported on every request so the backend can record
+// which version each user is on (admin panel "on latest?" column).
+const APP_VERSION = String(
+  Constants.expoConfig?.version || Application.nativeApplicationVersion || '',
+).trim();
 
 let authToken: string | null = null;
 
@@ -53,6 +61,7 @@ export async function apiFetch<T = unknown>(path: string, opts: RequestOptions =
   const headers: Record<string, string> = { Accept: 'application/json' };
   if (body !== undefined) headers['Content-Type'] = 'application/json';
   if (auth && authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  if (APP_VERSION) headers['X-App-Version'] = APP_VERSION;
 
   const controller = new AbortController();
   const timer = setTimeout(() => controller.abort(), timeoutMs);

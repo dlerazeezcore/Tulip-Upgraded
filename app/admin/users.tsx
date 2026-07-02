@@ -57,7 +57,7 @@ export default function AdminUsers() {
               >
                 <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                   <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 14, color: t.fg }}>
-                    {u.name.split(' ').map((p) => p[0]).slice(0, 2).join('')}
+                    {u.initials}
                   </Text>
                 </View>
                 <View style={{ flex: 1 }}>
@@ -72,9 +72,31 @@ export default function AdminUsers() {
                   </View>
                   <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>{u.phone}</Text>
                 </View>
-                <Text style={{ fontSize: 11, color: u.isBlocked ? t.danger : u.status === 'active' ? t.success : t.fgMuted, fontWeight: '700' }}>
-                  {u.isBlocked ? tr('admin.users.blockedBadge') : u.status}
-                </Text>
+                <View style={{ alignItems: 'flex-end', gap: 4 }}>
+                  <Text style={{ fontSize: 11, color: u.isBlocked ? t.danger : u.status === 'active' ? t.success : t.fgMuted, fontWeight: '700' }}>
+                    {u.isBlocked ? tr('admin.users.blockedBadge') : u.status}
+                  </Text>
+                  <View
+                    style={{
+                      paddingHorizontal: 6,
+                      paddingVertical: 2,
+                      borderRadius: 999,
+                      backgroundColor:
+                        u.versionKind === 'latest' ? t.successBg : u.versionKind === 'outdated' ? t.warningBg : t.bgSunken,
+                    }}
+                  >
+                    <Text
+                      style={{
+                        fontSize: 9,
+                        fontWeight: '800',
+                        color:
+                          u.versionKind === 'latest' ? t.successFg : u.versionKind === 'outdated' ? t.warningFg : t.fgFaint,
+                      }}
+                    >
+                      {u.versionLabel}
+                    </Text>
+                  </View>
+                </View>
               </Pressable>
             ))}
             {users.length === 0 && <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20 }}>{tr('admin.users.empty')}</Text>}

@@ -167,6 +167,8 @@ export type AdminUserRow = {
   isLoyalty?: boolean;
   isBlocked?: boolean;
   createdAt?: string | null;
+  /** Last app build this user was seen on (X-App-Version, stamped by auth/me). */
+  appVersion?: string | null;
 };
 
 export type FeaturedLocationAdmin = {
