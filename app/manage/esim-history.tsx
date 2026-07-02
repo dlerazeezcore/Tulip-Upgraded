@@ -6,7 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Archive } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
-import { formatEsimDataLabel } from '@/state/esimStore';
+import { useEsimUsageFormatters } from '@/lib/esimUsage';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
@@ -23,6 +23,7 @@ import { useEsimHistory } from '@/screens/manage/useEsimHistory';
 export default function EsimHistoryScreen() {
   const t = useTheme();
   const { t: tr } = useTranslation();
+  const fmt = useEsimUsageFormatters();
   const vm = useEsimHistory();
   const { history, loading, refreshHistory } = vm;
 
@@ -83,7 +84,7 @@ export default function EsimHistoryScreen() {
                     {e.country}
                   </Text>
                   <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                    {formatEsimDataLabel(e.dataLabel)}{e.planDays > 0 ? ` · ${e.planDays} days` : ''}
+                    {fmt.dataLabel(e.dataLabel)}{e.planDays > 0 ? ` · ${fmt.planDays(e.planDays)}` : ''}
                   </Text>
                   {e.iccid ? (
                     <Text style={{ fontSize: 11, color: t.fgFaint, marginTop: 2 }} numberOfLines={1}>

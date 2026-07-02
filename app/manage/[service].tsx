@@ -6,8 +6,7 @@ import { useTranslation } from 'react-i18next';
 import { Archive, Smartphone } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
-import { formatEsimDataLabel } from '@/state/esimStore';
-import { formatRemainingData, formatTimeRemaining } from '@/lib/esimUsage';
+import { useEsimUsageFormatters } from '@/lib/esimUsage';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
@@ -74,6 +73,7 @@ function HistoryCard({ count, onPress }: { count: number; onPress: () => void })
 function EsimList({ vm }: { vm: ReturnType<typeof useManageService> }) {
   const t = useTheme();
   const { t: tr } = useTranslation();
+  const fmt = useEsimUsageFormatters();
   const esims = vm.esims;
   const refreshing = vm.refreshing;
   const loaded = vm.loaded;
@@ -119,7 +119,7 @@ function EsimList({ vm }: { vm: ReturnType<typeof useManageService> }) {
                   {e.country}
                 </Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                  {formatEsimDataLabel(e.dataLabel)}{e.planDays > 0 ? ` · ${e.planDays} days` : ''}
+                  {fmt.dataLabel(e.dataLabel)}{e.planDays > 0 ? ` · ${fmt.planDays(e.planDays)}` : ''}
                 </Text>
               </View>
               <StatusPill kind={pillKind} label={pillLabel} />
@@ -132,10 +132,10 @@ function EsimList({ vm }: { vm: ReturnType<typeof useManageService> }) {
                 </View>
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
                   <Text style={{ fontSize: 11, color: t.fg, fontWeight: '600' }}>
-                    {formatRemainingData(e.remainingMb, e.unlimited)}
+                    {fmt.dataRemaining(e.remainingMb, e.unlimited)}
                   </Text>
                   <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                    {e.status === 'active' ? formatTimeRemaining(e.hoursLeft) : tr('manage.waitingFirstConnection')}
+                    {e.status === 'active' ? fmt.timeRemaining(e.hoursLeft) : tr('manage.waitingFirstConnection')}
                   </Text>
                 </View>
               </View>
@@ -217,7 +217,7 @@ export default function ManageService() {
           ) : undefined
         }
       >
-        {service === 'esim' ? <EsimList vm={vm} /> : <ComingSoon label={svc?.label ?? 'This'} />}
+        {service === 'esim' ? <EsimList vm={vm} /> : <ComingSoon label={svc ? tr(`serviceNames.${svc.id}`) : String(service ?? '')} />}
       </ScrollView>
     </SafeAreaView>
   );

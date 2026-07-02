@@ -83,6 +83,7 @@ export function useEsimDetail() {
     const profileId = esim.id;
     let cancelled = false;
     let attempts = 0;
+    let timer: ReturnType<typeof setTimeout> | null = null;
     const MAX_ATTEMPTS = 36; // ~3 minutes at 5s interval
     const tick = async () => {
       if (cancelled) return;
@@ -100,13 +101,14 @@ export function useEsimDetail() {
       }
       setPreparingTick((n) => n + 1);
       if (!cancelled && attempts < MAX_ATTEMPTS) {
-        setTimeout(tick, 5000);
+        timer = setTimeout(tick, 5000);
       }
     };
     // Kick off the first attempt immediately so the user doesn't wait 5s.
     tick();
     return () => {
       cancelled = true;
+      if (timer != null) clearTimeout(timer);
     };
   }, [esim?.id, showInstall, hasActivationData, refresh]);
 

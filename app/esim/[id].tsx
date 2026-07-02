@@ -12,7 +12,7 @@ import { StatusPill } from '@/components/StatusPill';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { EsimInstallCard } from '@/components/EsimInstallCard';
 import { isDefinitelyUnsupported } from '@/services/device';
-import { formatRemainingData, formatTimeRemaining, formatUsedData } from '@/lib/esimUsage';
+import { useEsimUsageFormatters } from '@/lib/esimUsage';
 import { useEsimDetail } from '@/screens/esim/useEsimDetail';
 import { useIsWideWeb } from '@/lib/responsive';
 import { useIsRTL } from '@/lib/rtl';
@@ -43,6 +43,7 @@ function Row({ label, value }: { label: string; value: string }) {
 export default function EsimDetail() {
   const t = useTheme();
   const { t: tr } = useTranslation();
+  const fmt = useEsimUsageFormatters();
   const vm = useEsimDetail();
   const esim = vm.esim;
   const isWide = useIsWideWeb();
@@ -96,13 +97,13 @@ export default function EsimDetail() {
           <UsageRing
             fraction={esim.unlimited ? 1 : vm.fraction}
             color={ringColor}
-            centerTop={esim.unlimited ? '∞' : formatRemainingData(esim.remainingMb).replace(' left', '')}
+            centerTop={esim.unlimited ? '∞' : fmt.dataAmount(esim.remainingMb)}
             centerSub={esim.unlimited ? tr('esim.unlimitedShort') : tr('esim.remaining')}
           />
           <View style={{ flexDirection: 'row', width: '100%' }}>
-            <Stat label={tr('esim.statUsed')} value={esim.unlimited ? '—' : formatUsedData(esim.usedMb)} />
+            <Stat label={tr('esim.statUsed')} value={esim.unlimited ? '—' : fmt.dataAmount(esim.usedMb)} />
             <View style={{ width: 1, backgroundColor: t.border }} />
-            <Stat label={tr('esim.statTimeLeft')} value={formatTimeRemaining(esim.hoursLeft).replace(' left', '')} />
+            <Stat label={tr('esim.statTimeLeft')} value={fmt.timeAmount(esim.hoursLeft)} />
             <View style={{ width: 1, backgroundColor: t.border }} />
             <Stat label={tr('esim.statPlan')} value={esim.unlimited ? tr('esim.unlimited') : `${esim.planGb} GB`} />
           </View>

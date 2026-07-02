@@ -12,6 +12,8 @@ import {
   LucideIcon,
 } from 'lucide-react-native';
 
+// User-visible service copy lives in i18n (serviceNames.* / serviceVerbs.* /
+// serviceHints.* keyed by id); `label` stays as the internal English name.
 export type Service = {
   id: 'flights' | 'hotels' | 'esim' | 'transfers' | 'cars';
   label: string;
@@ -19,18 +21,17 @@ export type Service = {
   Icon: LucideIcon;
   color: string;
   tint: string;
-  searchHint: string;
   /** Whether the service is actually shippable. Non-live services are badged
    *  "Soon" and lead to honest coming-soon placeholders (UX-4). */
   live: boolean;
 };
 
 export const SERVICES: Service[] = [
-  { id: 'flights',   label: 'Flights',    verb: 'Find flights',           Icon: Plane,       color: '#1967D2', tint: 'rgba(25,103,210,0.10)',  searchHint: 'Where to next?',  live: false },
-  { id: 'hotels',    label: 'Hotels',     verb: 'Find a place to stay',   Icon: Building2,   color: '#7C3AED', tint: 'rgba(124,58,237,0.10)',  searchHint: 'City or hotel name', live: false },
-  { id: 'esim',      label: 'eSIM',       verb: 'Stay connected',         Icon: Globe,       color: '#10B981', tint: 'rgba(16,185,129,0.12)',  searchHint: 'Country or region', live: true },
-  { id: 'transfers', label: 'Transfers',  verb: 'Airport & city transfers', Icon: ArrowRight, color: '#F59E0B', tint: 'rgba(245,158,11,0.12)',  searchHint: 'Pickup location', live: false },
-  { id: 'cars',      label: 'Car Rental', verb: 'Rent a car',             Icon: Car,         color: '#DC2626', tint: 'rgba(220,38,38,0.10)',   searchHint: 'Pickup city', live: false },
+  { id: 'flights',   label: 'Flights',    verb: 'Find flights',           Icon: Plane,       color: '#1967D2', tint: 'rgba(25,103,210,0.10)',  live: false },
+  { id: 'hotels',    label: 'Hotels',     verb: 'Find a place to stay',   Icon: Building2,   color: '#7C3AED', tint: 'rgba(124,58,237,0.10)',  live: false },
+  { id: 'esim',      label: 'eSIM',       verb: 'Stay connected',         Icon: Globe,       color: '#10B981', tint: 'rgba(16,185,129,0.12)',  live: true },
+  { id: 'transfers', label: 'Transfers',  verb: 'Airport & city transfers', Icon: ArrowRight, color: '#F59E0B', tint: 'rgba(245,158,11,0.12)',  live: false },
+  { id: 'cars',      label: 'Car Rental', verb: 'Rent a car',             Icon: Car,         color: '#DC2626', tint: 'rgba(220,38,38,0.10)',   live: false },
 ];
 
 export const SERVICE_SLOT = {

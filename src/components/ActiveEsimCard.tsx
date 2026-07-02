@@ -6,7 +6,7 @@ import { Signal } from 'lucide-react-native';
 import { DirectionalChevron } from './DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimStore } from '@/state/esimStore';
-import { formatRemainingData, formatTimeRemaining, formatUsedData } from '@/lib/esimUsage';
+import { useEsimUsageFormatters } from '@/lib/esimUsage';
 import { Flag } from './Flag';
 import { PressableScale } from './PressableScale';
 
@@ -18,6 +18,7 @@ import { PressableScale } from './PressableScale';
 export function ActiveEsimCard() {
   const t = useTheme();
   const { t: tr } = useTranslation();
+  const fmt = useEsimUsageFormatters();
   const router = useRouter();
   const esims = useEsimStore((s) => s.esims);
   const active = esims.filter((e) => e.status === 'active');
@@ -71,12 +72,14 @@ export function ActiveEsimCard() {
                   {e.country}
                 </Text>
                 <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 1 }}>
-                  {tr('home.planSummary', { gb: e.planGb, days: e.planDays })}
+                  {e.unlimited
+                    ? tr('home.planSummaryUnlimited', { days: e.planDays })
+                    : tr('home.planSummary', { gb: e.planGb, days: e.planDays })}
                 </Text>
               </View>
               <View style={{ alignItems: 'flex-end' }}>
                 <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
-                  {e.unlimited ? '∞' : formatRemainingData(e.remainingMb).replace(' left', '')}
+                  {e.unlimited ? '∞' : fmt.dataAmount(e.remainingMb)}
                 </Text>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>{e.unlimited ? tr('home.unlimitedShort') : tr('home.left')}</Text>
               </View>
@@ -89,10 +92,10 @@ export function ActiveEsimCard() {
               </View>
               <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 6 }}>
                 <Text style={{ fontSize: 11, color: t.fgMuted }}>
-                  {e.unlimited ? '—' : tr('home.used', { value: formatUsedData(e.usedMb) })}
+                  {e.unlimited ? '—' : tr('home.used', { value: fmt.dataAmount(e.usedMb) })}
                 </Text>
                 <Text style={{ fontSize: 11, fontWeight: '700', color: low ? t.warning : t.fgMuted }}>
-                  {formatTimeRemaining(e.hoursLeft)}
+                  {fmt.timeRemaining(e.hoursLeft)}
                 </Text>
               </View>
             </View>

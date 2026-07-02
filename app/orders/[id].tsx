@@ -12,19 +12,14 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { formatIqd } from '@/lib/pricing';
 import { useOrderDetail } from '@/screens/orders/useOrderDetail';
 import { useIsRTL } from '@/lib/rtl';
-
-function fmtDateTime(iso?: string | null) {
-  if (!iso) return '—';
-  return new Date(iso).toLocaleString(undefined, {
-    year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit',
-  });
-}
+import { useDateFormatters } from '@/lib/dates';
 
 export default function OrderDetail() {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const vm = useOrderDetail();
   const isRTL = useIsRTL();
+  const { formatDateTime } = useDateFormatters();
   const { order, item, completed } = vm;
 
   return (
@@ -40,14 +35,14 @@ export default function OrderDetail() {
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-          Order detail
+          {tr('orders.detailTitle')}
         </Text>
       </View>
 
       {!order ? (
         <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <Text style={{ color: t.fgMuted }}>Order not found.</Text>
-          <PrimaryButton label="Back to orders" onPress={vm.goOrders} />
+          <Text style={{ color: t.fgMuted }}>{tr('orders.notFound')}</Text>
+          <PrimaryButton label={tr('orders.backToOrders')} onPress={vm.goOrders} />
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
@@ -55,7 +50,7 @@ export default function OrderDetail() {
             {item?.countryCode ? <Flag iso={item.countryCode} size={42} /> : <Globe size={32} color={t.primary} />}
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>
-                {item?.countryName ? `${item.countryName} eSIM` : 'eSIM order'}
+                {item?.countryName ? tr('orders.countryEsim', { country: item.countryName }) : tr('orders.esimOrder')}
               </Text>
               {item?.packageName ? <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{item.packageName}</Text> : null}
               <View style={{ marginTop: 6 }}>
@@ -66,12 +61,12 @@ export default function OrderDetail() {
 
           <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
             {([
-              ['Order number', order.orderNumber],
-              ['Date', fmtDateTime(order.bookedAt || order.createdAt)],
-              ['Payment method', order.paymentMethod || '—'],
-              ['Destination', item?.countryName || '—'],
-              ['Plan', item?.packageName || item?.packageCode || '—'],
-              ['Quantity', String(item?.quantity ?? 1)],
+              [tr('orders.rowOrderNumber'), order.orderNumber],
+              [tr('orders.rowDate'), formatDateTime(order.bookedAt || order.createdAt)],
+              [tr('orders.rowPaymentMethod'), order.paymentMethod || '—'],
+              [tr('orders.rowDestination'), item?.countryName || '—'],
+              [tr('orders.rowPlan'), item?.packageName || item?.packageCode || '—'],
+              [tr('orders.rowQuantity'), String(item?.quantity ?? 1)],
             ] as [string, string][]).map(([k, v], i, arr) => (
               <View
                 key={k + i}

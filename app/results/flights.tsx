@@ -6,11 +6,13 @@ import { Plane } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
+import { useIsRTL } from '@/lib/rtl';
 import { useFlightResults } from '@/screens/results/useFlightResults';
 
 export default function FlightResults() {
   const t = useTheme();
   const { t: tr } = useTranslation();
+  const isRTL = useIsRTL();
   const vm = useFlightResults();
 
   return (
@@ -20,13 +22,14 @@ export default function FlightResults() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
+          hitSlop={4}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>
-            {(vm.from || tr('results.flightsTitle')).split(' · ')[0]}{vm.to ? ` → ${vm.to.split(' · ')[0]}` : ''}
+            {(vm.from || tr('results.flightsTitle')).split(' · ')[0]}{vm.to ? ` ${isRTL ? '←' : '→'} ${vm.to.split(' · ')[0]}` : ''}
           </Text>
           {vm.departDate ? (
             <Text style={{ fontSize: 11, color: t.fgMuted }}>

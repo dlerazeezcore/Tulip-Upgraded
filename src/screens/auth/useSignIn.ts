@@ -50,7 +50,11 @@ export function useSignIn() {
 
   const onSendCode = () =>
     run(async () => {
-      await requestOtp(phone, 'sms');
+      // OTP is SMS-only — never fire the request with an empty phone (e.g.
+      // when the identifier toggle sits on email).
+      const trimmed = phone.trim();
+      if (!trimmed) throw new Error(tr('auth.phoneRequired'));
+      await requestOtp(trimmed, 'sms');
       setOtpSent(true);
     });
 

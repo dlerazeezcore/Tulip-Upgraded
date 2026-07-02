@@ -61,16 +61,23 @@ function floor1(n: number): number {
  *
  * Priority:
  *   1. positive totalDataMb > 0  → show the GB amount
- *   2. package name from the order (e.g. "Iraq 0.5 GB · 1d") → show as-is
- *   3. neither → "pending" placeholder
+ *   2. package name says "unlimited" (and no positive total) → unlimited
+ *   3. package name from the order (e.g. "Iraq 0.5 GB · 1d") → show as-is
+ *   4. neither → "pending" placeholder
  */
 function buildDataLabel(p: EsimProfile): EsimDataLabel {
   const mb = p.totalDataMb;
   if (typeof mb === 'number' && mb > 0) {
     return { kind: 'gb', gb: round1(mb / 1024) };
   }
-  if (p.packageName && p.packageName.trim()) {
-    return { kind: 'package', name: p.packageName.trim() };
+  const name = (p.packageName ?? '').trim();
+  // Positive evidence for unlimited: the purchased package is named so. A
+  // missing/zero total alone must NOT imply unlimited (placeholder profiles).
+  if (/unlimited/i.test(name)) {
+    return { kind: 'unlimited' };
+  }
+  if (name) {
+    return { kind: 'package', name };
   }
   return { kind: 'pending' };
 }
@@ -123,16 +130,6 @@ function toDisplay(p: EsimProfile): Esim {
     unlimited: isUnlimited,
     dataLabel: label,
   };
-}
-
-/** Convenience: turn an EsimDataLabel into the user-visible string. */
-export function formatEsimDataLabel(label: EsimDataLabel): string {
-  switch (label.kind) {
-    case 'gb':        return `${label.gb} GB`;
-    case 'unlimited': return 'Unlimited data';
-    case 'package':   return label.name;
-    case 'pending':   return 'Plan details loading…';
-  }
 }
 
 function identifierFor(p: EsimProfile): { iccid?: string; esimTranNo?: string; providerOrderNo?: string; id?: number } {

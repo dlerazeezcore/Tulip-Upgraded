@@ -9,6 +9,7 @@ import Animated, {
 import * as Haptics from 'expo-haptics';
 import { Platform } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
+import { useIsRTL } from '@/lib/rtl';
 
 const W = 50;
 const H = 30;
@@ -19,7 +20,11 @@ const TRAVEL = W - THUMB - PAD * 2;
 /** Reliable, animated toggle that works the same on web and native. */
 export function Toggle({ value, onChange }: { value: boolean; onChange: (v: boolean) => void }) {
   const t = useTheme();
+  const isRTL = useIsRTL();
   const p = useSharedValue(value ? 1 : 0);
+  // In RTL the row is mirrored, so "on" is towards the visual left — negate the
+  // travel or the thumb slides against the reading direction.
+  const travel = isRTL ? -TRAVEL : TRAVEL;
 
   useEffect(() => {
     p.value = withTiming(value ? 1 : 0, { duration: 170 });
@@ -29,7 +34,7 @@ export function Toggle({ value, onChange }: { value: boolean; onChange: (v: bool
     backgroundColor: interpolateColor(p.value, [0, 1], [t.borderStrong, t.primary]),
   }));
   const thumbStyle = useAnimatedStyle(() => ({
-    transform: [{ translateX: p.value * TRAVEL }],
+    transform: [{ translateX: p.value * travel }],
   }));
 
   return (

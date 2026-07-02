@@ -86,7 +86,7 @@ export function usePlacePackages(): PlacePackagesViewModel {
     return () => {
       cancelled = true;
     };
-  }, [iso, place]);
+  }, [iso, place, isRegion]);
 
   // Resolve ISO codes to full country names for the coverage list (regions only).
   useEffect(() => {

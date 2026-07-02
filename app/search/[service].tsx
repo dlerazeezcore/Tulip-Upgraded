@@ -130,7 +130,7 @@ export default function SearchScreen() {
           <TextInput
             value={vm.from}
             onChangeText={vm.setFrom}
-            placeholder={svc.searchHint}
+            placeholder={tr(`serviceHints.${svc.id}`)}
             placeholderTextColor={t.fgFaint}
             style={{ fontSize: 15, fontFamily: t.font.bodyMedium, color: t.fg, marginTop: 4, paddingVertical: 2 }}
           />
