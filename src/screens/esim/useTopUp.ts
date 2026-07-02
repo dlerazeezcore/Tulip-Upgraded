@@ -48,11 +48,13 @@ export function useTopUp() {
   const [selected, setSelected] = useState<Bundle | null>(null);
 
   // Payment selection mirrors useCheckout: Loyalty is comped and reserved for
-  // loyalty accounts; everyone else only sees FIB, and FIB is the default so a
-  // top-up can never be checked out for free by accident.
+  // loyalty accounts (also enforced server-side) — loyalty customers pay with
+  // loyalty by default; everyone else pays FIB (or future methods). The
+  // default stays reactive to the account until the customer picks explicitly.
   const isLoyalty = !!user?.isLoyalty;
   const availableMethods = PAYMENT_METHODS.filter((p) => p.id !== 'loyalty' || isLoyalty);
-  const [method, setMethod] = useState<'fib' | 'loyalty'>('fib');
+  const [methodChoice, setMethod] = useState<'fib' | 'loyalty' | null>(null);
+  const method: 'fib' | 'loyalty' = methodChoice ?? (isLoyalty ? 'loyalty' : 'fib');
   const [busy, setBusy] = useState(false);
   const [payError, setPayError] = useState<string | null>(null);
   const fib = useFibPayment();

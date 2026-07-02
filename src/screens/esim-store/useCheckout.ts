@@ -27,12 +27,14 @@ export function useCheckout() {
   const isWide = useIsWideWeb();
   const esimSupport = useDeviceStore((s) => s.esimSupport);
   // Loyalty is a comped method reserved for loyalty (VIP/staff) accounts. Real
-  // customers only see FIB, and FIB is the default for everyone so a normal
-  // user can never accidentally check out for free. The backend independently
-  // rejects paymentMethod=loyalty from a non-loyalty token.
+  // customers only see FIB; loyalty customers pay with loyalty by default
+  // (product rule 2026-07-02) — the default stays reactive to the account
+  // until the customer picks explicitly. The backend independently rejects
+  // paymentMethod=loyalty from a non-loyalty token.
   const isLoyalty = !!user?.isLoyalty;
   const availableMethods = PAYMENT_METHODS.filter((p) => p.id !== 'loyalty' || isLoyalty);
-  const [method, setMethod] = useState<'fib' | 'loyalty'>('fib');
+  const [methodChoice, setMethod] = useState<'fib' | 'loyalty' | null>(null);
+  const method: 'fib' | 'loyalty' = methodChoice ?? (isLoyalty ? 'loyalty' : 'fib');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const fib = useFibPayment();
