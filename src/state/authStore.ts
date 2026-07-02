@@ -1,5 +1,7 @@
 import { create } from 'zustand';
+import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as SecureStore from 'expo-secure-store';
 import { setAuthToken } from '@/lib/api';
 import * as authApi from '@/services/auth';
 import { registerDevice, unregisterDevice } from '@/services/push';
@@ -21,6 +23,41 @@ export type AuthUser = {
 
 const USER_KEY = 'tulip.auth';
 const TOKEN_KEY = 'tulip.auth.token';
+
+// --- Token storage adapter --------------------------------------------------
+// The bearer token is sensitive, so on native it lives in the platform
+// keychain/keystore via expo-secure-store. SecureStore is unavailable on web,
+// where we keep using AsyncStorage. The non-sensitive USER_KEY profile blob
+// stays in AsyncStorage on all platforms.
+const isWeb = Platform.OS === 'web';
+
+const tokenStorage = {
+  async get(): Promise<string | null> {
+    if (isWeb) return AsyncStorage.getItem(TOKEN_KEY);
+    const token = await SecureStore.getItemAsync(TOKEN_KEY);
+    if (token !== null) return token;
+    // One-time migration: older builds persisted the token in AsyncStorage.
+    // Adopt it into SecureStore so already-signed-in users stay signed in,
+    // then drop the plaintext copy.
+    const legacy = await AsyncStorage.getItem(TOKEN_KEY);
+    if (legacy) {
+      await SecureStore.setItemAsync(TOKEN_KEY, legacy);
+      AsyncStorage.removeItem(TOKEN_KEY).catch(() => {});
+    }
+    return legacy;
+  },
+  set(token: string): Promise<void> {
+    if (isWeb) return AsyncStorage.setItem(TOKEN_KEY, token);
+    return SecureStore.setItemAsync(TOKEN_KEY, token);
+  },
+  async remove(): Promise<void> {
+    // Belt and braces: clear both stores so no plaintext copy lingers.
+    await Promise.all([
+      isWeb ? Promise.resolve() : SecureStore.deleteItemAsync(TOKEN_KEY).catch(() => {}),
+      AsyncStorage.removeItem(TOKEN_KEY).catch(() => {}),
+    ]);
+  },
+};
 
 function initials(name: string): string {
   const parts = (name || '').trim().split(/\s+/).filter(Boolean);
@@ -61,8 +98,8 @@ function userFromMe(m: AuthMe): AuthUser {
 function persist(user: AuthUser | null, token: string | null) {
   if (user) AsyncStorage.setItem(USER_KEY, JSON.stringify(user)).catch(() => {});
   else AsyncStorage.removeItem(USER_KEY).catch(() => {});
-  if (token) AsyncStorage.setItem(TOKEN_KEY, token).catch(() => {});
-  else AsyncStorage.removeItem(TOKEN_KEY).catch(() => {});
+  if (token) tokenStorage.set(token).catch(() => {});
+  else tokenStorage.remove().catch(() => {});
 }
 
 type AuthState = {
@@ -97,7 +134,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     if (get().hydrated) return;
     try {
       const [token, rawUser] = await Promise.all([
-        AsyncStorage.getItem(TOKEN_KEY),
+        tokenStorage.get(),
         AsyncStorage.getItem(USER_KEY),
       ]);
       if (token) {
