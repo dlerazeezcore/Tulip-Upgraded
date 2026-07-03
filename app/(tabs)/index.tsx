@@ -101,7 +101,7 @@ export default function Home() {
               }}
             >
               <Search size={18} color={t.fgMuted} />
-              <Text style={{ flex: 1, fontSize: 14, color: t.fgFaint }}>{tr(`serviceVerbs.${svc.id}`)}</Text>
+              <Text style={{ flex: 1, fontSize: 14, color: t.fgMuted }}>{tr(`serviceVerbs.${svc.id}`)}</Text>
               <View
                 style={{
                   paddingVertical: 8,

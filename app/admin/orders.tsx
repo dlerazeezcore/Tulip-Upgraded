@@ -1,13 +1,15 @@
 // THIN UI — wiring lives in src/screens/admin/useAdminOrders.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, ActivityIndicator } from 'react-native';
+import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Globe, ChevronDown, RefreshCw, Check, AlertCircle } from 'lucide-react-native';
+import { Globe, ChevronDown, RefreshCw, Check, AlertCircle, CalendarDays, Receipt } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
+import { EmptyState } from '@/components/EmptyState';
+import { OrderListSkeleton } from '@/components/Skeleton';
 import { useAdminOrders } from '@/screens/admin/useAdminOrders';
 
 const YEARS = [2026, 2027, 2028, 2029, 2030];
@@ -113,13 +115,13 @@ export default function AdminOrders() {
         </View>
 
         {month === null ? (
-          <Text style={{ color: t.fgMuted, textAlign: 'center', paddingVertical: 40 }}>{tr('admin.orders.selectYearMonth')}</Text>
+          <EmptyState icon={CalendarDays} title={tr('admin.orders.selectYearMonth')} />
         ) : loading ? (
-          <View style={{ paddingVertical: 50, alignItems: 'center' }}><ActivityIndicator color={t.primary} /></View>
+          <OrderListSkeleton />
         ) : error ? (
-          <Text style={{ color: t.danger, textAlign: 'center', paddingVertical: 20 }}>{error}</Text>
+          <EmptyState icon={AlertCircle} title={tr('common.error')} subtitle={error} />
         ) : filtered.length === 0 ? (
-          <Text style={{ color: t.fgMuted, textAlign: 'center', paddingVertical: 40 }}>{tr('admin.orders.noOrdersForMonth', { month: monthLabel(month), year })}</Text>
+          <EmptyState icon={Receipt} title={tr('admin.orders.noOrdersForMonth', { month: monthLabel(month), year })} />
         ) : (
           <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
             {filtered.map((o, i) => (

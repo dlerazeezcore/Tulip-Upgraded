@@ -21,7 +21,7 @@ export function UpdateAvailableModal() {
       <View
         style={{
           flex: 1,
-          backgroundColor: 'rgba(15,23,42,0.55)',
+          backgroundColor: t.scrim,
           padding: 24,
           alignItems: 'center',
           justifyContent: 'center',

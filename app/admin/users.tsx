@@ -106,7 +106,7 @@ export default function AdminUsers() {
 
       {/* Edit modal */}
       <Modal visible={selected !== null} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
-        <Pressable onPress={() => setSelected(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <Pressable onPress={() => setSelected(null)} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
             {selected && (
               <>

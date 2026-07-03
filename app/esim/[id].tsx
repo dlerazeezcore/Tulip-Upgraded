@@ -4,7 +4,7 @@ import { ScrollView, View, Text, Pressable, ActivityIndicator, RefreshControl } 
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Plus, Signal, Clock, RefreshCw, AlertTriangle } from 'lucide-react-native';
-import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { StackHeader } from '@/components/StackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { UsageRing } from '@/components/UsageRing';
@@ -50,21 +50,15 @@ export default function EsimDetail() {
   const isWide = useIsWideWeb();
 
   const screenHeader = (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-      <Pressable
-        onPress={vm.goBack}
-        accessibilityRole="button"
-        accessibilityLabel={tr('a11y.back')}
-        hitSlop={4}
-        style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
-      >
-        <DirectionalChevron direction="back" size={18} color={t.fg} />
-      </Pressable>
-      <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>{tr('esim.details')}</Text>
-      <Pressable onPress={() => vm.refreshUsage()} accessibilityRole="button" accessibilityLabel={tr('a11y.refresh')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
-        <RefreshCw size={16} color={t.fg} />
-      </Pressable>
-    </View>
+    <StackHeader
+      title={tr('esim.details')}
+      onBack={vm.goBack}
+      right={
+        <Pressable onPress={() => vm.refreshUsage()} accessibilityRole="button" accessibilityLabel={tr('a11y.refresh')} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+          <RefreshCw size={16} color={t.fg} />
+        </Pressable>
+      }
+    />
   );
 
   if (!esim) {

@@ -4,7 +4,7 @@ import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Receipt, Globe } from 'lucide-react-native';
-import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { StackHeader } from '@/components/StackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
@@ -19,19 +19,7 @@ export default function Orders() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable
-          onPress={vm.goBack}
-          accessibilityRole="button"
-          accessibilityLabel={tr('a11y.back')}
-          hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <DirectionalChevron direction="back" size={18} color={t.fg} />
-        </Pressable>
-        <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-          {tr('orders.title')}
-        </Text>
-      </View>
+      <StackHeader title={tr('orders.title')} onBack={vm.goBack} />
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 20, maxWidth: 780, width: '100%', alignSelf: 'center' }}>
         {vm.loading && !vm.loaded ? (

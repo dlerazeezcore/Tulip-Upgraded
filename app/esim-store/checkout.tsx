@@ -4,7 +4,7 @@ import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Check, Lock, Landmark, Gift, Globe, ShoppingBag } from 'lucide-react-native';
-import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { StackHeader } from '@/components/StackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -42,21 +42,7 @@ export default function Checkout() {
   const vm = useCheckout();
   const { place, bundle, user } = vm;
 
-  const header = (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-      <Pressable
-        onPress={vm.goBack}
-        accessibilityRole="button"
-        accessibilityLabel={tr('a11y.back')}
-        hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
-      >
-        <DirectionalChevron direction="back" size={18} color={t.fg} />
-      </Pressable>
-      <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-        {tr('checkout.title')}
-      </Text>
-    </View>
-  );
+  const header = <StackHeader title={tr('checkout.title')} onBack={vm.goBack} />;
 
   // No selection — guard.
   if (!place || !bundle) {

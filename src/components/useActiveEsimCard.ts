@@ -29,6 +29,9 @@ export function useActiveEsimCard() {
   const fmt = useEsimUsageFormatters();
   const router = useRouter();
   const esims = useEsimStore((s) => s.esims);
+  const loaded = useEsimStore((s) => s.loaded);
+  const storeError = useEsimStore((s) => s.error);
+  const refresh = useEsimStore((s) => s.refresh);
   const active = esims.filter((e) => e.status === 'active');
 
   const items: ActiveEsimItemVM[] = active.map((e) => {
@@ -60,5 +63,12 @@ export function useActiveEsimCard() {
     items,
     headerTitle: active.length > 1 ? tr('home.activeEsims') : tr('home.activeEsim'),
     goEsim: (id: string) => router.push(`/esim/${id}`),
+    /** First snapshot still on its way — show the card skeleton. */
+    loading: !loaded && !storeError,
+    /** First load failed with nothing to show — show the inline error row. */
+    errored: !loaded && !!storeError,
+    retry: () => {
+      void refresh();
+    },
   };
 }

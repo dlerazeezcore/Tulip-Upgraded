@@ -5,6 +5,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Archive, Smartphone } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { StackHeader } from '@/components/StackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
@@ -166,32 +167,25 @@ export default function ManageService() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable
-          onPress={vm.goBack}
-          accessibilityRole="button"
-          accessibilityLabel={tr('a11y.back')}
-          hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <DirectionalChevron direction="back" size={18} color={t.fg} />
-        </Pressable>
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          {svc && <svc.Icon size={20} color={svc.color} strokeWidth={2} />}
-          <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-            {title}
-          </Text>
-        </View>
-        {svc && service === 'esim' && (
-          <Pressable
-            onPress={vm.goBookNew}
-            style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: svc.color }}
-          >
-            <Text style={{ color: t.onPrimary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
-              {tr('manage.bookNew')}
-            </Text>
-          </Pressable>
-        )}
-      </View>
+      <StackHeader
+        title={title}
+        onBack={vm.goBack}
+        leading={svc ? <svc.Icon size={20} color={svc.color} strokeWidth={2} /> : undefined}
+        right={
+          svc && service === 'esim' ? (
+            <Pressable
+              onPress={vm.goBookNew}
+              accessibilityRole="button"
+              hitSlop={8}
+              style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: svc.color }}
+            >
+              <Text style={{ color: t.onPrimary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
+                {tr('manage.bookNew')}
+              </Text>
+            </Pressable>
+          ) : undefined
+        }
+      />
 
       <ScrollView
         contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 10, maxWidth: 900, width: '100%', alignSelf: 'center' }}

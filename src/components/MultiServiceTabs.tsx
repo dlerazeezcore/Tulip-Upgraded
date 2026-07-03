@@ -1,5 +1,5 @@
 import React from 'react';
-import { ScrollView, Pressable, View, Text } from 'react-native';
+import { ScrollView, Pressable, Text } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICES, Service } from '@/data/services';
@@ -32,31 +32,33 @@ export function MultiServiceTabs({
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={{ gap: compact ? 6 : 6, paddingVertical: 2, paddingRight: 8 }}
+      contentContainerStyle={{ gap: compact ? 6 : 6, paddingVertical: 2, paddingEnd: 8 }}
     >
       {SERVICES.map((s) => {
         const on = s.id === active;
         const Icon = s.Icon;
 
-        // Colors differ for the dark hero vs normal surfaces.
+        // Colors differ for the dark hero vs normal surfaces. On-hero tints are
+        // derived from t.onPrimary with hex-alpha suffixes (0x29≈16%, 0x47≈28%,
+        // 0xF2≈95%) instead of ad-hoc rgba literals.
         const bg = onDark
           ? on
-            ? '#FFFFFF'
-            : 'rgba(255,255,255,0.16)'
+            ? t.onPrimary
+            : `${t.onPrimary}29`
           : on
             ? s.tint
             : 'transparent';
         const borderColor = onDark
           ? on
-            ? '#FFFFFF'
-            : 'rgba(255,255,255,0.28)'
+            ? t.onPrimary
+            : `${t.onPrimary}47`
           : on
             ? s.color
             : 'transparent';
         const contentColor = onDark
           ? on
             ? s.color
-            : 'rgba(255,255,255,0.95)'
+            : `${t.onPrimary}F2`
           : on
             ? s.color
             : t.fgMuted;

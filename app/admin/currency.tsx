@@ -131,7 +131,7 @@ export default function AdminCurrency() {
 
       {/* ── Add / edit currency editor ── */}
       <Modal visible={!!vm.editing} transparent animationType="slide" onRequestClose={vm.closeEditor}>
-        <Pressable onPress={vm.closeEditor} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <Pressable onPress={vm.closeEditor} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14, maxWidth: 620, width: '100%', alignSelf: 'center' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>

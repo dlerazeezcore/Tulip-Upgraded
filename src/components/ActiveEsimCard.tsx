@@ -1,21 +1,65 @@
 // THIN UI — wiring lives in useActiveEsimCard.ts.
 import React from 'react';
-import { View, Text } from 'react-native';
-import { Signal } from 'lucide-react-native';
+import { View, Text, Pressable } from 'react-native';
+import { Signal, AlertCircle } from 'lucide-react-native';
+import { useTranslation } from 'react-i18next';
 import { DirectionalChevron } from './DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { useActiveEsimCard } from './useActiveEsimCard';
 import { Flag } from './Flag';
 import { PressableScale } from './PressableScale';
+import { EsimCardSkeleton } from './Skeleton';
 
 /**
  * Home widget that surfaces eSIM lifecycle even when the customer only
  * bought an eSIM (no trip). Shows each active eSIM's remaining data + days.
- * Renders nothing when there are no active eSIMs.
+ * Shows a skeleton while the first snapshot loads and an inline retry row when
+ * that load fails; renders nothing when there are genuinely no active eSIMs.
  */
 export function ActiveEsimCard() {
   const t = useTheme();
-  const { items, headerTitle, goEsim } = useActiveEsimCard();
+  const { t: tr } = useTranslation();
+  const { items, headerTitle, goEsim, loading, errored, retry } = useActiveEsimCard();
+
+  if (loading) return <EsimCardSkeleton />;
+
+  if (errored) {
+    return (
+      <View
+        style={{
+          flexDirection: 'row',
+          alignItems: 'center',
+          gap: 10,
+          padding: 14,
+          borderRadius: 16,
+          backgroundColor: t.bgElev,
+          borderColor: t.border,
+          borderWidth: 1,
+          ...t.shadow1,
+        }}
+      >
+        <AlertCircle size={18} color={t.danger} />
+        <Text style={{ flex: 1, fontSize: 12, color: t.fgMuted }}>{tr('common.error')}</Text>
+        <Pressable
+          onPress={retry}
+          accessibilityRole="button"
+          hitSlop={8}
+          style={({ pressed }) => ({
+            paddingVertical: 7,
+            paddingHorizontal: 12,
+            borderRadius: 999,
+            borderWidth: 1.5,
+            borderColor: t.primary,
+            opacity: pressed ? 0.7 : 1,
+          })}
+        >
+          <Text style={{ color: t.primary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
+            {tr('common.tryAgain')}
+          </Text>
+        </Pressable>
+      </View>
+    );
+  }
 
   if (items.length === 0) return null;
 

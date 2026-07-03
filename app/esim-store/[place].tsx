@@ -3,7 +3,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, Modal } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Globe, Check, Infinity as InfinityIcon, X, ArrowRight, Clock } from 'lucide-react-native';
-import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { StackHeader } from '@/components/StackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
@@ -21,20 +21,11 @@ export default function PlaceDetail() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable
-          onPress={vm.goBack}
-          accessibilityRole="button"
-          accessibilityLabel={tr('a11y.back')}
-          hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <DirectionalChevron direction="back" size={18} color={t.fg} />
-        </Pressable>
-        <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          {iso ? <Flag iso={iso} size={30} /> : <Globe size={24} color={t.primary} strokeWidth={2} />}
-          <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>{name}</Text>
-        </View>
-      </View>
+      <StackHeader
+        title={name}
+        onBack={vm.goBack}
+        leading={iso ? <Flag iso={iso} size={30} /> : <Globe size={24} color={t.primary} strokeWidth={2} />}
+      />
 
       <ScrollView
         contentContainerStyle={{ padding: vm.isWide ? 28 : 20, paddingBottom: 120, gap: 16, maxWidth: vm.isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
@@ -149,7 +140,7 @@ export default function PlaceDetail() {
       )}
 
       <Modal visible={vm.coverageOpen} transparent animationType="slide" onRequestClose={() => vm.setCoverageOpen(false)}>
-        <Pressable onPress={() => vm.setCoverageOpen(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <Pressable onPress={() => vm.setCoverageOpen(false)} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '76%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('esimStore.coverageTitle', { name })}</Text>

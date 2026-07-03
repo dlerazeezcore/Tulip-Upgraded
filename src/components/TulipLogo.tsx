@@ -1,8 +1,9 @@
 import React from 'react';
 import Svg, { G, Path } from 'react-native-svg';
+import { brand } from '@/theme/tokens';
 
 // Pure-JSX SVG (no SvgXml) so it renders on Expo Web as well as native.
-export function TulipLogo({ size = 28, color = '#1769c5' }: { size?: number; color?: string }) {
+export function TulipLogo({ size = 28, color = brand.blue500 }: { size?: number; color?: string }) {
   return (
     <Svg width={size} height={size} viewBox="0 0 1200 1200">
       <G transform="translate(3.8777622,-3.8778411)" fill={color}>

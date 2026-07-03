@@ -1,9 +1,9 @@
 // THIN UI — wiring lives in src/screens/results/useFlightResults.ts.
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Plane } from 'lucide-react-native';
-import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { StackHeader } from '@/components/StackHeader';
 import { EmptyState } from '@/components/EmptyState';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
@@ -18,27 +18,11 @@ export default function FlightResults() {
 
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable
-          onPress={vm.goBack}
-          accessibilityRole="button"
-          accessibilityLabel={tr('a11y.back')}
-          hitSlop={4}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <DirectionalChevron direction="back" size={18} color={t.fg} />
-        </Pressable>
-        <View style={{ flex: 1 }}>
-          <Text style={{ fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg }}>
-            {(vm.from || tr('results.flightsTitle')).split(' · ')[0]}{vm.to ? ` ${isRTL ? '←' : '→'} ${vm.to.split(' · ')[0]}` : ''}
-          </Text>
-          {vm.departDate ? (
-            <Text style={{ fontSize: 11, color: t.fgMuted }}>
-              {vm.departDate}{vm.tripType === 'roundtrip' && vm.returnDate ? ` – ${vm.returnDate}` : ''}
-            </Text>
-          ) : null}
-        </View>
-      </View>
+      <StackHeader
+        onBack={vm.goBack}
+        title={`${(vm.from || tr('results.flightsTitle')).split(' · ')[0]}${vm.to ? ` ${isRTL ? '←' : '→'} ${vm.to.split(' · ')[0]}` : ''}`}
+        subtitle={vm.departDate ? `${vm.departDate}${vm.tripType === 'roundtrip' && vm.returnDate ? ` – ${vm.returnDate}` : ''}` : null}
+      />
 
       <View style={{ flex: 1, justifyContent: 'center' }}>
         <EmptyState

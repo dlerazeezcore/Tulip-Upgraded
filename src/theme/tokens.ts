@@ -47,6 +47,10 @@ const shared = {
   ] as [string, string][],
 };
 
+/** Theme-independent brand ramp (same in light/dark) — for the few places that
+ *  need the brand color outside a theme context (e.g. the logo's default fill). */
+export const brand = shared.brand;
+
 type Mode = 'light' | 'dark';
 
 export type Theme = typeof shared & {
@@ -60,6 +64,8 @@ export type Theme = typeof shared & {
   fgFaint: string;
   border: string;
   borderStrong: string;
+  /** Modal/backdrop scrim behind sheets and dialogs. */
+  scrim: string;
   primary: string;
   primaryHover: string;
   primaryActive: string;
@@ -99,6 +105,7 @@ export const light: Theme = {
   fgFaint: '#9AA0AB',
   border: '#ECECF0',
   borderStrong: '#D9DBE2',
+  scrim: 'rgba(15, 23, 42, 0.45)',
   primary: '#1967D2',
   primaryHover: '#1557B0',
   primaryActive: '#114A99',
@@ -158,6 +165,7 @@ export const dark: Theme = {
   fgFaint: '#64748B',
   border: '#1E293B',
   borderStrong: '#2A3A55',
+  scrim: 'rgba(0, 0, 0, 0.55)',
   primary: '#3B82F6',
   primaryHover: '#2563EB',
   primaryActive: '#1D4ED8',

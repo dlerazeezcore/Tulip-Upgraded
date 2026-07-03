@@ -120,7 +120,7 @@ export default function Profile() {
             </View>
             <View style={{ flexDirection: 'row', gap: 10, maxWidth: 420 }}>
               <PrimaryButton label={tr('common.signIn')} onPress={vm.goSignIn} style={{ flex: 1 }} />
-              <PrimaryButton label={tr('common.signUp')} onPress={vm.goSignUp} style={{ flex: 1, backgroundColor: 'rgba(255,255,255,0.22)' }} />
+              <PrimaryButton label={tr('common.signUp')} variant="ghostOnPrimary" onPress={vm.goSignUp} style={{ flex: 1 }} />
             </View>
           </View>
         )}
@@ -178,7 +178,7 @@ export default function Profile() {
 
   const editModal = (
     <Modal visible={vm.editOpen} transparent animationType="slide" onRequestClose={vm.closeEdit}>
-      <Pressable onPress={vm.closeEdit} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+      <Pressable onPress={vm.closeEdit} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
         <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('profile.editProfile')}</Text>

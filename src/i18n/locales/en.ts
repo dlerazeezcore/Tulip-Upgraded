@@ -220,6 +220,7 @@ export default {
     noMatch: 'No countries match "{{q}}"',
     noCountries: 'No countries available.',
     noPopular: 'No popular destinations set. Use the Countries tab.',
+    noPopularTitle: 'No popular destinations',
     multiCountry: 'Multi-country eSIM',
     coverageCount: 'Coverage in {{count}} countries',
     coverageHint: 'Tap to see where this eSIM works',

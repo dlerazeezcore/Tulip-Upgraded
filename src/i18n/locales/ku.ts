@@ -220,6 +220,7 @@ export default {
     noMatch: 'هیچ وڵاتێک ناگونجێت لەگەڵ "{{q}}"',
     noCountries: 'هیچ وڵاتێک بەردەست نییە.',
     noPopular: 'هیچ شوێنێکی بەناوبانگ دانەنراوە. تابی وڵاتان بەکاربهێنە.',
+    noPopularTitle: 'هیچ شوێنێکی بەناوبانگ نییە',
     multiCountry: 'eSIM ـی فرە وڵات',
     coverageCount: 'گشتگیری لە {{count}} وڵات',
     coverageHint: 'کلیک بکە بۆ بینینی شوێنی کارکردنی ئەم eSIM',

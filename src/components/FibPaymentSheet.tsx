@@ -18,7 +18,7 @@ export function FibPaymentSheet({ sheet }: { sheet: FibPaymentSheetVM }) {
 
   return (
     <Modal visible={sheet.visible} transparent animationType="fade" onRequestClose={sheet.close}>
-      <View style={{ flex: 1, backgroundColor: 'rgba(15,23,42,0.55)', padding: 24, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ flex: 1, backgroundColor: t.scrim, padding: 24, alignItems: 'center', justifyContent: 'center' }}>
         <View style={{ width: '100%', maxWidth: 420, backgroundColor: t.bgElev, borderRadius: t.radius.lg, padding: 22, gap: 14, alignItems: 'center', ...t.shadow2 }}>
           {/* Title + close */}
           <View style={{ flexDirection: 'row', alignItems: 'center', width: '100%' }}>

@@ -7,7 +7,11 @@ type Props = {
   onPress?: () => void;
   icon?: React.ReactNode;
   style?: StyleProp<ViewStyle>;
-  variant?: 'primary' | 'ghost';
+  /** 'ghost' sits on normal surfaces (fg text, hairline border).
+   * 'ghostOnPrimary' is the same outline shape for primary/hero surfaces —
+   * onPrimary text + translucent onPrimary border, so it stays legible over
+   * the brand gradient in both themes. */
+  variant?: 'primary' | 'ghost' | 'ghostOnPrimary';
   /** Shows an inline spinner and blocks presses (prevents double-submit). */
   loading?: boolean;
   /** Dims the button and blocks presses. */
@@ -24,7 +28,10 @@ export function PrimaryButton({
   disabled = false,
 }: Props) {
   const t = useTheme();
-  const ghost = variant === 'ghost';
+  const ghost = variant === 'ghost' || variant === 'ghostOnPrimary';
+  const contentColor = variant === 'ghostOnPrimary' ? t.onPrimary : ghost ? t.fg : t.onPrimary;
+  const borderColor =
+    variant === 'ghostOnPrimary' ? `${t.onPrimary}59` : ghost ? t.border : 'transparent';
   // UX-13: a busy/disabled button must not be tappable, and should read as such.
   const blocked = loading || disabled;
   return (
@@ -44,17 +51,17 @@ export function PrimaryButton({
           justifyContent: 'center',
           gap: 8,
           borderWidth: ghost ? 1.5 : 0,
-          borderColor: ghost ? t.border : 'transparent',
+          borderColor,
           opacity: blocked ? 0.55 : pressed ? 0.85 : 1,
         },
         !ghost && t.shadowGlow,
         style,
       ]}
     >
-      {loading ? <ActivityIndicator size="small" color={ghost ? t.fg : t.onPrimary} /> : icon}
+      {loading ? <ActivityIndicator size="small" color={contentColor} /> : icon}
       <Text
         style={{
-          color: ghost ? t.fg : t.onPrimary,
+          color: contentColor,
           fontFamily: t.font.displayMedium,
           fontSize: 15,
           fontWeight: '600',

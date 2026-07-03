@@ -62,7 +62,7 @@ export default function AdminFeatured() {
       </ScrollView>
 
       <Modal visible={!!vm.confirmRow} transparent animationType="fade" onRequestClose={() => vm.setConfirmRow(null)}>
-        <Pressable onPress={() => vm.setConfirmRow(null)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+        <Pressable onPress={() => vm.setConfirmRow(null)} style={{ flex: 1, backgroundColor: t.scrim, alignItems: 'center', justifyContent: 'center', padding: 24 }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderRadius: 20, padding: 22, gap: 8, maxWidth: 380, width: '100%' }}>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('admin.featured.removeTitle')}</Text>
             <Text style={{ fontSize: 13, color: t.fgMuted }}>
@@ -81,7 +81,7 @@ export default function AdminFeatured() {
       </Modal>
 
       <Modal visible={vm.adding} transparent animationType="slide" onRequestClose={() => vm.setAdding(false)}>
-        <Pressable onPress={() => vm.setAdding(false)} style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.45)', justifyContent: 'flex-end' }}>
+        <Pressable onPress={() => vm.setAdding(false)} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
           <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('admin.featured.addTitle')}</Text>

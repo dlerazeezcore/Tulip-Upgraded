@@ -220,6 +220,7 @@ export default {
     noMatch: 'لا توجد دول تطابق "{{q}}"',
     noCountries: 'لا توجد دول متاحة.',
     noPopular: 'لا توجد وجهات شائعة. استخدم تبويب الدول.',
+    noPopularTitle: 'لا توجد وجهات شائعة',
     multiCountry: 'شريحة متعددة الدول',
     coverageCount: 'تغطية في {{count}} دولة',
     coverageHint: 'اضغط لرؤية أين تعمل هذه الشريحة',

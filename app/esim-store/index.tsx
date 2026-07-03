@@ -10,6 +10,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
 import { Skeleton } from '@/components/Skeleton';
+import { EmptyState } from '@/components/EmptyState';
 
 import type { LocationCountry } from '@/services/esim';
 import { useEsimStore } from '@/screens/esim-store/useEsimStore';
@@ -112,13 +113,31 @@ export default function EsimStore() {
         {loadingCountries ? (
           <>
             {listHeader}
-            <View style={{ paddingHorizontal: 20, gap: 12, paddingTop: 8 }}>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <View key={i} style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Skeleton width={32} height={32} radius={16} />
-                  <Skeleton width={`${50 + ((i * 7) % 30)}%`} height={14} />
-                </View>
-              ))}
+            {/* Skeleton mirrors the real country rows (card chrome, flag, name, chevron)
+                so the loaded list doesn't jump. */}
+            <View style={{ paddingHorizontal: isWide ? 28 : 20, maxWidth: isWide ? 1120 : 900, width: '100%', alignSelf: 'center' }}>
+              <View style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
+                {Array.from({ length: 8 }).map((_, i) => (
+                  <View
+                    key={i}
+                    style={{
+                      flexDirection: 'row',
+                      alignItems: 'center',
+                      gap: 12,
+                      paddingVertical: 12,
+                      paddingHorizontal: 14,
+                      borderBottomWidth: i === 7 ? 0 : 1,
+                      borderBottomColor: t.border,
+                    }}
+                  >
+                    <Skeleton width={28} height={28} radius={14} />
+                    <View style={{ flex: 1 }}>
+                      <Skeleton width={`${50 + ((i * 7) % 30)}%`} height={14} />
+                    </View>
+                    <Skeleton width={16} height={16} radius={8} />
+                  </View>
+                ))}
+              </View>
             </View>
           </>
         ) : (
@@ -128,9 +147,10 @@ export default function EsimStore() {
             renderItem={renderCountryRow}
             ListHeaderComponent={listHeader}
             ListEmptyComponent={
-              <Text style={{ color: t.fgMuted, textAlign: 'center', padding: 20 }}>
-                {q.trim() ? tr('esimStore.noMatch', { q }) : tr('esimStore.noCountries')}
-              </Text>
+              <EmptyState
+                icon={Search}
+                title={q.trim() ? tr('esimStore.noMatch', { q }) : tr('esimStore.noCountries')}
+              />
             }
             getItemLayout={vm.getCountryItemLayout}
             initialNumToRender={20}
@@ -163,7 +183,7 @@ export default function EsimStore() {
         {tab === 'popular' && (
           <View style={{ gap: 10 }}>
             {popular.length === 0 ? (
-              <Text style={{ fontSize: 13, color: t.fgMuted }}>{tr('esimStore.noPopular')}</Text>
+              <EmptyState icon={Globe} title={tr('esimStore.noPopularTitle')} subtitle={tr('esimStore.noPopular')} />
             ) : (
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
                 {popular.map((c) => (
