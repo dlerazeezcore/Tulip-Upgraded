@@ -84,7 +84,7 @@ export function useUpdateNotification(): UpdateNotificationViewModel {
       });
       setLastDelivery(res.delivery);
     } catch (e: any) {
-      setError(e?.message || 'Failed to send notification');
+      setError(e?.message || tr('admin.notifications.errors.sendFailed'));
     } finally {
       setSending(false);
     }

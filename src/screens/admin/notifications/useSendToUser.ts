@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { getUsers, sendPushNotification } from '@/services/admin';
 import { LANG_LABELS, SUPPORTED_LANGS, SupportedLang } from '@/data/notificationTemplates';
@@ -45,6 +46,7 @@ export type SendToUserViewModel = {
 
 export function useSendToUser(): SendToUserViewModel {
   const router = useRouter();
+  const { t: tr } = useTranslation();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
 
   const [search, setSearch] = useState('');
@@ -82,12 +84,12 @@ export function useSendToUser(): SendToUserViewModel {
   }, []);
 
   const validationError = useMemo<string | null>(() => {
-    if (!selectedUser) return 'Pick a user first.';
+    if (!selectedUser) return tr('admin.notifications.validation.pickUser');
     if (!form.en.title.trim() || !form.en.body.trim()) {
-      return 'English title and body are required (used as fallback).';
+      return tr('admin.notifications.validation.enRequired');
     }
     return null;
-  }, [selectedUser, form]);
+  }, [selectedUser, form, tr]);
 
   const canSend = validationError === null && !sending;
 
@@ -114,7 +116,7 @@ export function useSendToUser(): SendToUserViewModel {
       });
       setLastDelivery(res.delivery);
     } catch (e: any) {
-      setError(e?.message || 'Failed to send notification');
+      setError(e?.message || tr('admin.notifications.errors.sendFailed'));
     } finally {
       setSending(false);
     }
@@ -122,15 +124,21 @@ export function useSendToUser(): SendToUserViewModel {
 
   const send = () => {
     if (validationError || !selectedUser) {
-      Alert.alert('Missing info', validationError || 'Please complete the form.');
+      Alert.alert(
+        tr('admin.notifications.alerts.missingInfo'),
+        validationError || tr('admin.notifications.validation.completeForm'),
+      );
       return;
     }
     Alert.alert(
-      'Send notification?',
-      `${selectedUser.name} (${selectedUser.phone}) will receive this in their language.`,
+      tr('admin.notifications.user.confirmTitle'),
+      tr('admin.notifications.user.confirmBody', {
+        name: selectedUser.name,
+        phone: selectedUser.phone,
+      }),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Send', onPress: performSend },
+        { text: tr('common.cancel'), style: 'cancel' },
+        { text: tr('admin.notifications.send'), onPress: performSend },
       ],
     );
   };

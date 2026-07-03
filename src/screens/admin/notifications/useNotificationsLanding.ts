@@ -1,8 +1,11 @@
 // Wiring for the admin notifications landing card list.
-// Owns: admin-gate flag, the navigation routes, and the card metadata.
+// Owns: admin-gate flag, the navigation routes, and the card metadata
+// (titles/subtitles localized here; colors from the accent token palette).
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { Bell, History, Send, User } from 'lucide-react-native';
 import { useAuthStore } from '@/state/authStore';
+import { useTheme } from '@/theme/ThemeContext';
 
 export type NotifLandingCard = {
   id: string;
@@ -21,39 +24,41 @@ export type NotificationsLandingViewModel = {
 
 export function useNotificationsLanding(): NotificationsLandingViewModel {
   const router = useRouter();
+  const { t: tr } = useTranslation();
+  const t = useTheme();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
 
   const cards: NotifLandingCard[] = [
     {
       id: 'update',
-      title: 'Send update notification',
-      subtitle: 'Pre-baked, localized to each user',
+      title: tr('admin.notifications.landing.cards.update.title'),
+      subtitle: tr('admin.notifications.landing.cards.update.subtitle'),
       Icon: Bell,
-      color: '#7C3AED',
+      color: t.accent.purple,
       route: '/admin/notifications/update',
     },
     {
       id: 'user',
-      title: 'Send to a specific user',
-      subtitle: 'Pick a user, compose in 3 languages',
+      title: tr('admin.notifications.landing.cards.user.title'),
+      subtitle: tr('admin.notifications.landing.cards.user.subtitle'),
       Icon: User,
-      color: '#1967D2',
+      color: t.accent.blue,
       route: '/admin/notifications/user',
     },
     {
       id: 'custom',
-      title: 'Send custom notification',
-      subtitle: 'Audience-targeted, 3-language',
+      title: tr('admin.notifications.landing.cards.custom.title'),
+      subtitle: tr('admin.notifications.landing.cards.custom.subtitle'),
       Icon: Send,
-      color: '#0EA5E9',
+      color: t.accent.sky,
       route: '/admin/notifications/custom',
     },
     {
       id: 'history',
-      title: 'History',
-      subtitle: 'Past sends + delivery counts',
+      title: tr('admin.notifications.landing.cards.history.title'),
+      subtitle: tr('admin.notifications.landing.cards.history.subtitle'),
       Icon: History,
-      color: '#10B981',
+      color: t.accent.emerald,
       route: '/admin/notifications/history',
     },
   ];

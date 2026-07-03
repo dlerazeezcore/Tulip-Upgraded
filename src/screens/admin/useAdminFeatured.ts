@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { listFeaturedLocations, saveFeaturedLocation, deleteFeaturedLocation } from '@/services/admin';
 import type { FeaturedLocationAdmin } from '@/services/types';
@@ -31,6 +32,7 @@ export type AdminFeaturedViewModel = {
 
 export function useAdminFeatured(): AdminFeaturedViewModel {
   const router = useRouter();
+  const { t: tr } = useTranslation();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
 
   const [rows, setRows] = useState<FeaturedLocationAdmin[]>([]);
@@ -46,7 +48,7 @@ export function useAdminFeatured(): AdminFeaturedViewModel {
     setLoading(true);
     listFeaturedLocations()
       .then(setRows)
-      .catch((e: any) => Alert.alert('Error', e?.message || 'Failed to load'))
+      .catch((e: any) => Alert.alert(tr('admin.errors.title'), e?.message || tr('admin.errors.loadFailed')))
       .finally(() => setLoading(false));
   };
   useEffect(() => { if (isAdmin) load(); }, [isAdmin]);
@@ -54,7 +56,7 @@ export function useAdminFeatured(): AdminFeaturedViewModel {
   const run = async (fn: () => Promise<void>) => {
     if (busy) return;
     setBusy(true);
-    try { await fn(); load(); } catch (e: any) { Alert.alert('Error', e?.message || 'Failed'); }
+    try { await fn(); load(); } catch (e: any) { Alert.alert(tr('admin.errors.title'), e?.message || tr('admin.errors.actionFailed')); }
     finally { setBusy(false); }
   };
 

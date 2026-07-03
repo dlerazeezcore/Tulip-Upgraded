@@ -454,6 +454,11 @@ export default {
   },
   admin: {
     title: 'لوحة الإدارة',
+    errors: {
+      title: 'خطأ',
+      loadFailed: 'فشل التحميل',
+      actionFailed: 'فشلت العملية',
+    },
     users: {
       title: 'المستخدمون',
       subView: 'عرض التسجيلات',
@@ -615,6 +620,24 @@ export default {
     notifications: {
       landing: {
         title: 'الإشعارات الفورية',
+        cards: {
+          update: { title: 'إرسال إشعار التحديث', subtitle: 'جاهز مسبقًا ومترجم لكل مستخدم' },
+          user: { title: 'إرسال إلى مستخدم محدد', subtitle: 'اختر مستخدمًا واكتب بثلاث لغات' },
+          custom: { title: 'إرسال إشعار مخصص', subtitle: 'موجّه لجمهور محدد وبثلاث لغات' },
+          history: { title: 'السجل', subtitle: 'الإرسالات السابقة وأعداد التسليم' },
+        },
+      },
+      validation: {
+        enRequired: 'العنوان والنص بالإنجليزية مطلوبان (يُستخدمان كاحتياطي).',
+        pickUser: 'اختر مستخدمًا أولًا.',
+        completeForm: 'يُرجى إكمال النموذج.',
+      },
+      alerts: {
+        missingInfo: 'معلومات ناقصة',
+      },
+      errors: {
+        sendFailed: 'فشل إرسال الإشعار',
+        loadHistoryFailed: 'فشل تحميل السجل',
       },
       preview: 'معاينة',
       sent: 'تم الإرسال',
@@ -644,11 +667,21 @@ export default {
         searchPlaceholder: 'ابحث بالاسم أو رقم الهاتف',
         noUsers: 'لم يتم العثور على مستخدمين.',
         langHint: 'الإنجليزية مطلوبة (تُستخدم كاحتياطي). العربية والكردية اختياريتان — اتركهما فارغتين للرجوع إلى الإنجليزية.',
+        confirmTitle: 'إرسال الإشعار؟',
+        confirmBody: '{{name}} ({{phone}}) سيستلمه بلغته.',
       },
       custom: {
         title: 'إرسال إشعار مخصص',
         audience: 'الجمهور',
         langHint: 'الإنجليزية مطلوبة (تُستخدم كاحتياطي). العربية والكردية اختياريتان.',
+        confirmTitle: 'الإرسال إلى {{audience}}؟',
+        confirmBody: 'سيتم التسليم إلى كل جهاز نشط في هذا الجمهور بلغته.',
+        audiences: {
+          all: { label: 'كل المستخدمين', subtitle: 'كل أجهزة مستخدمي التطبيق النشطة' },
+          authenticated: { label: 'المستخدمون المسجّلون', subtitle: 'مستخدمو التطبيق المسجّلون' },
+          loyalty: { label: 'أعضاء الولاء', subtitle: 'المستخدمون الموسومون بالولاء' },
+          active_esim: { label: 'حاملو eSIM نشطة', subtitle: 'مستخدمون لديهم eSIM نشطة أو مثبتة' },
+        },
       },
       history: {
         title: 'سجل الإشعارات',

@@ -3,6 +3,7 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { sendPushNotification } from '@/services/admin';
 import { LANG_LABELS, SUPPORTED_LANGS, SupportedLang } from '@/data/notificationTemplates';
@@ -19,12 +20,7 @@ const EMPTY_FORM: LangForm = {
 
 export type AudienceOption = { value: Audience; label: string; subtitle: string };
 
-export const AUDIENCE_OPTIONS: AudienceOption[] = [
-  { value: 'all', label: 'All users', subtitle: 'Every active app user device' },
-  { value: 'authenticated', label: 'Signed-in users', subtitle: 'Authenticated app users' },
-  { value: 'loyalty', label: 'Loyalty members', subtitle: 'Users flagged loyalty' },
-  { value: 'active_esim', label: 'Active eSIM holders', subtitle: 'Users with an active or installed eSIM' },
-];
+const AUDIENCE_VALUES: Audience[] = ['all', 'authenticated', 'loyalty', 'active_esim'];
 
 export type CustomNotificationViewModel = {
   isAdmin: boolean;
@@ -46,7 +42,18 @@ export type CustomNotificationViewModel = {
 
 export function useCustomNotification(): CustomNotificationViewModel {
   const router = useRouter();
+  const { t: tr } = useTranslation();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
+
+  const audienceOptions = useMemo<AudienceOption[]>(
+    () =>
+      AUDIENCE_VALUES.map((value) => ({
+        value,
+        label: tr(`admin.notifications.custom.audiences.${value}.label`),
+        subtitle: tr(`admin.notifications.custom.audiences.${value}.subtitle`),
+      })),
+    [tr],
+  );
 
   const [audience, setAudience] = useState<Audience>('all');
   const [form, setForm] = useState<LangForm>(EMPTY_FORM);
@@ -67,16 +74,16 @@ export function useCustomNotification(): CustomNotificationViewModel {
 
   const validationError = useMemo<string | null>(() => {
     if (!form.en.title.trim() || !form.en.body.trim()) {
-      return 'English title and body are required (used as fallback).';
+      return tr('admin.notifications.validation.enRequired');
     }
     return null;
-  }, [form]);
+  }, [form, tr]);
 
   const canSend = validationError === null && !sending;
 
   const audienceLabel = useMemo(
-    () => AUDIENCE_OPTIONS.find((o) => o.value === audience)?.label ?? audience,
-    [audience],
+    () => audienceOptions.find((o) => o.value === audience)?.label ?? audience,
+    [audienceOptions, audience],
   );
 
   const performSend = async () => {
@@ -101,7 +108,7 @@ export function useCustomNotification(): CustomNotificationViewModel {
       });
       setLastDelivery(res.delivery);
     } catch (e: any) {
-      setError(e?.message || 'Failed to send notification');
+      setError(e?.message || tr('admin.notifications.errors.sendFailed'));
     } finally {
       setSending(false);
     }
@@ -109,15 +116,15 @@ export function useCustomNotification(): CustomNotificationViewModel {
 
   const send = () => {
     if (validationError) {
-      Alert.alert('Missing info', validationError);
+      Alert.alert(tr('admin.notifications.alerts.missingInfo'), validationError);
       return;
     }
     Alert.alert(
-      `Send to ${audienceLabel}?`,
-      'This will be delivered to every active device in this audience in their own language.',
+      tr('admin.notifications.custom.confirmTitle', { audience: audienceLabel }),
+      tr('admin.notifications.custom.confirmBody'),
       [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Send', style: 'destructive', onPress: performSend },
+        { text: tr('common.cancel'), style: 'cancel' },
+        { text: tr('admin.notifications.send'), style: 'destructive', onPress: performSend },
       ],
     );
   };
@@ -132,7 +139,7 @@ export function useCustomNotification(): CustomNotificationViewModel {
     goBack,
     audience,
     setAudience,
-    audienceOptions: AUDIENCE_OPTIONS,
+    audienceOptions,
     form,
     setField,
     copyFromEn,

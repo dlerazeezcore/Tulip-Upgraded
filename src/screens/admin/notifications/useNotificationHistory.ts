@@ -46,7 +46,7 @@ export function useNotificationHistory(): NotificationHistoryViewModel {
       const result = await listPushNotifications({ limit: 100 });
       setRows(result);
     } catch (e: any) {
-      setError(e?.message || 'Failed to load history');
+      setError(e?.message || tr('admin.notifications.errors.loadHistoryFailed'));
     } finally {
       if (mode === 'initial') setLoading(false);
       else setRefreshing(false);
@@ -59,19 +59,21 @@ export function useNotificationHistory(): NotificationHistoryViewModel {
   }, [isAdmin, load]);
 
   const shapedRows = useMemo<NotificationHistoryRowVM[]>(() => {
-    const statusColor = (status: string): string => {
+    // fg + matching semantic tint from the token palette — no hex-format
+    // assumptions (the old `${color}20` broke for non-6-digit-hex tokens).
+    const statusColors = (status: string): { fg: string; bg: string } => {
       const s = status.toLowerCase();
-      if (s === 'sent') return t.success;
-      if (s === 'partial') return t.warning;
-      if (s === 'failed') return t.danger;
-      return t.fgMuted; // dry_run and anything unknown
+      if (s === 'sent') return { fg: t.success, bg: t.successBg };
+      if (s === 'partial') return { fg: t.warning, bg: t.warningBg };
+      if (s === 'failed') return { fg: t.danger, bg: t.dangerBg };
+      return { fg: t.fgMuted, bg: t.bgSunken }; // dry_run and anything unknown
     };
     return rows.map((row) => {
-      const sc = statusColor(row.status);
+      const sc = statusColors(row.status);
       return {
         ...row,
-        statusFg: sc,
-        statusBg: `${sc}20`,
+        statusFg: sc.fg,
+        statusBg: sc.bg,
         statusLabel: tr(`admin.notifications.history.status.${row.status.toLowerCase()}`, { defaultValue: row.status }),
         dateLabel: formatDateTime(row.sentAt || row.createdAt),
       };

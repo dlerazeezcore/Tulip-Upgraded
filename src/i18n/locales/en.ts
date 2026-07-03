@@ -455,6 +455,11 @@ export default {
   },
   admin: {
     title: 'Admin panel',
+    errors: {
+      title: 'Error',
+      loadFailed: 'Failed to load',
+      actionFailed: 'Action failed',
+    },
     users: {
       title: 'Users',
       subView: 'View signups',
@@ -616,6 +621,24 @@ export default {
     notifications: {
       landing: {
         title: 'Push notifications',
+        cards: {
+          update: { title: 'Send update notification', subtitle: 'Pre-baked, localized to each user' },
+          user: { title: 'Send to a specific user', subtitle: 'Pick a user, compose in 3 languages' },
+          custom: { title: 'Send custom notification', subtitle: 'Audience-targeted, 3-language' },
+          history: { title: 'History', subtitle: 'Past sends + delivery counts' },
+        },
+      },
+      validation: {
+        enRequired: 'English title and body are required (used as fallback).',
+        pickUser: 'Pick a user first.',
+        completeForm: 'Please complete the form.',
+      },
+      alerts: {
+        missingInfo: 'Missing info',
+      },
+      errors: {
+        sendFailed: 'Failed to send notification',
+        loadHistoryFailed: 'Failed to load history',
       },
       preview: 'Preview',
       sent: 'Sent',
@@ -645,11 +668,21 @@ export default {
         searchPlaceholder: 'Search by name or phone',
         noUsers: 'No users found.',
         langHint: 'English is required (used as fallback). Arabic and Kurdish are optional — leave blank to fall back to English.',
+        confirmTitle: 'Send notification?',
+        confirmBody: '{{name}} ({{phone}}) will receive this in their language.',
       },
       custom: {
         title: 'Send custom notification',
         audience: 'Audience',
         langHint: 'English is required (used as fallback). Arabic and Kurdish are optional.',
+        confirmTitle: 'Send to {{audience}}?',
+        confirmBody: 'This will be delivered to every active device in this audience in their own language.',
+        audiences: {
+          all: { label: 'All users', subtitle: 'Every active app user device' },
+          authenticated: { label: 'Signed-in users', subtitle: 'Authenticated app users' },
+          loyalty: { label: 'Loyalty members', subtitle: 'Users flagged loyalty' },
+          active_esim: { label: 'Active eSIM holders', subtitle: 'Users with an active or installed eSIM' },
+        },
       },
       history: {
         title: 'Notification history',
