@@ -235,6 +235,9 @@ export default {
     deviceUnknown: "We couldn't confirm eSIM on your device — please check before you buy",
     howToCheck: 'How to check',
     howToCheckBody: 'Open your phone Settings and look for "Add eSIM" or "Mobile/Cellular plan". You can also dial *#06# — if an EID number appears, your phone supports eSIM.',
+    deviceLikely: 'Your iPhone model supports eSIM — unless it was bought in mainland China',
+    dualSimCaveat: 'iPhones sold in mainland China (and some Hong Kong/Macau models) use two physical SIM slots instead of eSIM. If your phone was bought anywhere else, it supports eSIM.',
+    esimDisabledNote: 'Your phone has eSIM hardware, but eSIM appears to be switched off. Open Settings and enable eSIM ("Add eSIM" / "SIM manager") to use it.',
   },
   checkout: {
     title: 'Checkout',

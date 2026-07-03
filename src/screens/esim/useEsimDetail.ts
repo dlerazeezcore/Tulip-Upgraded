@@ -4,6 +4,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { useEsimStore } from '@/state/esimStore';
+import { useDeviceStore } from '@/state/deviceStore';
 import { checkEsimSupport, isDefinitelyUnsupported, type EsimSupportResult } from '@/services/device';
 import { recoverProfile } from '@/services/esim';
 import type { PillKind } from '@/components/StatusPill';
@@ -137,13 +138,24 @@ export function useEsimDetail() {
       setDetectingInstall(false);
     };
 
-    const startPolling = () => {
+    // `fromDeviceInstall` is true only when polling started because the user
+    // returned from the SYSTEM eSIM install sheet on THIS device (the Activate
+    // deeplink path). The manual "I've installed it" button passes false — that
+    // path is also used after sharing the QR to someone else's phone, so a
+    // provider-confirmed install there proves nothing about THIS device.
+    const startPolling = (fromDeviceInstall: boolean) => {
       pollCancelled = false;
       setDetectingInstall(true);
       setDetectTimedOut(false);
       let attempts = 0;
       let installRecorded = false;
       const MAX_ATTEMPTS = 45; // 45 * 4s = 3 minutes
+      // Provider confirmed the profile is installed right after the system
+      // install sheet ran here — empirical proof this device supports eSIM.
+      // Flips the store banner to a certain green (see src/lib/esimPolicy.ts).
+      const markProven = () => {
+        if (fromDeviceInstall) void useDeviceStore.getState().markProvenInstalled();
+      };
       const tick = async () => {
         if (pollCancelled) return;
         attempts += 1;
@@ -165,6 +177,7 @@ export function useEsimDetail() {
           recovered.installed === true &&
           (recovered.appStatus || '').toUpperCase() === 'PROVIDER_WAITING'
         ) {
+          markProven();
           try { await refresh(); } catch {}
           stopPolling();
           return;
@@ -175,6 +188,7 @@ export function useEsimDetail() {
           recovered.installed === true &&
           !!recovered.activatedAt
         ) {
+          markProven();
           // Pull fresh store state so the home tab paints with real usage/days.
           try { await refreshUsage(); } catch {}
           stopPolling();
@@ -187,6 +201,7 @@ export function useEsimDetail() {
           try { await refreshUsage(); } catch {}
           const latest = useEsimStore.getState().esims.find((e) => e.id === id);
           if (latest && latest.status === 'active') {
+            markProven();
             stopPolling();
             router.replace('/(tabs)');
             return;
@@ -211,7 +226,8 @@ export function useEsimDetail() {
     };
 
     // Expose startPolling so the manual "I've installed it" button can fire it.
-    pollStarterRef.current = startPolling;
+    // Manual path ≠ proof about this device (share-QR case) — hence `false`.
+    pollStarterRef.current = () => startPolling(false);
 
     const sub = AppState.addEventListener('change', (next) => {
       if (next !== 'active') return;
@@ -220,7 +236,8 @@ export function useEsimDetail() {
       // Reset the arm so a second app-foreground (e.g. they switch tabs)
       // doesn't kick off another polling loop.
       pendingActivateAt.current = null;
-      startPolling();
+      // Armed by the Activate deeplink → the system install sheet ran HERE.
+      startPolling(true);
     });
     return () => {
       sub.remove();
