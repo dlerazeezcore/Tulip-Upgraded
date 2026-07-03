@@ -127,7 +127,10 @@ export function useAdminOrders(): AdminOrdersViewModel {
     return orders
       .filter((o) => esim === 'all' || o.esimStatus === esim)
       .map((o) => {
-        const it = o.items[0];
+        // Defensive: one order row without items must not blank the whole
+        // admin list (audit L3).
+        const items = o.items ?? [];
+        const it = items[0];
         const date = orderDate(o);
         return {
           id: o.id,
@@ -139,9 +142,9 @@ export function useAdminOrders(): AdminOrdersViewModel {
           paymentMethod: o.paymentMethod ?? null,
           totalLabel: formatIqd(o.totalMinor ?? 0),
           expanded: !!expanded[o.id],
-          itemCount: o.items.length,
+          itemCount: items.length,
           orderNumber: o.orderNumber,
-          lines: o.items.map((item) => {
+          lines: items.map((item) => {
             const data = item.unlimited ? tr('admin.orders.unlimited') : item.dataGb ? `${item.dataGb} GB` : null;
             return {
               id: item.id,

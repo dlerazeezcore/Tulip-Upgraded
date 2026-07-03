@@ -128,8 +128,11 @@ export function useTopUp() {
       paymentMethod: payment.method,
       paymentProviderPaymentId: payment.providerPaymentId,
     });
-    await refreshEsims();
-    await refreshOrders();
+    // Top-up applied. Refreshes are best-effort — a failed cache refresh must
+    // not read as a payment failure (audit L5); the detail screen re-syncs on
+    // mount anyway.
+    try { await refreshEsims(); } catch {}
+    try { await refreshOrders(); } catch {}
     // Land back on the eSIM detail so the refreshed data/validity is visible.
     router.replace(`/esim/${id}`);
   };

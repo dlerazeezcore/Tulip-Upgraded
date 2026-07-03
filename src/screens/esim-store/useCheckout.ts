@@ -50,9 +50,15 @@ export function useCheckout() {
     else router.replace('/esim-store');
   };
 
-  const placeOrder = async (payment: { method: 'loyalty' | 'fib'; status?: string; transactionId?: string }) => {
+  const placeOrder = async (
+    payment: { method: 'loyalty' | 'fib'; status?: string; transactionId?: string },
+    // Frozen at performPay start so the recorded sale price can never diverge
+    // from the amount the customer was actually charged (a background FX
+    // refresh between fib.start and onPaid used to recompute it — audit L1).
+    salePriceMinor: number,
+    providerPriceMinor: number,
+  ) => {
     if (!place || !bundle || !user) return;
-    const providerPriceMinor = bundle.providerPriceMinor ?? Math.round(bundle.usd * 10000);
     await createManagedOrder({
       transactionId: `APP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       packageCode: bundle.packageCode!,
@@ -67,26 +73,39 @@ export function useCheckout() {
       paymentMethod: payment.method,
       paymentStatus: payment.status,
       paymentTransactionId: payment.transactionId,
-      salePriceMinor: iqdAmount(bundle.usd, bundle.saleIqdMinor),
+      salePriceMinor,
     });
+    // Booked. Everything after this point is best-effort: a failed cache
+    // refresh must not surface as a "payment failed" error or strand the user
+    // on a cleared-cart checkout (audit L5) — the target screens refresh on
+    // mount anyway.
     clear();
-    await refreshEsims();
-    await refreshOrders();
+    try { await refreshEsims(); } catch {}
+    try { await refreshOrders(); } catch {}
     router.replace('/manage/esim');
   };
 
   const performPay = async () => {
     if (!place || !bundle || !user) return;
+    // The provider price must come from the catalog row. Re-deriving it from
+    // the display float was a silent rounding source (audit L2) — refuse the
+    // order instead of guessing; the backend re-verifies amounts regardless.
+    const providerPriceMinor = bundle.providerPriceMinor;
+    if (providerPriceMinor == null) {
+      setError(tr('common.somethingWrong'));
+      return;
+    }
+    // Freeze the customer amount once, before any payment starts (audit L1).
+    const amountIqd = iqdAmount(bundle.usd, bundle.saleIqdMinor);
     setBusy(true);
     try {
       if (method === 'loyalty') {
-        await placeOrder({ method: 'loyalty', status: 'paid' });
+        await placeOrder({ method: 'loyalty', status: 'paid' }, amountIqd, providerPriceMinor);
         return;
       }
 
       // FIB: open the QR + "pay by phone" sheet. It polls for confirmation and
       // shows cancel/decline/expiry/timeout itself; we only book once it's paid.
-      const amountIqd = iqdAmount(bundle.usd, bundle.saleIqdMinor);
       await fib.start(
         {
           amount: amountIqd,
@@ -94,7 +113,14 @@ export function useCheckout() {
           description: `${place.name} eSIM`,
           metadata: { packageCode: bundle.packageCode, place: place.name },
         },
-        { onPaid: (p) => placeOrder({ method: 'fib', status: 'paid', transactionId: p.paymentId }) },
+        {
+          onPaid: (p) =>
+            placeOrder(
+              { method: 'fib', status: 'paid', transactionId: p.paymentId },
+              amountIqd,
+              providerPriceMinor,
+            ),
+        },
       );
     } catch (e: any) {
       setError(e?.message || tr('checkout.failed'));
