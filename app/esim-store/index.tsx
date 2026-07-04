@@ -5,7 +5,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Search, Globe } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
@@ -206,37 +205,36 @@ export default function EsimStore() {
 
         {tab === 'regions' && (
           regions.length === 0 ? (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
-              {Array.from({ length: 6 }).map((_, i) => (
-                <View key={i} style={{ width: isWide ? '33.333%' : '50%', padding: 5 }}>
-                  <Skeleton width="100%" height={110} radius={t.radius.lg} />
+            // Same bordered-row skeleton as the Countries tab, for one consistent look.
+            <View style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <View
+                  key={i}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderBottomWidth: i === 7 ? 0 : 1, borderBottomColor: t.border }}
+                >
+                  <Skeleton width={28} height={28} radius={14} />
+                  <View style={{ flex: 1 }}><Skeleton width={`${50 + ((i * 7) % 30)}%`} height={14} /></View>
+                  <Skeleton width={16} height={16} radius={8} />
                 </View>
               ))}
             </View>
           ) : (
-            <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
-              {regions.map((r) => (
-                <View key={r.code} style={{ width: isWide ? '33.333%' : '50%', padding: 5 }}>
-                  <PressableScale
-                    onPress={() => vm.openRegion(r.code, r.name)}
-                    scaleTo={0.97}
-                  >
-                    <LinearGradient
-                      colors={r.gradient}
-                      start={{ x: 0, y: 0 }}
-                      end={{ x: 1, y: 1 }}
-                      style={{ borderRadius: 16, padding: 14, minHeight: 116, justifyContent: 'space-between', ...t.shadow1 }}
-                    >
-                      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: 'rgba(255,255,255,0.22)', alignItems: 'center', justifyContent: 'center' }}>
-                        <Globe size={20} color={t.onPrimary} strokeWidth={2.2} />
-                      </View>
-                      <View style={{ marginTop: 10 }}>
-                        <Text numberOfLines={2} style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 15, color: t.onPrimary }}>{r.name}</Text>
-                        <Text style={{ fontSize: 11, color: 'rgba(255,255,255,0.85)', marginTop: 2 }}>{tr('esimStore.multiCountry')}</Text>
-                      </View>
-                    </LinearGradient>
-                  </PressableScale>
-                </View>
+            // Clean list rows matching the Countries tab — a globe glyph stands in
+            // for the (multi-country) region where a flag would be. Regions come
+            // straight from the provider API (getRegions, type=2) — no curation.
+            <View style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
+              {regions.map((r, index) => (
+                <Pressable
+                  key={r.code}
+                  onPress={() => vm.openRegion(r.code, r.name)}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 12, paddingHorizontal: 14, borderBottomWidth: index === regions.length - 1 ? 0 : 1, borderBottomColor: t.border }}
+                >
+                  <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+                    <Globe size={16} color={t.accent.emerald} strokeWidth={2} />
+                  </View>
+                  <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '600', fontSize: 14, color: t.fg }}>{r.name}</Text>
+                  <DirectionalChevron direction="forward" size={16} color={t.fgFaint} />
+                </Pressable>
               ))}
             </View>
           )

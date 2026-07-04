@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { useTheme } from '@/theme/ThemeContext';
 import { useIsWideWeb } from '@/lib/responsive';
 import { getFeaturedLocations, getCountries, getRegions, cachedCountries, type LocationCountry, type ProviderRegion } from '@/services/esim';
 import type { FeaturedLocation } from '@/services/types';
@@ -20,7 +19,7 @@ export interface EsimStoreVM {
   q: string;
   setQ: (q: string) => void;
   popular: (FeaturedLocation & { displayName: string })[];
-  regions: (ProviderRegion & { gradient: [string, string] })[];
+  regions: ProviderRegion[];
   loadingCountries: boolean;
   filteredCountries: LocationCountry[];
   getCountryItemLayout: (_: unknown, index: number) => { length: number; offset: number; index: number };
@@ -32,7 +31,6 @@ export interface EsimStoreVM {
 export function useEsimStore(): EsimStoreVM {
   const router = useRouter();
   const { t: tr } = useTranslation();
-  const t = useTheme();
   const isWide = useIsWideWeb();
   const [tab, setTab] = useState<Tab>('popular');
   const [q, setQ] = useState('');
@@ -77,13 +75,6 @@ export function useEsimStore(): EsimStoreVM {
     [popular, nameByCode],
   );
 
-  // Region card gradients live in the design tokens (theme.gradients) — vibrant
-  // by design so the Regions grid looks polished without a photo per region.
-  const regionsView = useMemo(
-    () => regions.map((r, idx) => ({ ...r, gradient: t.gradients[idx % t.gradients.length] })),
-    [regions, t.gradients],
-  );
-
   const tabs = TAB_IDS.map((id) => ({
     id,
     label: tr(`esimStore.tab${id.charAt(0).toUpperCase()}${id.slice(1)}`),
@@ -112,7 +103,7 @@ export function useEsimStore(): EsimStoreVM {
     q,
     setQ,
     popular: popularView,
-    regions: regionsView,
+    regions,
     loadingCountries,
     filteredCountries,
     getCountryItemLayout,
