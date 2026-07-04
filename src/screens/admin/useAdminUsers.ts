@@ -13,6 +13,13 @@ import type { AdminUserRow } from '@/services/types';
 
 export type UserVersionKind = 'latest' | 'outdated' | 'unknown';
 
+/** A user row enriched with the derived initials + app-version verdict. */
+export type AdminUserView = AdminUserRow & {
+  initials: string;
+  versionKind: UserVersionKind;
+  versionLabel: string;
+};
+
 export type AdminUsersViewModel = {
   isAdmin: boolean;
   goBack: () => void;
@@ -21,12 +28,12 @@ export type AdminUsersViewModel = {
   setQ: (q: string) => void;
   // data
   rows: AdminUserRow[];
-  users: (AdminUserRow & { initials: string; versionKind: UserVersionKind; versionLabel: string })[];
+  users: AdminUserView[];
   loading: boolean;
   error: string | null;
   // edit modal
-  selected: AdminUserRow | null;
-  setSelected: (u: AdminUserRow | null) => void;
+  selected: AdminUserView | null;
+  setSelected: (u: AdminUserView | null) => void;
   clearError: () => void;
   busy: boolean;
   // actions
@@ -44,7 +51,7 @@ export function useAdminUsers(): AdminUsersViewModel {
   const [latestVersion, setLatestVersion] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selected, setSelected] = useState<AdminUserRow | null>(null);
+  const [selected, setSelected] = useState<AdminUserView | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {

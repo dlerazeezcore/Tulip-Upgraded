@@ -1,6 +1,6 @@
 // THIN UI — wiring lives in src/screens/admin/useAdminCurrency.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator, Modal } from 'react-native';
+import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { Check, Plus, X } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { CenteredModal } from '@/components/CenteredModal';
 import { Toggle } from '@/components/Toggle';
 import { Flag } from '@/components/Flag';
 import { useAdminCurrency } from '@/screens/admin/useAdminCurrency';
@@ -129,10 +130,8 @@ export default function AdminCurrency() {
         </ScrollView>
       )}
 
-      {/* ── Add / edit currency editor ── */}
-      <Modal visible={!!vm.editing} transparent animationType="slide" onRequestClose={vm.closeEditor}>
-        <Pressable onPress={vm.closeEditor} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14, maxWidth: 620, width: '100%', alignSelf: 'center' }}>
+      {/* ── Add / edit currency editor (centered) ── */}
+      <CenteredModal visible={!!vm.editing} onRequestClose={vm.closeEditor} maxWidth={620} dismissOnBackdrop={false}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
                 {vm.editing?.isNew ? tr('admin.currency.addCurrency') : tr('admin.currency.editCurrency', { code: vm.editing?.code })}
@@ -189,9 +188,7 @@ export default function AdminCurrency() {
             </View>
 
             <PrimaryButton label={vm.busy ? tr('admin.currency.saving') : tr('admin.currency.saveCurrency')} onPress={vm.onSaveCurrency} />
-          </Pressable>
-        </Pressable>
-      </Modal>
+      </CenteredModal>
     </SafeAreaView>
   );
 }

@@ -124,9 +124,13 @@ export function classifyEsimDetail(signals: EsimSignals | null): EsimVerdict {
     const major = parseIphoneMajor(signals.model);
     // iPhone X (iPhone10,x) and older physically have no eSIM — certain red.
     if (major !== null && major <= 10) return { state: 'unsupported', certain: true, needsEnabling: false };
-    // Modern iPhone with the expected entitlement-less API false — honest
-    // 'likely': true for global (eSIM) and China dual-SIM units alike.
-    if (major !== null && major >= 11) return { state: 'likely', ...no };
+    // Modern iPhone (XS/XR+, 2018+). The OS positive can't fire without Apple's
+    // carrier entitlement, so we present it as GREEN 'supported' by MODEL —
+    // matching Airalo/industry apps — with `certain: false` so the banner keeps
+    // the "How to check" help visible and surfaces the mainland-China dual-SIM
+    // caveat there (the one model-indistinguishable exception). A proven install
+    // upgrades this to a certain green.
+    if (major !== null && major >= 11) return { state: 'supported', certain: false, needsEnabling: false };
     // iPad or unparseable identifier — out of scope, no claim.
     return { state: 'unknown', ...no };
   }

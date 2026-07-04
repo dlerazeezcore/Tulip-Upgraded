@@ -1,12 +1,13 @@
 // THIN UI — wiring lives in src/screens/admin/useAdminUsers.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator, Modal } from 'react-native';
+import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { Search, Star, X, Ban, ShieldCheck, Trash2 } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
+import { CenteredModal } from '@/components/CenteredModal';
 import { useAdminUsers } from '@/screens/admin/useAdminUsers';
 
 export default function AdminUsers() {
@@ -104,10 +105,8 @@ export default function AdminUsers() {
         )}
       </ScrollView>
 
-      {/* Edit modal */}
-      <Modal visible={selected !== null} transparent animationType="slide" onRequestClose={() => setSelected(null)}>
-        <Pressable onPress={() => setSelected(null)} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
+      {/* Edit modal (centered) */}
+      <CenteredModal visible={selected !== null} onRequestClose={() => setSelected(null)} maxWidth={480}>
             {selected && (
               <>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -116,6 +115,16 @@ export default function AdminUsers() {
                     <Text style={{ fontSize: 12, color: t.fgMuted }}>{selected.phone}{selected.email ? ` · ${selected.email}` : ''}</Text>
                   </View>
                   <Pressable onPress={() => setSelected(null)} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
+                </View>
+
+                {/* App build this user is on (fills in as they use a header-sending build). */}
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 2 }}>
+                  <Text style={{ flex: 1, fontSize: 13, color: t.fgMuted }}>{tr('admin.users.appVersion')}</Text>
+                  <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: selected.versionKind === 'latest' ? t.successBg : selected.versionKind === 'outdated' ? t.warningBg : t.bgSunken }}>
+                    <Text style={{ fontSize: 12, fontWeight: '700', color: selected.versionKind === 'latest' ? t.successFg : selected.versionKind === 'outdated' ? t.warningFg : t.fgFaint }}>
+                      {selected.appVersion ? `v${selected.appVersion}` : '—'}{selected.versionKind === 'latest' ? ` · ${tr('admin.users.onLatest')}` : ''}
+                    </Text>
+                  </View>
                 </View>
 
                 {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
@@ -151,9 +160,7 @@ export default function AdminUsers() {
                 </Pressable>
               </>
             )}
-          </Pressable>
-        </Pressable>
-      </Modal>
+      </CenteredModal>
     </SafeAreaView>
   );
 }

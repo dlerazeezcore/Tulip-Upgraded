@@ -1,6 +1,6 @@
 // THIN UI — wiring lives in src/screens/admin/usePricing.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator, Modal } from 'react-native';
+import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -8,6 +8,7 @@ import { Check, Plus, X, Trash2 } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { CenteredModal } from '@/components/CenteredModal';
 import { usePricing } from '@/screens/admin/usePricing';
 import type { RuleScope, AdjustmentType } from '@/services/admin';
 
@@ -39,7 +40,11 @@ export default function AdminPricing() {
   const card = { borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, overflow: 'hidden' as const, ...t.shadow1 };
 
   const fmtVal = (type: AdjustmentType, value: number) =>
-    type === 'percent' ? tr('admin.pricing.valuePercent', { value }) : tr('admin.pricing.valueFixed', { value: value.toLocaleString('en-US') });
+    type === 'percent'
+      ? tr('admin.pricing.valuePercent', { value })
+      : type === 'absolute'
+        ? tr('admin.pricing.valueExact', { value: value.toLocaleString('en-US') })
+        : tr('admin.pricing.valueFixed', { value: value.toLocaleString('en-US') });
 
   const scopeTarget = (scope: RuleScope, country: string | null, pkg: string | null) =>
     scope === 'global' ? tr('admin.pricing.scopeGeneral') : scope === 'country' ? vm.countryName(country) : pkg || '';
@@ -139,12 +144,8 @@ export default function AdminPricing() {
         </ScrollView>
       )}
 
-      {/* ── Add / edit rule editor ── */}
-      <Modal visible={!!ed} transparent animationType="slide" onRequestClose={vm.closeEditor}>
-        {/* Backdrop is a plain View: tapping outside does NOT close — only the X
-            (or Android back) closes, so an accidental tap can't discard the form. */}
-        <View style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-          <View style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14, maxWidth: 620, width: '100%', alignSelf: 'center' }}>
+      {/* ── Add / edit rule editor (centered dialog) ── */}
+      <CenteredModal visible={!!ed} onRequestClose={vm.closeEditor} maxWidth={620} dismissOnBackdrop={false}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
                 {tr(ed?.kind === 'discount' ? (ed?.isNew ? 'admin.pricing.addDiscount' : 'admin.pricing.editDiscount') : ed?.isNew ? 'admin.pricing.addOverride' : 'admin.pricing.editOverride')}
@@ -217,19 +218,35 @@ export default function AdminPricing() {
                 <Seg<AdjustmentType>
                   value={ed?.type ?? 'percent'}
                   onChange={(type) => vm.patchDraft({ type })}
-                  options={[{ id: 'percent', label: tr('admin.pricing.percent') }, { id: 'fixed', label: tr('admin.pricing.fixed') }]}
+                  options={[
+                    { id: 'percent', label: tr('admin.pricing.percent') },
+                    { id: 'fixed', label: tr('admin.pricing.fixed') },
+                    // 'absolute' (exact price) is a markup concept only — never for discounts.
+                    ...(ed?.kind === 'discount' ? [] : [{ id: 'absolute' as AdjustmentType, label: tr('admin.pricing.absolute') }]),
+                  ]}
                 />
               </View>
               <View style={{ flex: 1, gap: 6 }}>
                 <Text style={sectionLabel}>{tr('admin.pricing.value')}</Text>
-                <TextInput value={ed?.value} onChangeText={(v) => vm.patchDraft({ value: v.replace(/[^\d.]/g, '') })} keyboardType="decimal-pad" placeholder={ed?.type === 'fixed' ? '1000' : '80'} placeholderTextColor={t.fgFaint} style={numStyle} />
+                <TextInput value={ed?.value} onChangeText={(v) => vm.patchDraft({ value: v.replace(/[^\d.]/g, '') })} keyboardType="decimal-pad" placeholder={ed?.type === 'absolute' ? '5000' : ed?.type === 'fixed' ? '1000' : '80'} placeholderTextColor={t.fgFaint} style={numStyle} />
               </View>
             </View>
 
+            {/* Plain-language explainer so the three types aren't confused
+                (fixed ADDS to cost; absolute SETS the exact final price). */}
+            {ed?.kind !== 'discount' && (
+              <Text style={{ fontSize: 12, color: t.fgMuted }}>
+                {tr(ed?.type === 'absolute' ? 'admin.pricing.typeHintAbsolute' : ed?.type === 'fixed' ? 'admin.pricing.typeHintFixed' : 'admin.pricing.typeHintPercent')}
+              </Text>
+            )}
+            {ed?.type === 'absolute' && !!ed?.value && Number.isFinite(parseFloat(ed.value)) && (
+              <Text style={{ fontSize: 13, color: t.primary, fontWeight: '700' }}>
+                {tr('admin.pricing.exactPreview', { value: parseFloat(ed.value).toLocaleString('en-US') })}
+              </Text>
+            )}
+
             <PrimaryButton label={vm.busy ? tr('admin.currency.saving') : tr('admin.pricing.saveRule')} onPress={vm.onSave} />
-          </View>
-        </View>
-      </Modal>
+      </CenteredModal>
     </SafeAreaView>
   );
 }

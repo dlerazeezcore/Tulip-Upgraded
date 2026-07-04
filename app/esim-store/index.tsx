@@ -106,9 +106,14 @@ export default function EsimStore() {
     return (
       <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
         {header}
-        <View style={{ paddingHorizontal: isWide ? 28 : 20, paddingTop: 8, maxWidth: isWide ? 1120 : 900, width: '100%', alignSelf: 'center' }}>
-          <EsimCompatibilityBanner />
-        </View>
+        {/* Device eSIM check is native-only (real detection needs the native
+            module) and shows an unhelpful "couldn't confirm" on web — hide it on
+            the desktop web layout; keep it on native + mobile web. */}
+        {!isWide && (
+          <View style={{ paddingHorizontal: 20, paddingTop: 8, maxWidth: 900, width: '100%', alignSelf: 'center' }}>
+            <EsimCompatibilityBanner />
+          </View>
+        )}
         {loadingCountries ? (
           <>
             {listHeader}
@@ -169,9 +174,12 @@ export default function EsimStore() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       {header}
-      <View style={{ paddingHorizontal: isWide ? 28 : 20, paddingTop: 8, maxWidth: isWide ? 1120 : 900, width: '100%', alignSelf: 'center' }}>
-        <EsimCompatibilityBanner />
-      </View>
+      {/* Native-only device check — hidden on desktop web (see note above). */}
+      {!isWide && (
+        <View style={{ paddingHorizontal: 20, paddingTop: 8, maxWidth: 900, width: '100%', alignSelf: 'center' }}>
+          <EsimCompatibilityBanner />
+        </View>
+      )}
       <ScrollView
         contentContainerStyle={{ padding: isWide ? 28 : 20, paddingBottom: 40, gap: 16, maxWidth: isWide ? 1120 : 900, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}

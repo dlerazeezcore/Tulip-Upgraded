@@ -9,6 +9,7 @@ import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { CenteredModal } from '@/components/CenteredModal';
 import { useAdminFeatured } from '@/screens/admin/useAdminFeatured';
 
 export default function AdminFeatured() {
@@ -80,9 +81,7 @@ export default function AdminFeatured() {
         </Pressable>
       </Modal>
 
-      <Modal visible={vm.adding} transparent animationType="slide" onRequestClose={() => vm.setAdding(false)}>
-        <Pressable onPress={() => vm.setAdding(false)} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
+      <CenteredModal visible={vm.adding} onRequestClose={() => vm.setAdding(false)} maxWidth={520} dismissOnBackdrop={false}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('admin.featured.addTitle')}</Text>
               <Pressable onPress={() => vm.setAdding(false)} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
@@ -100,9 +99,7 @@ export default function AdminFeatured() {
               <TextInput value={vm.sortOrder} onChangeText={vm.onChangeSortOrder} keyboardType="number-pad" placeholder="0" placeholderTextColor={t.fgFaint} style={numStyle} />
             </View>
             <PrimaryButton label={vm.busy ? tr('admin.featured.saving') : tr('admin.featured.addTitle')} onPress={vm.onAdd} style={{ marginTop: 4 }} />
-          </Pressable>
-        </Pressable>
-      </Modal>
+      </CenteredModal>
     </SafeAreaView>
   );
 }

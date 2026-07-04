@@ -85,7 +85,8 @@ export async function saveEsimMarkup(markupPercent: number): Promise<void> {
 // general for that country/bundle and the general still applies to the rest.
 
 export type RuleScope = 'global' | 'country' | 'package' | 'provider';
-export type AdjustmentType = 'percent' | 'fixed';
+// 'absolute' (markup only) = set the exact final sale price. Discounts use only percent|fixed.
+export type AdjustmentType = 'percent' | 'fixed' | 'absolute';
 
 export type RuleCustomFields = { label?: string; slug?: string } | null;
 

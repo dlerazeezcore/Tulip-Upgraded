@@ -57,9 +57,19 @@ export function useEsimCompatibilityBanner(): EsimCompatibilityVM {
     helpLabel: tr('esimStore.howToCheck'),
   };
 
-  // Green — certain evidence (OS positive, proven install, or Android hardware
-  // flag). Help only surfaces for the Android "eSIM disabled" nuance.
+  // Green "Your device is compatible". Three flavours:
+  //   - certain (OS positive / proven install): no help — nothing to check.
+  //   - Android hardware present but eUICC disabled (needsEnabling): help = enable note.
+  //   - model-based green (certain:false — modern iPhone, Airalo-style): keep the
+  //     "How to check" help visible with the mainland-China dual-SIM caveat + EID
+  //     check, the one case the model can't distinguish.
   if (verdict.state === 'supported') {
+    const modelGreen = !verdict.certain;
+    const helpBody = verdict.needsEnabling
+      ? `${tr('esimStore.esimDisabledNote')}${diag}`
+      : modelGreen
+        ? `${tr('esimStore.dualSimCaveat')}\n\n${tr('esimStore.howToCheckBody')}${diag}`
+        : '';
     return {
       tone: 'compatible',
       bg: t.successBg,
@@ -67,25 +77,8 @@ export function useEsimCompatibilityBanner(): EsimCompatibilityVM {
       fg: t.successFg,
       Icon: CheckCircle2,
       title: tr('esimStore.deviceCompatible'),
-      showHelp: verdict.needsEnabling,
-      helpBody: verdict.needsEnabling ? `${tr('esimStore.esimDisabledNote')}${diag}` : '',
-      ...helpCommon,
-    };
-  }
-
-  // Info-blue — modern iPhone, entitlement-locked OS check. The title is true
-  // for global AND mainland-China dual-SIM units; help explains the 10-second
-  // EID check plus the China-variant caveat.
-  if (verdict.state === 'likely') {
-    return {
-      tone: 'likely',
-      bg: t.infoBg,
-      borderColor: `${t.info}66`,
-      fg: t.infoFg,
-      Icon: Info,
-      title: tr('esimStore.deviceLikely'),
-      showHelp: true,
-      helpBody: `${tr('esimStore.dualSimCaveat')}\n\n${tr('esimStore.howToCheckBody')}${diag}`,
+      showHelp: verdict.needsEnabling || modelGreen,
+      helpBody,
       ...helpCommon,
     };
   }
