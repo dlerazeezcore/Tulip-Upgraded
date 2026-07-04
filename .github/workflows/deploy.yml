@@ -40,14 +40,18 @@ jobs:
 
       - name: GitHub Pages hygiene (SPA fallback + Jekyll + custom domain)
         run: |
-          # Static legal pages MUST exist as real files so Google Play's
-          # crawler gets a 200 (not the SPA "not found" screen). Expo copies
-          # public/ into dist/, but copy explicitly so it never depends on
-          # that behaviour. These resolve at:
+          # Static legal / support pages MUST exist as real files so app-store
+          # and Google Play crawlers get a 200 (not the SPA "not found" screen).
+          # Expo copies public/ into dist/, but copy explicitly so it never
+          # depends on that behaviour. These resolve at:
           #   https://tulipbookings.com/privacy-policy.html
           #   https://tulipbookings.com/account-deletion.html
+          #   https://tulipbookings.com/support.html      (App Store Support URL)
+          #   https://tulipbookings.com/welcome.html       (App Store Marketing URL)
           cp public/privacy-policy.html dist/privacy-policy.html
           cp public/account-deletion.html dist/account-deletion.html
+          cp public/support.html dist/support.html
+          cp public/welcome.html dist/welcome.html
           # SPA deep-link fallback: serve the app for any unknown path.
           # (Runs AFTER the copies above so it can't shadow the real files.)
           cp dist/index.html dist/404.html
