@@ -22,6 +22,7 @@
       "package": "com.theesim.app",
       "versionCode": 10,
       "userInterfaceStyle": "automatic",
+      "softwareKeyboardLayoutMode": "resize",
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "NOTIFICATIONS",

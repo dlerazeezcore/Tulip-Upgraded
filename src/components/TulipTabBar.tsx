@@ -79,7 +79,10 @@ export function TulipTabBar({ state, navigation }: BottomTabBarProps) {
               <Text
                 style={{
                   fontSize: 11,
-                  fontFamily: t.font.displayMedium,
+                  // Android custom fonts don't synthesize weight, so switch the
+                  // FONT FILE (SemiBold -> Bold) to actually show a focused
+                  // label heavier — fontWeight alone would render identically.
+                  fontFamily: focused ? t.font.display : t.font.displayMedium,
                   fontWeight: focused ? '700' : '600',
                   color: focused ? t.primary : t.fgMuted,
                 }}

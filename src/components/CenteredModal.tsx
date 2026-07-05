@@ -35,7 +35,10 @@ export function CenteredModal({
   const { height } = useWindowDimensions();
   return (
     <Modal visible={visible} transparent animationType="fade" onRequestClose={onRequestClose}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : undefined} style={{ flex: 1 }}>
+      {/* Android: 'height' lifts the centred card above the soft keyboard.
+          RN Modals are a separate window that adjustResize doesn't reliably
+          resize, so the KeyboardAvoidingView must do the work here. */}
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <Pressable
           onPress={dismissOnBackdrop ? onRequestClose : undefined}
           style={{ flex: 1, backgroundColor: t.scrim, alignItems: 'center', justifyContent: 'center', padding: 20 }}

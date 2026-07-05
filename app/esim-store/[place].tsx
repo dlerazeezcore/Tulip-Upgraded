@@ -1,7 +1,7 @@
 // THIN UI — wiring lives in src/screens/esim-store/usePlacePackages.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, Modal } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Globe, Check, Infinity as InfinityIcon, X, ArrowRight, Clock } from 'lucide-react-native';
 import { StackHeader } from '@/components/StackHeader';
 import { useTheme } from '@/theme/ThemeContext';
@@ -17,6 +17,7 @@ export default function PlaceDetail() {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const vm = usePlacePackages();
+  const insets = useSafeAreaInsets();
   const { name, iso, money } = vm;
 
   return (
@@ -28,7 +29,7 @@ export default function PlaceDetail() {
       />
 
       <ScrollView
-        contentContainerStyle={{ padding: vm.isWide ? 28 : 20, paddingBottom: 120, gap: 16, maxWidth: vm.isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
+        contentContainerStyle={{ padding: vm.isWide ? 28 : 20, paddingBottom: 120 + insets.bottom, gap: 16, maxWidth: vm.isWide ? 960 : 780, width: '100%', alignSelf: 'center' }}
         showsVerticalScrollIndicator={false}
       >
         {vm.isRegion && vm.coverage.length > 0 && (
@@ -126,7 +127,7 @@ export default function PlaceDetail() {
       </ScrollView>
 
       {vm.selected && (
-        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: 28, backgroundColor: t.bgElev, borderTopWidth: 1, borderTopColor: t.border }}>
+        <View style={{ position: 'absolute', left: 0, right: 0, bottom: 0, padding: 16, paddingBottom: 16 + insets.bottom, backgroundColor: t.bgElev, borderTopWidth: 1, borderTopColor: t.border }}>
           <View style={{ maxWidth: 780, width: '100%', alignSelf: 'center', flexDirection: 'row', alignItems: 'center', gap: 12 }}>
             <View style={{ flex: 1 }}>
               <Text style={{ fontSize: 12, color: t.fgMuted }}>
@@ -141,7 +142,7 @@ export default function PlaceDetail() {
 
       <Modal visible={vm.coverageOpen} transparent animationType="slide" onRequestClose={() => vm.setCoverageOpen(false)}>
         <Pressable onPress={() => vm.setCoverageOpen(false)} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '76%' }}>
+          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 20 + insets.bottom, maxHeight: '76%' }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('esimStore.coverageTitle', { name })}</Text>
               <Pressable onPress={() => vm.setCoverageOpen(false)} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>

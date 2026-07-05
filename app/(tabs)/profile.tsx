@@ -1,7 +1,7 @@
 // THIN UI — wiring lives in src/screens/profile/useProfile.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, Modal, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -76,6 +76,7 @@ export default function Profile() {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const vm = useProfile();
+  const insets = useSafeAreaInsets();
   const tierLabel = vm.isLoyalty ? tr('profile.loyalty') : tr('profile.member');
 
   // ─── Hero ───
@@ -174,8 +175,9 @@ export default function Profile() {
 
   const editModal = (
     <Modal visible={vm.editOpen} transparent animationType="slide" onRequestClose={vm.closeEdit}>
+      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
       <Pressable onPress={vm.closeEdit} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-        <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
+        <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 20 + insets.bottom, gap: 14 }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('profile.editProfile')}</Text>
             <Pressable onPress={vm.closeEdit} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
@@ -210,6 +212,7 @@ export default function Profile() {
           </Pressable>
         </Pressable>
       </Pressable>
+      </KeyboardAvoidingView>
     </Modal>
   );
 

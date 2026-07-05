@@ -1,7 +1,7 @@
 // THIN UI — wiring lives in src/screens/travelers/useTravelers.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, TextInput, Modal } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { ScrollView, View, Text, Pressable, TextInput, Modal, KeyboardAvoidingView, Platform } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Plus, Pencil, Trash2, User, X } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
@@ -15,6 +15,7 @@ export default function Travelers() {
   const t = useTheme();
   const { t: tt } = useTranslation();
   const vm = useTravelers();
+  const insets = useSafeAreaInsets();
   const {
     isWide, travelers, editing, setEditing, name, setName,
     relation, setRelation, dob, setDob, busy, openNew, openEdit, save, onRemove,
@@ -108,8 +109,9 @@ export default function Travelers() {
 
       {/* Add / edit modal */}
       <Modal visible={editing !== null} transparent animationType="slide" onRequestClose={() => setEditing(null)}>
+        <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
         <Pressable onPress={() => setEditing(null)} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, gap: 14 }}>
+          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 20 + insets.bottom, gap: 14 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>
                 {editing === 'new' ? tt('travelers.addTraveler') : tt('travelers.editTraveler')}
@@ -152,6 +154,7 @@ export default function Travelers() {
             <PrimaryButton label={busy ? tt('travelers.saving') : editing === 'new' ? tt('travelers.addTraveler') : tt('travelers.saveChanges')} onPress={save} style={{ marginTop: 4 }} />
           </Pressable>
         </Pressable>
+        </KeyboardAvoidingView>
       </Modal>
     </SafeAreaView>
   );
