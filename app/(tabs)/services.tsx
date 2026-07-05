@@ -2,7 +2,6 @@
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
 import { ArrowRight, Plus, Star } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
@@ -37,7 +36,7 @@ export default function Services() {
                   onPress={() => vm.openService(s.id)}
                   style={({ pressed }) => ({
                     padding: 22,
-                    borderRadius: 18,
+                    borderRadius: t.radius.card,
                     backgroundColor: t.bgElev,
                     borderColor: t.border,
                     borderWidth: 1,
@@ -104,7 +103,7 @@ export default function Services() {
             <View
               style={{
                 padding: 22,
-                borderRadius: 18,
+                borderRadius: t.radius.card,
                 borderWidth: 2,
                 borderColor: t.borderStrong,
                 borderStyle: 'dashed',
@@ -139,13 +138,11 @@ export default function Services() {
         </View>
 
         {/* Bundle promo */}
-        <LinearGradient
-          colors={[t.infoBg, t.infoBg]}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 0 }}
+        <View
           style={{
             padding: 20,
-            borderRadius: 18,
+            borderRadius: t.radius.card,
+            backgroundColor: t.infoBg,
             flexDirection: 'row',
             alignItems: 'center',
             gap: 18,
@@ -171,7 +168,7 @@ export default function Services() {
               {tr('servicesScreen.bundleSub')}
             </Text>
           </View>
-        </LinearGradient>
+        </View>
       </ScrollView>
       </AnimatedScreen>
     </SafeAreaView>

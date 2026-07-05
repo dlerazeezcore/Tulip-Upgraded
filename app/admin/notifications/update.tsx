@@ -22,7 +22,7 @@ export default function AdminSendUpdateNotification() {
   return (
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -106,16 +106,43 @@ export default function AdminSendUpdateNotification() {
           </Text>
         </View>
 
-        {/* Store URLs from version-info */}
+        {/* Store URLs — editable; these open when a user taps "Update now" */}
         {vm.loadingVersion ? (
           <ActivityIndicator color={t.primary} />
         ) : (
-          <View style={{ padding: 12, borderRadius: 12, backgroundColor: t.bgSunken, gap: 4 }}>
+          <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 10, ...t.shadow1 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>
               {tr('admin.notifications.update.storeUrls')}
             </Text>
-            <Text style={{ fontSize: 11, color: t.fgMuted }}>iOS: {vm.versionInfo?.appStoreUrl || tr('admin.notifications.update.notSet')}</Text>
-            <Text style={{ fontSize: 11, color: t.fgMuted }}>Android: {vm.versionInfo?.playStoreUrl || tr('admin.notifications.update.notSet')}</Text>
+            <View style={{ gap: 6 }}>
+              <Text style={{ fontSize: 11, color: t.fgMuted }}>{tr('admin.notifications.update.iosStoreUrl')}</Text>
+              <TextInput
+                value={vm.appStoreUrl}
+                onChangeText={vm.setAppStoreUrl}
+                placeholder="https://apps.apple.com/..."
+                placeholderTextColor={t.fgFaint}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                style={{ fontSize: 13, fontFamily: t.font.bodyMedium, color: t.fg, borderWidth: 1, borderColor: t.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: t.bgSunken }}
+              />
+            </View>
+            <View style={{ gap: 6 }}>
+              <Text style={{ fontSize: 11, color: t.fgMuted }}>{tr('admin.notifications.update.androidStoreUrl')}</Text>
+              <TextInput
+                value={vm.playStoreUrl}
+                onChangeText={vm.setPlayStoreUrl}
+                placeholder="https://play.google.com/..."
+                placeholderTextColor={t.fgFaint}
+                autoCapitalize="none"
+                autoCorrect={false}
+                keyboardType="url"
+                style={{ fontSize: 13, fontFamily: t.font.bodyMedium, color: t.fg, borderWidth: 1, borderColor: t.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: t.bgSunken }}
+              />
+            </View>
+            <Text style={{ fontSize: 11, color: t.fgMuted, lineHeight: 16 }}>
+              {tr('admin.notifications.update.storeUrlsHint')}
+            </Text>
           </View>
         )}
 

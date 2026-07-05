@@ -20,6 +20,7 @@ export type NotificationsLandingViewModel = {
   isAdmin: boolean;
   goBack: () => void;
   cards: NotifLandingCard[];
+  onSelectCard: (route: string) => void;
 };
 
 export function useNotificationsLanding(): NotificationsLandingViewModel {
@@ -68,5 +69,5 @@ export function useNotificationsLanding(): NotificationsLandingViewModel {
     else router.replace('/admin');
   };
 
-  return { isAdmin, goBack, cards };
+  return { isAdmin, goBack, cards, onSelectCard: (route: string) => router.push(route as any) };
 }

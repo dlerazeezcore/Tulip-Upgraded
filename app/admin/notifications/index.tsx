@@ -2,7 +2,7 @@
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import { Redirect, useRouter } from 'expo-router';
+import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Bell } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
@@ -13,7 +13,6 @@ import { useNotificationsLanding } from '@/screens/admin/notifications/useNotifi
 export default function AdminNotificationsLanding() {
   const t = useTheme();
   const { t: tr } = useTranslation();
-  const router = useRouter();
   const vm = useNotificationsLanding();
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
@@ -25,7 +24,7 @@ export default function AdminNotificationsLanding() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.back')}
-          hitSlop={4}
+          hitSlop={8}
           style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
@@ -42,14 +41,14 @@ export default function AdminNotificationsLanding() {
         {vm.cards.map((c) => (
           <PressableScale
             key={c.id}
-            onPress={() => router.push(c.route as any)}
+            onPress={() => vm.onSelectCard(c.route)}
             scaleTo={0.98}
             style={{
               flexDirection: 'row',
               alignItems: 'center',
               gap: 14,
               padding: 16,
-              borderRadius: 16,
+              borderRadius: t.radius.card,
               backgroundColor: t.bgElev,
               borderColor: t.border,
               borderWidth: 1,

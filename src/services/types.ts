@@ -34,15 +34,6 @@ export type AuthMe = {
   permissions?: Record<string, boolean>;
 };
 
-export type OtpChannel = 'sms' | 'whatsapp';
-
-export type OtpStartResult = {
-  to: string;
-  channel: OtpChannel;
-  status: string;
-  sid?: string | null;
-};
-
 export type ExchangeSettings = {
   enableIQD: boolean;
   exchangeRate: string; // units of IQD per 1 USD

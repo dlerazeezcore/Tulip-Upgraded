@@ -60,6 +60,9 @@ export function usePlacePackages(): PlacePackagesViewModel {
     let cancelled = false;
     const locationCode = (iso ?? String(place || '')).toUpperCase();
     setLoading(true);
+    // FE-12: clear any prior region's coverage before refetching so a reused
+    // [place] route instance can't briefly show a stale country list.
+    setCoverage([]);
     queryPackages({ locationCode })
       .then((pkgs) => {
         if (cancelled) return;

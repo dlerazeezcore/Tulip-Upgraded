@@ -30,8 +30,11 @@ export function formatAmount(value: number, meta: CurrencyMeta): string {
   const n =
     meta.decimals === 0
       ? Math.round(value).toLocaleString('en-US')
-      : Number.isInteger(value)
-        ? value.toLocaleString('en-US')
-        : value.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+      : // FE-11: always show the currency's fraction digits so a whole amount
+        // ($4) doesn't sit misaligned next to a fractional one ($4.19) in a column.
+        value.toLocaleString('en-US', {
+          minimumFractionDigits: meta.decimals,
+          maximumFractionDigits: meta.decimals,
+        });
   return meta.position === 'prefix' ? `${meta.symbol}${n}` : `${n} ${meta.symbol}`;
 }

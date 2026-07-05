@@ -22,7 +22,7 @@ export default function Onboarding() {
       <LinearGradient colors={t.gradHero as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingBottom: 28 }}>
         <SafeAreaView edges={['top']}>
           <View style={{ paddingHorizontal: 24, paddingTop: 16, alignItems: 'center', gap: 12 }}>
-            <View style={{ width: 56, height: 56, borderRadius: 16, backgroundColor: 'rgba(255,255,255,0.92)', alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 56, height: 56, borderRadius: t.radius.card, backgroundColor: t.onHero.frost, alignItems: 'center', justifyContent: 'center' }}>
               <TulipLogo size={34} color={t.primary} />
             </View>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 26, color: t.onPrimary, letterSpacing: -0.6, textAlign: 'center' }}>
@@ -57,7 +57,7 @@ export default function Onboarding() {
                   alignItems: 'center',
                   gap: 12,
                   padding: 16,
-                  borderRadius: 16,
+                  borderRadius: t.radius.card,
                   backgroundColor: t.bgElev,
                   borderWidth: 1.5,
                   borderColor: on ? t.primary : t.border,
@@ -94,7 +94,7 @@ export default function Onboarding() {
                   alignItems: 'center',
                   gap: 12,
                   padding: 16,
-                  borderRadius: 16,
+                  borderRadius: t.radius.card,
                   backgroundColor: t.bgElev,
                   borderWidth: 1.5,
                   borderColor: on ? t.primary : t.border,

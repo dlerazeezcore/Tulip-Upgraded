@@ -39,7 +39,7 @@ export default function Travelers() {
           onPress={vm.goBack}
           accessibilityRole="button"
           accessibilityLabel={tt('a11y.back')}
-          hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+          hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
@@ -93,10 +93,10 @@ export default function Travelers() {
                   {tt(`travelers.relations.${tr.relation}`, { defaultValue: tr.relation })}{tr.dob ? ` · ${tr.dob}` : ''}
                 </Text>
               </View>
-              <Pressable onPress={() => openEdit(tr)} accessibilityRole="button" accessibilityLabel={tt('travelers.editTraveler')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => openEdit(tr)} accessibilityRole="button" accessibilityLabel={tt('travelers.editTraveler')} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                 <Pencil size={15} color={t.fg} />
               </Pressable>
-              <Pressable onPress={() => onRemove(tr.id)} accessibilityRole="button" accessibilityLabel={tt('travelers.removeTitle')} hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.dangerBg, alignItems: 'center', justifyContent: 'center' }}>
+              <Pressable onPress={() => onRemove(tr.id)} accessibilityRole="button" accessibilityLabel={tt('travelers.removeTitle')} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.dangerBg, alignItems: 'center', justifyContent: 'center' }}>
                 <Trash2 size={15} color={t.danger} />
               </Pressable>
             </View>

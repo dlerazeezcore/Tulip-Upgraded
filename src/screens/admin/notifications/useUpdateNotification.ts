@@ -27,6 +27,10 @@ export type UpdateNotificationViewModel = {
   loadingVersion: boolean;
   latestVersion: string;
   setLatestVersion: (v: string) => void;
+  appStoreUrl: string;
+  setAppStoreUrl: (v: string) => void;
+  playStoreUrl: string;
+  setPlayStoreUrl: (v: string) => void;
   preview: { lang: SupportedLang; label: string; title: string; body: string }[];
   selectedLang: SupportedLang;
   setSelectedLang: (lang: SupportedLang) => void;
@@ -44,6 +48,8 @@ export function useUpdateNotification(): UpdateNotificationViewModel {
   const [versionInfo, setVersionInfo] = useState<AppVersionInfo | null>(null);
   const [loadingVersion, setLoadingVersion] = useState(true);
   const [latestVersion, setLatestVersion] = useState('');
+  const [appStoreUrl, setAppStoreUrl] = useState('');
+  const [playStoreUrl, setPlayStoreUrl] = useState('');
   const [selectedLang, setSelectedLang] = useState<SupportedLang>('en');
   const [sending, setSending] = useState(false);
   const [lastDelivery, setLastDelivery] = useState<PushDeliverySummary | null>(null);
@@ -56,6 +62,8 @@ export function useUpdateNotification(): UpdateNotificationViewModel {
       .then((info) => {
         setVersionInfo(info);
         setLatestVersion(info.latestVersion || '');
+        setAppStoreUrl(info.appStoreUrl || '');
+        setPlayStoreUrl(info.playStoreUrl || '');
       })
       .catch(() => {})
       .finally(() => setLoadingVersion(false));
@@ -75,8 +83,13 @@ export function useUpdateNotification(): UpdateNotificationViewModel {
     try {
       // Publish first: setting latestVersion is what blocks older builds.
       // Only then notify, so users are never pushed towards a version the
-      // backend doesn't advertise yet.
-      const info = await updateAppVersionInfo({ latestVersion: version });
+      // backend doesn't advertise yet. Persist the store URLs in the same call
+      // so the in-app modal + push always have a link on both platforms.
+      const info = await updateAppVersionInfo({
+        latestVersion: version,
+        appStoreUrl: appStoreUrl.trim() || null,
+        playStoreUrl: playStoreUrl.trim() || null,
+      });
       setVersionInfo(info);
       const res = await sendAppUpdate({
         appStoreUrl: info.appStoreUrl || undefined,
@@ -119,6 +132,10 @@ export function useUpdateNotification(): UpdateNotificationViewModel {
     loadingVersion,
     latestVersion,
     setLatestVersion,
+    appStoreUrl,
+    setAppStoreUrl,
+    playStoreUrl,
+    setPlayStoreUrl,
     preview,
     selectedLang,
     setSelectedLang,

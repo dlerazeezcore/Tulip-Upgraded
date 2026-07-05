@@ -48,6 +48,12 @@ export function useBookings() {
   return {
     isWide,
     tiles,
-    openManage: (id: string) => router.push(`/manage/${id}`),
+    // FE-4: eSIM is the only live "manage" surface. Non-live tiles have no data
+    // and would land on an empty screen, so route only eSIM into manage and let
+    // the UI present the rest as coming-soon.
+    openManage: (id: string) => {
+      if (id === 'esim') router.push('/manage/esim');
+    },
+    isManageable: (id: string) => id === 'esim',
   };
 }

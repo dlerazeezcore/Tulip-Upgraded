@@ -66,7 +66,7 @@ Each design card maps to exactly one implementation, and vice-versa. Current inv
 - **Components** (`src/components/*.tsx`, each token-driven via `useTheme()`): `PrimaryButton`,
   `Card`, `Checkbox`, `Toggle`, `StatusPill`, `ScreenHeader`, `TripCard`, `HotelCard`,
   `FlightCard`, `ServiceTile`, `UsageRing`, `Flag`, `EmptyState`, `Skeleton`, `TulipTabBar`,
-  `CurrencyPicker`, `LanguagePicker`, `PhoneField`, `OtpInput`, … (see the folder for the full set).
+  `CurrencyPicker`, `LanguagePicker`, `PhoneField`, … (see the folder for the full set).
 - **Screens** — thin UI in `app/<route>.tsx`, wiring in `src/screens/<area>/use<Screen>.ts`
   (e.g. `app/esim/top-up.tsx` ↔ `src/screens/esim/useTopUp.ts`). This split is mandatory
   (see CLAUDE.md) and is what keeps a *visual* change (the `.tsx`) isolated from *behavior*

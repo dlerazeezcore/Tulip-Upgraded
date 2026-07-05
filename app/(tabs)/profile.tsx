@@ -3,7 +3,6 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, Modal, TextInput } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
 import {
@@ -81,15 +80,12 @@ export default function Profile() {
 
   // ─── Hero ───
   const hero = (
-    <View style={{ borderRadius: 20, overflow: 'hidden', ...t.shadow2 }}>
-      <Image
-        source="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85"
-        style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
-        contentFit="cover"
-        transition={300}
-      />
+    <View style={{ borderRadius: t.radius.lg, overflow: 'hidden', ...t.shadow2 }}>
+      {/* FE-19 / #17: a token-driven brand gradient (theme-adaptive, deeper in
+          dark mode) instead of reusing the home tab's stock photo behind a
+          hardcoded scrim. */}
       <LinearGradient
-        colors={[`${t.primary}D0`, 'rgba(15,23,42,0.78)']}
+        colors={t.gradHero as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
@@ -98,13 +94,13 @@ export default function Profile() {
       <BlurView intensity={20} tint="dark" style={{ padding: 22 }}>
         {vm.user ? (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: 'rgba(255,255,255,0.28)', alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.35)' }}>
+            <View style={{ width: 64, height: 64, borderRadius: 32, backgroundColor: t.onHero.fill, alignItems: 'center', justifyContent: 'center', borderWidth: 1.5, borderColor: t.onHero.border }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: t.onPrimary, letterSpacing: -0.4 }}>{vm.user.initials}</Text>
             </View>
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.onPrimary, letterSpacing: -0.4 }}>{vm.user.name}</Text>
               <Text style={{ fontSize: 12, color: t.onPrimary, opacity: 0.88 }}>{vm.user.email ?? vm.user.phone}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4, paddingHorizontal: 10, backgroundColor: 'rgba(255,255,255,0.22)', borderRadius: 999 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4, paddingHorizontal: 10, backgroundColor: t.onHero.chip, borderRadius: 999 }}>
                 <Star size={11} color={t.onPrimary} fill={t.onPrimary} />
                 <Text style={{ color: t.onPrimary, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
                   {tierLabel}{vm.memberSince ? ` · ${tr('profile.memberSince', { year: vm.memberSince })}` : ''}
@@ -208,7 +204,7 @@ export default function Profile() {
 
           <PrimaryButton label={vm.editBusy ? tr('profile.saving') : tr('profile.saveChanges')} onPress={vm.saveProfile} />
 
-          <Pressable onPress={vm.deleteAccount} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12 }}>
+          <Pressable onPress={vm.deleteAccount} disabled={vm.deleteBusy} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, paddingVertical: 12, opacity: vm.deleteBusy ? 0.5 : 1 }}>
             <Trash2 size={15} color={t.danger} />
             <Text style={{ color: t.danger, fontWeight: '700', fontSize: 13 }}>{tr('profile.deleteAccount')}</Text>
           </Pressable>
@@ -228,10 +224,16 @@ export default function Profile() {
 
   const footer = (
     <View style={{ alignItems: 'center', paddingTop: 8, paddingBottom: 4, gap: 8 }}>
-      <Pressable onPress={vm.openPrivacy} hitSlop={8}>
+      <Pressable
+        onPress={vm.openPrivacy}
+        hitSlop={12}
+        accessibilityRole="button"
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingVertical: 6 }}
+      >
         <Text style={{ fontSize: 12, color: t.fgMuted, textDecorationLine: 'underline' }}>
           {tr('profile.privacyPolicy')}
         </Text>
+        <DirectionalChevron direction="forward" size={14} color={t.fgFaint} />
       </Pressable>
       <View style={{ alignItems: 'center', gap: 2 }}>
         <Text style={{ fontSize: 11, color: t.fgFaint }}>{tr('profile.broughtToYouBy')}</Text>

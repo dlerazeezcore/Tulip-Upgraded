@@ -40,12 +40,12 @@ export function AuthShell({
                 onPress={() => router.back()}
                 accessibilityRole="button"
                 accessibilityLabel={tr('a11y.back')}
-                hitSlop={4}
+                hitSlop={8}
                 style={{
                   width: 38,
                   height: 38,
                   borderRadius: 19,
-                  backgroundColor: 'rgba(255,255,255,0.22)',
+                  backgroundColor: t.onHero.chip,
                   alignItems: 'center',
                   justifyContent: 'center',
                   marginBottom: 14,
@@ -60,7 +60,7 @@ export function AuthShell({
                   width: 40,
                   height: 40,
                   borderRadius: 12,
-                  backgroundColor: 'rgba(255,255,255,0.9)',
+                  backgroundColor: t.onHero.badge,
                   alignItems: 'center',
                   justifyContent: 'center',
                 }}

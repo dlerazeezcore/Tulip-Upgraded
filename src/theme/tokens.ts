@@ -13,7 +13,9 @@ const shared = {
     blue800: '#0E3D7E',
     blue900: '#0B2E5F',
   },
-  radius: { xs: 6, sm: 10, md: 14, lg: 20, xl: 28, pill: 999 },
+  // `card` is the single radius for tappable list surfaces (bookings, services,
+  // eSIM store, manage, admin cards) so they stop drifting between 16/18/20.
+  radius: { xs: 6, sm: 10, md: 14, card: 16, lg: 20, xl: 28, pill: 999 },
   space: { s1: 4, s2: 8, s3: 12, s4: 16, s5: 20, s6: 24, s7: 32, s8: 40, s9: 48, s10: 64 },
   font: {
     display: 'Outfit_700Bold',
@@ -31,9 +33,21 @@ const shared = {
     amber: '#F59E0B',
     purple: '#7C3AED',
     emerald: '#10B981',
+    // Soft 12% emerald tint for "success/included" chips (matches accent.emerald).
+    emeraldSoft: 'rgba(16, 185, 129, 0.12)',
     pink: '#EC4899',
     red: '#EF4444',
     teal: '#14B8A6',
+  },
+  // White overlays that sit ON the brand hero gradient (theme-independent by
+  // design — the gradient is the same in light/dark). Named so screens stop
+  // hardcoding rgba(255,255,255,…) literals on their heros.
+  onHero: {
+    chip: 'rgba(255, 255, 255, 0.22)',
+    badge: 'rgba(255, 255, 255, 0.9)',
+    frost: 'rgba(255, 255, 255, 0.92)',
+    fill: 'rgba(255, 255, 255, 0.28)',
+    border: 'rgba(255, 255, 255, 0.35)',
   },
   gradients: [
     ['#1967D2', '#0B4FB0'],
@@ -66,6 +80,9 @@ export type Theme = typeof shared & {
   borderStrong: string;
   /** Modal/backdrop scrim behind sheets and dialogs. */
   scrim: string;
+  /** Two-stop overlay (top→bottom) over the hero photo. Deeper in dark mode so
+   *  the bright stock image doesn't glow against the deep-navy UI. */
+  scrimHero: readonly [string, string];
   primary: string;
   primaryHover: string;
   primaryActive: string;
@@ -106,6 +123,7 @@ export const light: Theme = {
   border: '#ECECF0',
   borderStrong: '#D9DBE2',
   scrim: 'rgba(15, 23, 42, 0.45)',
+  scrimHero: ['rgba(15,23,42,0.30)', 'rgba(15,23,42,0.55)'] as const as readonly [string, string],
   primary: '#1967D2',
   primaryHover: '#1557B0',
   primaryActive: '#114A99',
@@ -166,6 +184,7 @@ export const dark: Theme = {
   border: '#1E293B',
   borderStrong: '#2A3A55',
   scrim: 'rgba(0, 0, 0, 0.55)',
+  scrimHero: ['rgba(2,6,23,0.45)', 'rgba(2,6,23,0.80)'] as const as readonly [string, string],
   primary: '#3B82F6',
   primaryHover: '#2563EB',
   primaryActive: '#1D4ED8',

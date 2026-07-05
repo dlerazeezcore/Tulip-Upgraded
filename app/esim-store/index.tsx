@@ -52,7 +52,7 @@ export default function EsimStore() {
         onPress={vm.goBack}
         accessibilityRole="button"
         accessibilityLabel={tr('a11y.back')}
-        hitSlop={4} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+        hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
       >
         <DirectionalChevron direction="back" size={18} color={t.fg} />
       </Pressable>
@@ -198,7 +198,7 @@ export default function EsimStore() {
                     <PressableScale
                       onPress={() => vm.openPlace(c.code, c.displayName)}
                       scaleTo={0.98}
-                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
+                      style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
                     >
                       <Flag iso={c.code} size={34} />
                       <Text style={{ flex: 1, fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{c.displayName}</Text>

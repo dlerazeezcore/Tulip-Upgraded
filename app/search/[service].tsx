@@ -140,7 +140,7 @@ export default function SearchScreen() {
             onPress={vm.swap}
             accessibilityRole="button"
             accessibilityLabel={tr('a11y.swapOriginDestination')}
-            hitSlop={4}
+            hitSlop={8}
             style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center', marginHorizontal: 8 }}
           >
             <ArrowUpDown size={16} color={t.fgMuted} />

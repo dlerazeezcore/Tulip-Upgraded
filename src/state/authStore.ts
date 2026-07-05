@@ -6,7 +6,7 @@ import { setAuthToken } from '@/lib/api';
 import * as authApi from '@/services/auth';
 import { registerDevice, unregisterDevice } from '@/services/push';
 import { getLocaleLanguage, registerAuthAccessor } from '@/state/storeAccess';
-import type { AuthSession, AuthMe, OtpChannel } from '@/services/types';
+import type { AuthSession, AuthMe } from '@/services/types';
 
 export type AuthUser = {
   id: string;
@@ -106,20 +106,14 @@ type AuthState = {
   user: AuthUser | null;
   token: string | null;
   hydrated: boolean;
-  pendingPhone: string | null;
   isAuthed: () => boolean;
   hydrate: () => Promise<void>;
   setSession: (session: AuthSession) => AuthUser;
   signInPassword: (input: { phone?: string; email?: string; password: string }) => Promise<AuthUser>;
-  signInOtp: (input: { phone: string; otpCode: string; otpChannel?: OtpChannel; verificationSid?: string }) => Promise<AuthUser>;
   signUp: (input: authApi.SignupInput) => Promise<AuthUser>;
-  requestOtp: (phone: string, channel?: OtpChannel) => Promise<void>;
-  verifyOtpAndAuth: (input: { phone: string; code: string; name?: string; channel?: OtpChannel; verificationSid?: string }) => Promise<AuthUser>;
-  resetPassword: (input: { phone: string; otpCode: string; newPassword: string; otpChannel?: OtpChannel; verificationSid?: string }) => Promise<AuthUser>;
   updateProfile: (patch: { name?: string; email?: string | null; notificationsEnabled?: boolean }) => Promise<AuthUser>;
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
   deleteAccount: () => Promise<void>;
-  startPhoneFlow: (phone: string) => void;
   signOut: () => void;
 };
 
@@ -127,7 +121,6 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   token: null,
   hydrated: false,
-  pendingPhone: null,
   isAuthed: () => get().user !== null,
 
   hydrate: async () => {
@@ -174,7 +167,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   setSession: (session) => {
     const user = userFromSession(session);
     setAuthToken(session.accessToken);
-    set({ user, token: session.accessToken, pendingPhone: null });
+    set({ user, token: session.accessToken });
     persist(user, session.accessToken);
     // Fire-and-forget: register this device's push token + locale with the backend.
     // Locale is read lazily via storeAccess to avoid a require cycle.
@@ -187,15 +180,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInPassword: async (input) => get().setSession(await authApi.loginWithPassword(input)),
-  signInOtp: async (input) => get().setSession(await authApi.loginWithOtp(input)),
   signUp: async (input) => get().setSession(await authApi.signup(input)),
-  verifyOtpAndAuth: async (input) => get().setSession(await authApi.verifyOtp(input)),
-  resetPassword: async (input) => get().setSession(await authApi.resetPasswordWithOtp(input)),
-
-  requestOtp: async (phone, channel = 'sms') => {
-    await authApi.requestOtp(phone, channel);
-    set({ pendingPhone: phone });
-  },
 
   updateProfile: async (patch) => {
     const me = await authApi.updateMe(patch);
@@ -233,14 +218,12 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     }
   },
 
-  startPhoneFlow: (phone) => set({ pendingPhone: phone }),
-
   signOut: () => {
     // Fire-and-forget device unregistration before we drop the token (the request
     // needs the bearer to identify the actor). Failure must not block sign-out.
     unregisterDevice().catch(() => {});
     setAuthToken(null);
-    set({ user: null, token: null, pendingPhone: null });
+    set({ user: null, token: null });
     persist(null, null);
   },
 }));

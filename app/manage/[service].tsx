@@ -3,7 +3,7 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Archive, Smartphone } from 'lucide-react-native';
+import { Archive, Smartphone, Sparkles, type LucideIcon } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { StackHeader } from '@/components/StackHeader';
 import { useTheme } from '@/theme/ThemeContext';
@@ -24,7 +24,7 @@ function Card({ children, onPress }: { children: React.ReactNode; onPress?: () =
         backgroundColor: t.bgElev,
         borderColor: t.border,
         borderWidth: 1,
-        borderRadius: 16,
+        borderRadius: t.radius.card,
         padding: 14,
         ...t.shadow1,
       }}
@@ -46,7 +46,7 @@ function HistoryCard({ count, onPress }: { count: number; onPress: () => void })
         backgroundColor: t.bgElev,
         borderColor: t.border,
         borderWidth: 1,
-        borderRadius: 16,
+        borderRadius: t.radius.card,
         padding: 14,
         flexDirection: 'row',
         alignItems: 'center',
@@ -77,7 +77,7 @@ function EsimList({ vm }: { vm: ReturnType<typeof useManageService> }) {
   const refreshing = vm.refreshing;
   const loaded = vm.loaded;
 
-  if (!loaded && refreshing) {
+  if (!loaded) {
     return <EsimListSkeleton count={3} />;
   }
 
@@ -146,16 +146,16 @@ function EsimList({ vm }: { vm: ReturnType<typeof useManageService> }) {
   );
 }
 
-function ComingSoon({ label }: { label: string }) {
-  const t = useTheme();
+function ComingSoon({ label, Icon }: { label: string; Icon?: LucideIcon }) {
   const { t: tr } = useTranslation();
+  // FE-21: use the branded EmptyState (like every other empty surface) rather
+  // than a bare centered Text block.
   return (
-    <View style={{ paddingVertical: 48, alignItems: 'center', gap: 8 }}>
-      <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('manage.comingSoonTitle')}</Text>
-      <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center', maxWidth: 320 }}>
-        {tr('manage.comingSoonBody', { label })}
-      </Text>
-    </View>
+    <EmptyState
+      icon={Icon ?? Sparkles}
+      title={tr('manage.comingSoonTitle')}
+      subtitle={tr('manage.comingSoonBody', { label })}
+    />
   );
 }
 
@@ -195,7 +195,7 @@ export default function ManageService() {
           ) : undefined
         }
       >
-        {service === 'esim' ? <EsimList vm={vm} /> : <ComingSoon label={svc ? tr(`serviceNames.${svc.id}`) : String(service ?? '')} />}
+        {service === 'esim' ? <EsimList vm={vm} /> : <ComingSoon label={svc ? tr(`serviceNames.${svc.id}`) : String(service ?? '')} Icon={svc?.Icon} />}
       </ScrollView>
     </SafeAreaView>
   );

@@ -98,7 +98,7 @@ export default function PlaceDetail() {
                           backgroundColor: t.bgElev, borderWidth: isSelected ? 2 : 1, borderColor: isSelected ? t.primary : t.border, ...t.shadow1,
                         }}
                       >
-                        <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: 'rgba(16,185,129,0.12)', alignItems: 'center', justifyContent: 'center' }}>
+                        <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: t.accent.emeraldSoft, alignItems: 'center', justifyContent: 'center' }}>
                           {b.type === 'unlimited' ? (
                             <InfinityIcon size={22} color={t.accent.emerald} strokeWidth={2.2} />
                           ) : (
@@ -134,7 +134,7 @@ export default function PlaceDetail() {
               </Text>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(vm.selected.usd, vm.selected.saleIqdMinor)}</Text>
             </View>
-            <PrimaryButton label={tr('common.continue')} icon={<ArrowRight size={16} color={t.onPrimary} strokeWidth={2.2} />} onPress={vm.onContinue} style={{ flex: 1 }} />
+            <PrimaryButton label={tr('common.continue')} icon={<ArrowRight size={16} color={t.onPrimary} strokeWidth={2.2} />} onPress={vm.onContinue} style={{ flex: 1.4 }} />
           </View>
         </View>
       )}

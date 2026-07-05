@@ -4,6 +4,7 @@ import { ScrollView, View, Text, Pressable } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
+import { light } from '@/theme/tokens';
 import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
 import { Search, ArrowRight } from 'lucide-react-native';
@@ -77,7 +78,7 @@ export default function Home() {
             transition={400}
           />
           <LinearGradient
-            colors={['rgba(15,23,42,0.30)', 'rgba(15,23,42,0.55)']}
+            colors={t.scrimHero as any}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             pointerEvents="none"
           />
@@ -97,11 +98,11 @@ export default function Home() {
                 gap: 10,
                 padding: 14,
                 borderRadius: 14,
-                backgroundColor: 'rgba(255,255,255,0.92)',
+                backgroundColor: t.onHero.frost,
               }}
             >
-              <Search size={18} color={t.fgMuted} />
-              <Text style={{ flex: 1, fontSize: 14, color: t.fgMuted }}>{tr(`serviceVerbs.${svc.id}`)}</Text>
+              <Search size={18} color={light.fgMuted} />
+              <Text style={{ flex: 1, fontSize: 14, color: light.fgMuted }}>{tr(`serviceVerbs.${svc.id}`)}</Text>
               <View
                 style={{
                   paddingVertical: 8,
@@ -153,8 +154,14 @@ export default function Home() {
             >
               {tr('home.services')}
             </Text>
-            <Pressable onPress={vm.openServices} hitSlop={8} accessibilityRole="button">
+            <Pressable
+              onPress={vm.openServices}
+              hitSlop={12}
+              accessibilityRole="button"
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 4 }}
+            >
               <Text style={{ fontSize: 12, color: t.primary, fontWeight: '600' }}>{tr('home.seeAll')}</Text>
+              <ArrowRight size={13} color={t.primary} strokeWidth={2.4} />
             </Pressable>
           </View>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>

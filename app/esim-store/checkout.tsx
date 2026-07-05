@@ -75,8 +75,8 @@ export default function Checkout() {
             title={tr('checkout.signInToContinue')}
             subtitle={tr('checkout.signInSub')}
             action={
-              <View style={{ flexDirection: 'row', gap: 10, width: 300 }}>
-                <PrimaryButton label={tr('common.signIn')} onPress={vm.goSignIn} style={{ flex: 1 }} />
+              <View style={{ flexDirection: 'row', gap: 10, maxWidth: 340, width: '100%' }}>
+                <PrimaryButton label={tr('common.signIn')} onPress={vm.goSignIn} style={{ flex: 1.4 }} />
                 <PrimaryButton label={tr('common.signUp')} variant="ghost" onPress={vm.goSignUp} style={{ flex: 1 }} />
               </View>
             }
@@ -144,7 +144,7 @@ export default function Checkout() {
                 {tr('checkout.orderSummary')}
               </Text>
               <SummaryRow label={tr('checkout.subtotal')} value={vm.money(bundle.usd, bundle.saleIqdMinor)} />
-              <SummaryRow label={tr('checkout.taxesFees')} value={vm.money(0)} />
+              {/* FE-26: taxes/fees row is omitted while it is always zero */}
               <View style={{ height: 1, backgroundColor: t.border, marginVertical: 4 }} />
               <SummaryRow label={tr('checkout.total')} value={vm.money(bundle.usd, bundle.saleIqdMinor)} strong />
             </View>

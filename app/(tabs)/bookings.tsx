@@ -20,7 +20,7 @@ export default function Bookings() {
     <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
       <AnimatedScreen>
         <ScrollView
-          contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 1200, width: '100%', alignSelf: 'center' }}
+          contentContainerStyle={{ padding: t.space.s5, paddingBottom: t.space.s8, gap: t.space.s4, maxWidth: 1200, width: '100%', alignSelf: 'center' }}
           showsVerticalScrollIndicator={false}
         >
           <ScreenHeader title={tr('bookings.title')} subtitle={tr('bookings.subtitle')} />
@@ -37,8 +37,8 @@ export default function Bookings() {
                     backgroundColor: t.bgElev,
                     borderColor: t.border,
                     borderWidth: 1,
-                    borderRadius: 16,
-                    padding: 16,
+                    borderRadius: t.radius.card,
+                    padding: t.space.s4,
                     ...t.shadow1,
                   }}
                 >

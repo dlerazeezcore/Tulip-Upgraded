@@ -38,6 +38,7 @@ export function useProfile() {
   const [editEmail, setEditEmail] = useState('');
   const [editBusy, setEditBusy] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
+  const [deleteBusy, setDeleteBusy] = useState(false);
 
   const openEdit = () => {
     setEditName(user?.name ?? '');
@@ -62,16 +63,21 @@ export function useProfile() {
   };
 
   const removeAccount = async () => {
-    if (editBusy) return;
-    setEditBusy(true);
+    if (editBusy || deleteBusy) return;
+    // FE-13: the destructive path gets its own busy flag so it doesn't flip the
+    // "Save changes" button into a spinner, and lands on a neutral destination
+    // (deleteAccount signs the user out, so re-navigating to the same profile
+    // tab reused the stale edit-modal context).
+    setDeleteBusy(true);
+    setEditError(null);
     try {
       await deleteAccount();
       setEditOpen(false);
-      router.replace('/(tabs)/profile');
+      router.replace('/(tabs)');
     } catch (e: any) {
       setEditError(e?.message || tr('profile.couldNotDelete'));
     } finally {
-      setEditBusy(false);
+      setDeleteBusy(false);
     }
   };
 
@@ -97,6 +103,7 @@ export function useProfile() {
     editEmail,
     editBusy,
     editError,
+    deleteBusy,
     setEditName,
     setEditEmail,
     // actions
