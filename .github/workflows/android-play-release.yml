@@ -134,3 +134,9 @@ jobs:
           track: ${{ inputs.track }}
           status: ${{ inputs.status }}
           userFraction: ${{ inputs.status == 'inProgress' && inputs.user_fraction || '' }}
+          # Stage the release rather than auto-sending it for review. The Play
+          # API refuses to auto-submit when other changes are pending review
+          # (e.g. a Data safety edit), and staging lets you review + submit
+          # everything together from Play Console → Publishing overview →
+          # "Send changes for review". One extra click, but robust.
+          changesNotSentForReview: true

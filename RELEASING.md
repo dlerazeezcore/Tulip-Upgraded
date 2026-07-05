@@ -13,7 +13,10 @@ Package name: `com.theesim.app`
 2. GitHub → **Actions → "Android Play release (AAB)" → Run workflow**:
    - First run of a version: **track = internal** (validates the whole pipeline safely).
    - Then run again with **track = production**.
-3. Once the build is **live in the store**, open the app's **Admin → Publish app update**,
+3. The workflow **stages** the release (it does not auto-submit — `changesNotSentForReview: true`).
+   Go to **Play Console → Publishing overview → "Send changes for review"** to submit it
+   (together with any pending Data safety / store-listing changes). Google then reviews it.
+4. Once the build is **live in the store**, open the app's **Admin → Publish app update**,
    enter the new version, confirm. This forces every older build to update.
 
 That's it — the workflow builds a signed AAB and uploads it to Play via the Play
