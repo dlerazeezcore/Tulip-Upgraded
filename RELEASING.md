@@ -53,6 +53,25 @@ sideload testing (not usable for Play).
 
 ---
 
+## ⚠️ Known follow-up: Expo SDK upgrade (Android 15 / API 35)
+
+Google Play requires apps to **target API level 35** (Android 15). This project is on
+**Expo SDK 51 (RN 0.74)**, which defaults to API 34 and isn't designed to build for 35.
+We got it shipping with two workarounds:
+
+1. `expo-build-properties` forces `compileSdkVersion`/`targetSdkVersion` 35 (in `app.json`).
+2. `patches/expo-modules-core+1.12.26.patch` fixes a compile error — `PackageInfo.requestedPermissions`
+   became nullable in API 35 and `PermissionsService.kt` called `.contains()` on it directly.
+
+This works, but it's **off Expo 51's supported path for Android 15**, so:
+- After each Android release, sanity-check the **internal testing** build on a real device
+  for permission prompts and Android 15 **edge-to-edge** layout (status/nav-bar overlap).
+- The clean long-term fix is upgrading to **Expo SDK 52/53** (RN 0.76+), which supports
+  API 35 natively and lets both workarounds above be removed. Schedule it as its own
+  test-worthy task, not during a release.
+
+---
+
 ## One-time setup (already done — reference only)
 
 ### Signing (Play App Signing is enabled)
