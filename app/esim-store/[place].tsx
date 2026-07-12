@@ -1,9 +1,11 @@
 // THIN UI — wiring lives in src/screens/esim-store/usePlacePackages.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, Modal } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { Globe, Check, Infinity as InfinityIcon, X, ArrowRight, Clock } from 'lucide-react-native';
+import { ScrollView, View, Text, Pressable } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Globe, Check, Infinity as InfinityIcon, X, Clock } from 'lucide-react-native';
+import { DirectionalArrow } from '@/components/DirectionalArrow';
 import { StackHeader } from '@/components/StackHeader';
+import { BottomSheet } from '@/components/BottomSheet';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PressableScale } from '@/components/PressableScale';
@@ -11,6 +13,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { useTranslation } from 'react-i18next';
 import { Skeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { usePlacePackages } from '@/screens/esim-store/usePlacePackages';
 
 export default function PlaceDetail() {
@@ -21,7 +24,7 @@ export default function PlaceDetail() {
   const { name, iso, money } = vm;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <StackHeader
         title={name}
         onBack={vm.goBack}
@@ -36,7 +39,7 @@ export default function PlaceDetail() {
           <PressableScale
             onPress={() => vm.setCoverageOpen(true)}
             scaleTo={0.98}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.infoBg, borderWidth: 1, borderColor: t.border }}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: t.radius.md, backgroundColor: t.infoBg, borderWidth: 1, borderColor: t.border }}
           >
             <Globe size={20} color={t.primary} strokeWidth={2} />
             <View style={{ flex: 1 }}>
@@ -75,7 +78,7 @@ export default function PlaceDetail() {
                 <View
                   style={{
                     flexDirection: 'row', alignItems: 'center', gap: 6,
-                    paddingVertical: 6, paddingHorizontal: 12, borderRadius: 999,
+                    paddingVertical: 6, paddingHorizontal: 12, borderRadius: t.radius.pill,
                     backgroundColor: t.infoBg, borderWidth: 1, borderColor: t.border,
                   }}
                 >
@@ -86,20 +89,20 @@ export default function PlaceDetail() {
                 </View>
                 <View style={{ flex: 1, height: 1, backgroundColor: t.border }} />
               </View>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: vm.isWide ? -5 : 0, gap: vm.isWide ? 0 : 10 }}>
+              <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: vm.isWide ? -t.gridGutterHalf : 0, gap: vm.isWide ? 0 : 10 }}>
                 {g.items.map((b) => {
                   const isSelected = vm.selected?.id === b.id;
                   return (
-                    <View key={b.id} style={{ width: vm.isWide ? '50%' : '100%', padding: vm.isWide ? 5 : 0 }}>
+                    <View key={b.id} style={{ width: vm.isWide ? '50%' : '100%', padding: vm.isWide ? t.gridGutterHalf : 0 }}>
                       <PressableScale
                         onPress={() => vm.setSelected(b)}
                         scaleTo={0.98}
                         style={{
-                          flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16,
+                          flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: t.radius.card,
                           backgroundColor: t.bgElev, borderWidth: isSelected ? 2 : 1, borderColor: isSelected ? t.primary : t.border, ...t.shadow1,
                         }}
                       >
-                        <View style={{ width: 48, height: 48, borderRadius: 12, backgroundColor: t.accent.emeraldSoft, alignItems: 'center', justifyContent: 'center' }}>
+                        <View style={{ width: 48, height: 48, borderRadius: t.radius.badge, backgroundColor: t.accent.emeraldSoft, alignItems: 'center', justifyContent: 'center' }}>
                           {b.type === 'unlimited' ? (
                             <InfinityIcon size={22} color={t.accent.emerald} strokeWidth={2.2} />
                           ) : (
@@ -135,29 +138,25 @@ export default function PlaceDetail() {
               </Text>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{money(vm.selected.usd, vm.selected.saleIqdMinor)}</Text>
             </View>
-            <PrimaryButton label={tr('common.continue')} icon={<ArrowRight size={16} color={t.onPrimary} strokeWidth={2.2} />} onPress={vm.onContinue} style={{ flex: 1.4 }} />
+            <PrimaryButton label={tr('common.continue')} icon={<DirectionalArrow size={16} color={t.onPrimary} strokeWidth={2.2} />} onPress={vm.onContinue} style={{ flex: 1.4 }} />
           </View>
         </View>
       )}
 
-      <Modal visible={vm.coverageOpen} transparent animationType="slide" onRequestClose={() => vm.setCoverageOpen(false)}>
-        <Pressable onPress={() => vm.setCoverageOpen(false)} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 20 + insets.bottom, maxHeight: '76%' }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('esimStore.coverageTitle', { name })}</Text>
-              <Pressable onPress={() => vm.setCoverageOpen(false)} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
+      <BottomSheet visible={vm.coverageOpen} onClose={() => vm.setCoverageOpen(false)} maxHeight="76%">
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
+          <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('esimStore.coverageTitle', { name })}</Text>
+          <Pressable onPress={() => vm.setCoverageOpen(false)} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
+        </View>
+        <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {vm.coverage.map((c) => (
+            <View key={c} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 10, borderRadius: t.radius.pill, backgroundColor: t.bgSunken }}>
+              <Flag iso={c} size={18} />
+              <Text style={{ fontSize: 12, color: t.fg, fontWeight: '600' }}>{vm.nameByCode[c] || c}</Text>
             </View>
-            <ScrollView contentContainerStyle={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-              {vm.coverage.map((c) => (
-                <View key={c} style={{ flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 7, paddingHorizontal: 10, borderRadius: 999, backgroundColor: t.bgSunken }}>
-                  <Flag iso={c} size={18} />
-                  <Text style={{ fontSize: 12, color: t.fg, fontWeight: '600' }}>{vm.nameByCode[c] || c}</Text>
-                </View>
-              ))}
-            </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
-    </SafeAreaView>
+          ))}
+        </ScrollView>
+      </BottomSheet>
+    </ScreenSafeArea>
   );
 }

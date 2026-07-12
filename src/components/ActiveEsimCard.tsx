@@ -31,7 +31,7 @@ export function ActiveEsimCard() {
           alignItems: 'center',
           gap: 10,
           padding: 14,
-          borderRadius: 16,
+          borderRadius: t.radius.card,
           backgroundColor: t.bgElev,
           borderColor: t.border,
           borderWidth: 1,
@@ -39,7 +39,7 @@ export function ActiveEsimCard() {
         }}
       >
         <AlertCircle size={18} color={t.danger} />
-        <Text style={{ flex: 1, fontSize: 12, color: t.fgMuted }}>{tr('common.error')}</Text>
+        <Text style={{ flex: 1, fontSize: 12, color: t.fgMuted }}>{tr('home.esimLoadError')}</Text>
         <Pressable
           onPress={retry}
           accessibilityRole="button"
@@ -47,7 +47,7 @@ export function ActiveEsimCard() {
           style={({ pressed }) => ({
             paddingVertical: 7,
             paddingHorizontal: 12,
-            borderRadius: 999,
+            borderRadius: t.radius.pill,
             borderWidth: 1.5,
             borderColor: t.primary,
             opacity: pressed ? 0.7 : 1,
@@ -89,7 +89,7 @@ export function ActiveEsimCard() {
             backgroundColor: t.bgElev,
             borderColor: t.border,
             borderWidth: 1,
-            borderRadius: 16,
+            borderRadius: t.radius.card,
             padding: 16,
             ...t.shadow1,
           }}

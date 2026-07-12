@@ -3,7 +3,7 @@ import { Stack } from 'expo-router';
 import { View, ActivityIndicator } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
 import {
   useFonts as useOutfit,
   Outfit_400Regular,
@@ -97,7 +97,9 @@ export default function RootLayout() {
   const hydrateLocale = useLocaleStore((s) => s.hydrate);
   const localeHydrated = useLocaleStore((s) => s.hydrated);
   const hydrateDevice = useDeviceStore((s) => s.hydrate);
-  const authUser = useAuthStore((s) => s.user);
+  // Stable scalar, not the user object: profile edits / notification toggles
+  // replace the object reference and would re-fire the refresh effect below.
+  const authKey = useAuthStore((s) => s.user?.id ?? null);
   const refreshEsims = useEsimStore((s) => s.refresh);
   const refreshOrders = useOrderStore((s) => s.refresh);
   const refreshTravelers = useTravelersStore((s) => s.refresh);
@@ -135,7 +137,7 @@ export default function RootLayout() {
     refreshEsims();
     refreshOrders();
     refreshTravelers();
-  }, [authUser, refreshEsims, refreshOrders, refreshTravelers]);
+  }, [authKey, refreshEsims, refreshOrders, refreshTravelers]);
 
   // On web, font loading can occasionally fail or timeout; don't block initial render forever.
   const ready =
@@ -155,7 +157,11 @@ export default function RootLayout() {
   }
 
   return (
-    <SafeAreaProvider>
+    // initialMetrics: without it the provider renders null until the first
+    // async native insets event, so the whole tree mounts a frame late and
+    // pops down by the status-bar height on launch (Android 15 dispatches
+    // window insets after first layout under enforced edge-to-edge).
+    <SafeAreaProvider initialMetrics={initialWindowMetrics}>
       <ThemeProvider>
         <ThemedStack />
         <UpdateAvailableModal />

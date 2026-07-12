@@ -1,9 +1,9 @@
 // THIN UI — wiring lives in src/screens/trip/useTrip.ts.
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { MapPin } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { useTrip } from '@/screens/trip/useTrip';
@@ -16,7 +16,7 @@ export default function TripDetail() {
   const vm = useTrip();
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
@@ -31,7 +31,7 @@ export default function TripDetail() {
       </View>
 
       <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 32, gap: 12 }}>
-        <View style={{ width: 64, height: 64, borderRadius: 20, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+        <View style={{ width: 64, height: 64, borderRadius: t.radius.lg, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <MapPin size={28} color={t.primary} strokeWidth={2} />
         </View>
         <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('trip.comingSoonTitle')}</Text>
@@ -39,6 +39,6 @@ export default function TripDetail() {
           {tr('trip.comingSoonBody')}
         </Text>
       </View>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

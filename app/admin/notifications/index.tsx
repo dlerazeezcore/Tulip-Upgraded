@@ -1,13 +1,13 @@
 // THIN UI — wiring lives in src/screens/admin/notifications/useNotificationsLanding.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Bell } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useNotificationsLanding } from '@/screens/admin/notifications/useNotificationsLanding';
 
 export default function AdminNotificationsLanding() {
@@ -18,7 +18,7 @@ export default function AdminNotificationsLanding() {
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
@@ -55,7 +55,7 @@ export default function AdminNotificationsLanding() {
               ...t.shadow1,
             }}
           >
-            <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: `${c.color}1A`, alignItems: 'center', justifyContent: 'center' }}>
+            <View style={{ width: 46, height: 46, borderRadius: t.radius.badge, backgroundColor: `${c.color}1A`, alignItems: 'center', justifyContent: 'center' }}>
               <c.Icon size={22} color={c.color} strokeWidth={2} />
             </View>
             <View style={{ flex: 1 }}>
@@ -66,6 +66,6 @@ export default function AdminNotificationsLanding() {
           </PressableScale>
         ))}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

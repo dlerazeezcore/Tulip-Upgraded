@@ -1,7 +1,6 @@
 // THIN UI — wiring lives in src/screens/orders/useOrders.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Receipt, Globe } from 'lucide-react-native';
 import { StackHeader } from '@/components/StackHeader';
@@ -9,7 +8,9 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { EmptyState } from '@/components/EmptyState';
+import { ErrorState } from '@/components/ErrorState';
 import { OrderListSkeleton } from '@/components/Skeleton';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useOrders } from '@/screens/orders/useOrders';
 
 export default function Orders() {
@@ -18,12 +19,14 @@ export default function Orders() {
   const vm = useOrders();
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <StackHeader title={tr('orders.title')} onBack={vm.goBack} />
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 20, maxWidth: 780, width: '100%', alignSelf: 'center' }}>
         {vm.loading && !vm.loaded ? (
           <OrderListSkeleton />
+        ) : vm.errored ? (
+          <ErrorState onRetry={vm.retry} />
         ) : vm.orders.length === 0 ? (
           <EmptyState icon={Receipt} title={tr('orders.noOrdersTitle')} subtitle={tr('orders.noOrdersSub')} />
         ) : (
@@ -32,7 +35,7 @@ export default function Orders() {
               <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, paddingHorizontal: 4 }}>
                 {g.label}
               </Text>
-              <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
+              <View style={{ backgroundColor: t.bgElev, borderRadius: t.radius.card, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
                 {g.items.map((o, i) => (
                   <Pressable
                     key={o.id}
@@ -67,6 +70,6 @@ export default function Orders() {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

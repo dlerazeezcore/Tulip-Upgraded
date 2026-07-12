@@ -5,7 +5,7 @@
 //   - The pre-baked 3-language preview (mirrored from the backend templates).
 //   - The publish action — writes latestVersion to the backend (which BLOCKS
 //     every older app build until it updates), then sends the push to all users.
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
@@ -32,10 +32,14 @@ export type UpdateNotificationViewModel = {
   playStoreUrl: string;
   setPlayStoreUrl: (v: string) => void;
   preview: { lang: SupportedLang; label: string; title: string; body: string }[];
+  /** Preview record for the selected language (pre-selected here — THIN UI). */
+  currentPreview: { lang: SupportedLang; label: string; title: string; body: string };
   selectedLang: SupportedLang;
   setSelectedLang: (lang: SupportedLang) => void;
   sending: boolean;
   lastDelivery: PushDeliverySummary | null;
+  /** Pre-formatted per-language delivery breakdown ("EN: 3 · AR: 1"), or null. */
+  perLanguageLabel: string | null;
   error: string | null;
   send: () => void;
 };
@@ -75,6 +79,17 @@ export function useUpdateNotification(): UpdateNotificationViewModel {
     title: APP_UPDATE_TEMPLATES[lang].title,
     body: APP_UPDATE_TEMPLATES[lang].body,
   }));
+  // Active preview record for the selected language — derived selection
+  // belongs here, not in the screen (THIN UI).
+  const currentPreview = preview.find((p) => p.lang === selectedLang) ?? preview[0];
+
+  // Pre-formatted per-language delivery breakdown — the screen renders it as-is.
+  const perLanguageLabel = useMemo(() => {
+    if (!lastDelivery?.perLanguageCounts) return null;
+    return Object.entries(lastDelivery.perLanguageCounts)
+      .map(([lang, n]) => `${lang.toUpperCase()}: ${n}`)
+      .join(' · ');
+  }, [lastDelivery]);
 
   const performSend = async (version: string) => {
     setSending(true);
@@ -137,10 +152,12 @@ export function useUpdateNotification(): UpdateNotificationViewModel {
     playStoreUrl,
     setPlayStoreUrl,
     preview,
+    currentPreview,
     selectedLang,
     setSelectedLang,
     sending,
     lastDelivery,
+    perLanguageLabel,
     error,
     send,
   };

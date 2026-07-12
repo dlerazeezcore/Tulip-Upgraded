@@ -1,73 +1,81 @@
 // THIN UI — wiring lives in src/screens/orders/useOrderDetail.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Globe, Check } from 'lucide-react-native';
-import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { ScrollView, View, Text } from 'react-native';
+import { Globe, Check, Receipt } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
+import { StackHeader } from '@/components/StackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { StatusPill } from '@/components/StatusPill';
 import { PrimaryButton } from '@/components/PrimaryButton';
-import { formatIqd } from '@/lib/pricing';
+import { EmptyState } from '@/components/EmptyState';
+import { Skeleton } from '@/components/Skeleton';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useOrderDetail } from '@/screens/orders/useOrderDetail';
 import { useIsRTL } from '@/lib/rtl';
-import { useDateFormatters } from '@/lib/dates';
 
 export default function OrderDetail() {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const vm = useOrderDetail();
   const isRTL = useIsRTL();
-  const { formatDateTime } = useDateFormatters();
   const { order, item, completed } = vm;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
-        <Pressable
-          onPress={vm.goBack}
-          accessibilityRole="button"
-          accessibilityLabel={tr('a11y.back')}
-          hitSlop={8}
-          style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
-        >
-          <DirectionalChevron direction="back" size={18} color={t.fg} />
-        </Pressable>
-        <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-          {tr('orders.detailTitle')}
-        </Text>
-      </View>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
+      <StackHeader title={tr('orders.detailTitle')} onBack={vm.goBack} />
 
-      {!order ? (
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', gap: 12 }}>
-          <Text style={{ color: t.fgMuted }}>{tr('orders.notFound')}</Text>
-          <PrimaryButton label={tr('orders.backToOrders')} onPress={vm.goOrders} />
+      {vm.loading ? (
+        <View style={{ padding: 20, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
+          {/* Shaped like the summary + rows cards so the loaded screen doesn't jump. */}
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
+            <Skeleton width={42} height={42} radius={21} />
+            <View style={{ flex: 1, gap: 6 }}>
+              <Skeleton width="55%" height={14} />
+              <Skeleton width="35%" height={11} />
+              <Skeleton width={72} height={22} radius={t.radius.pill} />
+            </View>
+          </View>
+          <View style={{ backgroundColor: t.bgElev, borderRadius: t.radius.card, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
+            {[0, 1, 2, 3, 4, 5].map((i, _, arr) => (
+              <View
+                key={i}
+                style={{
+                  flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 13, paddingHorizontal: 14,
+                  borderBottomWidth: i < arr.length - 1 ? 1 : 0, borderBottomColor: t.border,
+                }}
+              >
+                <Skeleton width={90} height={13} />
+                <Skeleton width={120} height={13} />
+              </View>
+            ))}
+          </View>
+        </View>
+      ) : !order ? (
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <EmptyState
+            icon={Receipt}
+            title={tr('orders.notFound')}
+            action={<PrimaryButton label={tr('orders.backToOrders')} onPress={vm.goOrders} />}
+          />
         </View>
       ) : (
         <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 16, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
             {item?.countryCode ? <Flag iso={item.countryCode} size={42} /> : <Globe size={32} color={t.primary} />}
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 17, color: t.fg }}>
-                {item?.countryName ? tr('orders.countryEsim', { country: item.countryName }) : tr('orders.esimOrder')}
+                {vm.title}
               </Text>
               {item?.packageName ? <Text style={{ fontSize: 12, color: t.fgMuted, marginTop: 2 }}>{item.packageName}</Text> : null}
               <View style={{ marginTop: 6 }}>
-                <StatusPill kind={completed ? 'completed' : 'upcoming'} label={String(order.status).toLowerCase()} />
+                <StatusPill kind={completed ? 'completed' : 'upcoming'} label={vm.statusLabel} />
               </View>
             </View>
           </View>
 
-          <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
-            {([
-              [tr('orders.rowOrderNumber'), order.orderNumber],
-              [tr('orders.rowDate'), formatDateTime(order.bookedAt || order.createdAt)],
-              [tr('orders.rowPaymentMethod'), order.paymentMethod || '—'],
-              [tr('orders.rowDestination'), item?.countryName || '—'],
-              [tr('orders.rowPlan'), item?.packageName || item?.packageCode || '—'],
-              [tr('orders.rowQuantity'), String(item?.quantity ?? 1)],
-            ] as [string, string][]).map(([k, v], i, arr) => (
+          <View style={{ backgroundColor: t.bgElev, borderRadius: t.radius.card, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
+            {vm.rows.map(([k, v], i, arr) => (
               <View
                 key={k + i}
                 style={{
@@ -81,10 +89,10 @@ export default function OrderDetail() {
             ))}
           </View>
 
-          <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1 }}>
+          <View style={{ padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1 }}>
             <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
               <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 15, color: t.fg }}>{tr('orders.total')}</Text>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.fg }}>{formatIqd(order.totalMinor ?? 0)}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.fg }}>{vm.totalLabel}</Text>
             </View>
             {completed && (
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 8 }}>
@@ -97,6 +105,6 @@ export default function OrderDetail() {
           <PrimaryButton label={tr('orders.manageEsim')} onPress={vm.goManageEsim} />
         </ScrollView>
       )}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

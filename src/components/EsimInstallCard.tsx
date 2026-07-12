@@ -64,7 +64,7 @@ export function EsimInstallCard(props: Props) {
 
   if (!vm.hasActivationData) {
     return (
-      <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 18, gap: 10, ...t.shadow1 }}>
+      <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.card, padding: 18, gap: 10, ...t.shadow1 }}>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           <AlertCircle size={18} color={t.warning} />
           <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 15, color: t.fg }}>
@@ -79,7 +79,7 @@ export function EsimInstallCard(props: Props) {
   }
 
   return (
-    <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 18, gap: 14, ...t.shadow1 }}>
+    <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.card, padding: 18, gap: 14, ...t.shadow1 }}>
       <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
         {tr('install.installEsim')}
       </Text>
@@ -116,7 +116,7 @@ export function EsimInstallCard(props: Props) {
 
       {/* QR — rendered via SVG, works on iOS / Android / web. */}
       <View style={{ alignItems: 'center', gap: 10, paddingVertical: 8 }}>
-        <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 16 }}>
+        <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: t.radius.card }}>
           {vm.lpa ? (
             // QR colors are intentionally hardcoded #fff/#000 — a scannable code
             // must be black-on-white regardless of light/dark theme.
@@ -127,7 +127,7 @@ export function EsimInstallCard(props: Props) {
                   Pure-SVG overlay (TulipLogo) renders identically web + native. */}
               <View
                 pointerEvents="none"
-                style={{ position: 'absolute', width: 52, height: 52, borderRadius: 14, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}
+                style={{ position: 'absolute', width: 52, height: 52, borderRadius: t.radius.md, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center' }}
               >
                 <TulipLogo size={38} />
               </View>
@@ -149,7 +149,7 @@ export function EsimInstallCard(props: Props) {
               gap: 6,
               paddingVertical: 9,
               paddingHorizontal: 18,
-              borderRadius: 999,
+              borderRadius: t.radius.pill,
               borderWidth: 1.5,
               borderColor: t.primary,
               opacity: pressed || vm.busy || !vm.lpa ? 0.6 : 1,
@@ -169,7 +169,7 @@ export function EsimInstallCard(props: Props) {
 
       {/* Manual entry — for users who type into iOS Settings. */}
       {(vm.smdp || vm.activationCodeManual) && (
-        <View style={{ borderWidth: 1, borderColor: t.border, borderRadius: 12, overflow: 'hidden' }}>
+        <View style={{ borderWidth: 1, borderColor: t.border, borderRadius: t.radius.md, overflow: 'hidden' }}>
           <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, padding: 12, paddingBottom: 0 }}>
             {tr('install.manualEntry')}
           </Text>

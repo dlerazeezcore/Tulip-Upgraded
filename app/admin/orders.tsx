@@ -1,7 +1,6 @@
 // THIN UI — wiring lives in src/screens/admin/useAdminOrders.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Globe, ChevronDown, RefreshCw, Check, AlertCircle, CalendarDays, Receipt } from 'lucide-react-native';
@@ -10,6 +9,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { EmptyState } from '@/components/EmptyState';
 import { OrderListSkeleton } from '@/components/Skeleton';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useAdminOrders } from '@/screens/admin/useAdminOrders';
 
 const YEARS = [2026, 2027, 2028, 2029, 2030];
@@ -32,13 +32,13 @@ export default function AdminOrders() {
 
   const labelStyle = { fontSize: 11, fontWeight: '700' as const, color: t.fgMuted, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
   const Chip = ({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) => (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}>
+    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: t.radius.pill, backgroundColor: on ? t.primary : t.bgSunken }}>
       <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 12, color: on ? t.onPrimary : t.fgMuted }}>{label}</Text>
     </Pressable>
   );
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
@@ -60,7 +60,7 @@ export default function AdminOrders() {
             gap: 6,
             paddingVertical: 8,
             paddingHorizontal: 14,
-            borderRadius: 999,
+            borderRadius: t.radius.pill,
             borderWidth: 1.5,
             borderColor: t.primary,
             backgroundColor: refreshing ? t.bgSunken : 'transparent',
@@ -75,7 +75,7 @@ export default function AdminOrders() {
       </View>
 
       {refreshSummary && (
-        <View style={{ marginHorizontal: 20, marginTop: 4, padding: 10, borderRadius: 12, backgroundColor: refreshSummary.errorCount > 0 ? t.warningBg : t.successBg, borderWidth: 1, borderColor: refreshSummary.errorCount > 0 ? `${t.warning}59` : `${t.success}59`, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <View style={{ marginHorizontal: 20, marginTop: 4, padding: 10, borderRadius: t.radius.md, backgroundColor: refreshSummary.errorCount > 0 ? t.warningBg : t.successBg, borderWidth: 1, borderColor: refreshSummary.errorCount > 0 ? `${t.warning}59` : `${t.success}59`, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
           {refreshSummary.errorCount > 0 ? (
             <AlertCircle size={14} color={t.warning} />
           ) : (
@@ -123,7 +123,7 @@ export default function AdminOrders() {
         ) : filtered.length === 0 ? (
           <EmptyState icon={Receipt} title={tr('admin.orders.noOrdersForMonth', { month: monthLabel(month), year })} />
         ) : (
-          <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
+          <View style={{ backgroundColor: t.bgElev, borderRadius: t.radius.card, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
             {filtered.map((o, i) => (
               <View key={o.id} style={{ borderBottomWidth: i === filtered.length - 1 ? 0 : 1, borderBottomColor: t.border }}>
                 <Pressable onPress={() => toggle(o.id)} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14 }}>
@@ -140,7 +140,7 @@ export default function AdminOrders() {
                       {o.subLabel}
                     </Text>
                     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 4 }}>
-                      <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: 999, backgroundColor: t.bgSunken }}>
+                      <View style={{ paddingHorizontal: 7, paddingVertical: 2, borderRadius: t.radius.pill, backgroundColor: t.bgSunken }}>
                         <Text style={{ fontSize: 9, fontWeight: '800', color: t.fgMuted, letterSpacing: 0.3 }}>
                           {o.statusLabel}
                         </Text>
@@ -174,6 +174,6 @@ export default function AdminOrders() {
           </View>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

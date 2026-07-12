@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Linking, Platform, useWindowDimensions } from 'react-native';
+import { Alert, Linking, Platform, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useThemeStore } from '@/state/themeStore';
@@ -7,9 +7,7 @@ import { useCurrencyStore } from '@/state/currencyStore';
 import { useAuthStore } from '@/state/authStore';
 import { useLocaleStore } from '@/state/localeStore';
 import { useTravelersStore } from '@/state/travelersStore';
-
-const SUPPORT_WHATSAPP_URL = 'https://wa.me/9647507201111';
-const PRIVACY_URL = 'https://tulipbookings.com/privacy-policy.html';
+import { PRIVACY_URL, SUPPORT_WHATSAPP_URL } from '@/lib/config';
 
 export function useProfile() {
   const router = useRouter();
@@ -30,6 +28,10 @@ export function useProfile() {
 
   const isAdmin = !!user?.isAdmin;
   const isLoyalty = !!user?.isLoyalty;
+  // Saved travelers are tied to app-user rows; admin subjects have none and
+  // every /travelers/my call 403s for them — hide the entry rather than
+  // dead-ending admins on an erroring screen.
+  const showTravelers = !!user && !isAdmin;
   const notificationsOn = user?.notificationsEnabled !== false; // default ON
   const memberSince = user?.createdAt ? String(new Date(user.createdAt).getFullYear()) : null;
 
@@ -82,7 +84,11 @@ export function useProfile() {
   };
 
   const setNotifications = (next: boolean) => {
-    setNotificationsEnabled(next).catch(() => {});
+    // The store reverts the optimistic toggle on failure; tell the user why
+    // their switch snapped back instead of failing silently.
+    setNotificationsEnabled(next).catch((e: any) => {
+      Alert.alert(tr('common.error'), e?.message || tr('profile.notifUpdateFailed'));
+    });
   };
 
   return {
@@ -91,6 +97,7 @@ export function useProfile() {
     user,
     isAdmin,
     isLoyalty,
+    showTravelers,
     notificationsOn,
     memberSince,
     travelerCount,

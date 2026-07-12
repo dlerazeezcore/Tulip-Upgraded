@@ -47,6 +47,7 @@ export function useManageService() {
   const refreshList = useEsimStore((s) => s.refresh);
   const refreshUsage = useEsimStore((s) => s.refreshUsage);
   const refreshing = useEsimStore((s) => s.refreshing);
+  const storeError = useEsimStore((s) => s.error);
 
   React.useEffect(() => {
     if (service === 'esim') refreshList();
@@ -117,6 +118,13 @@ export function useManageService() {
     // list
     esims,
     loaded,
+    // First snapshot failed with nothing to show — a returning customer's
+    // owned eSIMs must never read as "No eSIMs yet" on a network error
+    // (audit #2). Stale-but-loaded data still renders as the list.
+    errored: !loaded && !refreshing && !!storeError,
+    retry: () => {
+      void refreshList();
+    },
     // history card
     historyCount,
     // navigation

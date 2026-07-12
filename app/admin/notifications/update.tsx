@@ -1,13 +1,13 @@
 // THIN UI — wiring lives in src/screens/admin/notifications/useUpdateNotification.ts.
 import React from 'react';
 import { ScrollView, View, Text, TextInput, Pressable, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Bell, Check } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useUpdateNotification } from '@/screens/admin/notifications/useUpdateNotification';
 
 export default function AdminSendUpdateNotification() {
@@ -17,10 +17,10 @@ export default function AdminSendUpdateNotification() {
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
-  const current = vm.preview.find((p) => p.lang === vm.selectedLang) ?? vm.preview[0];
+  const current = vm.currentPreview;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <DirectionalChevron direction="back" size={18} color={t.fg} />
@@ -39,7 +39,7 @@ export default function AdminSendUpdateNotification() {
         </Text>
 
         {/* Latest version — publishing this BLOCKS every older app build */}
-        <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 8, ...t.shadow1 }}>
+        <View style={{ padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 8, ...t.shadow1 }}>
           <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>
             {tr('admin.notifications.update.latestVersionLabel')}
           </Text>
@@ -57,7 +57,7 @@ export default function AdminSendUpdateNotification() {
               color: t.fg,
               borderWidth: 1,
               borderColor: t.border,
-              borderRadius: 12,
+              borderRadius: t.radius.md,
               paddingHorizontal: 12,
               paddingVertical: 10,
               backgroundColor: t.bgSunken,
@@ -81,7 +81,7 @@ export default function AdminSendUpdateNotification() {
                 style={{
                   paddingVertical: 8,
                   paddingHorizontal: 14,
-                  borderRadius: 999,
+                  borderRadius: t.radius.pill,
                   backgroundColor: selected ? t.primary : t.bgSunken,
                 }}
               >
@@ -94,7 +94,7 @@ export default function AdminSendUpdateNotification() {
         </View>
 
         {/* Preview card */}
-        <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 8, ...t.shadow1 }}>
+        <View style={{ padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 8, ...t.shadow1 }}>
           <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>
             {tr('admin.notifications.preview')}
           </Text>
@@ -110,7 +110,7 @@ export default function AdminSendUpdateNotification() {
         {vm.loadingVersion ? (
           <ActivityIndicator color={t.primary} />
         ) : (
-          <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 10, ...t.shadow1 }}>
+          <View style={{ padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 10, ...t.shadow1 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase' }}>
               {tr('admin.notifications.update.storeUrls')}
             </Text>
@@ -124,7 +124,7 @@ export default function AdminSendUpdateNotification() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="url"
-                style={{ fontSize: 13, fontFamily: t.font.bodyMedium, color: t.fg, borderWidth: 1, borderColor: t.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: t.bgSunken }}
+                style={{ fontSize: 13, fontFamily: t.font.bodyMedium, color: t.fg, borderWidth: 1, borderColor: t.border, borderRadius: t.radius.md, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: t.bgSunken }}
               />
             </View>
             <View style={{ gap: 6 }}>
@@ -137,7 +137,7 @@ export default function AdminSendUpdateNotification() {
                 autoCapitalize="none"
                 autoCorrect={false}
                 keyboardType="url"
-                style={{ fontSize: 13, fontFamily: t.font.bodyMedium, color: t.fg, borderWidth: 1, borderColor: t.border, borderRadius: 12, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: t.bgSunken }}
+                style={{ fontSize: 13, fontFamily: t.font.bodyMedium, color: t.fg, borderWidth: 1, borderColor: t.border, borderRadius: t.radius.md, paddingHorizontal: 12, paddingVertical: 10, backgroundColor: t.bgSunken }}
               />
             </View>
             <Text style={{ fontSize: 11, color: t.fgMuted, lineHeight: 16 }}>
@@ -149,7 +149,7 @@ export default function AdminSendUpdateNotification() {
         {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
 
         {vm.lastDelivery ? (
-          <View style={{ padding: 14, borderRadius: 14, backgroundColor: t.successBg, gap: 4 }}>
+          <View style={{ padding: 14, borderRadius: t.radius.md, backgroundColor: t.successBg, gap: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Check size={16} color={t.success} strokeWidth={2.5} />
               <Text style={{ color: t.success, fontWeight: '700' }}>{tr('admin.notifications.sent')}</Text>
@@ -166,12 +166,8 @@ export default function AdminSendUpdateNotification() {
                     total: vm.lastDelivery.requestedTokens,
                   })}
             </Text>
-            {vm.lastDelivery.perLanguageCounts && (
-              <Text style={{ fontSize: 11, color: t.fgFaint }}>
-                {Object.entries(vm.lastDelivery.perLanguageCounts)
-                  .map(([lang, n]) => `${lang.toUpperCase()}: ${n}`)
-                  .join(' · ')}
-              </Text>
+            {vm.perLanguageLabel && (
+              <Text style={{ fontSize: 11, color: t.fgFaint }}>{vm.perLanguageLabel}</Text>
             )}
           </View>
         ) : null}
@@ -181,6 +177,6 @@ export default function AdminSendUpdateNotification() {
           onPress={vm.send}
         />
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

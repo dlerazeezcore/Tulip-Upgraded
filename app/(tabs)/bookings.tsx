@@ -1,13 +1,13 @@
 // THIN UI — wiring lives in src/screens/bookings/useBookings.ts.
 import React from 'react';
 import { ScrollView, View, Text } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { ScreenHeader } from '@/components/ScreenHeader';
 import { PressableScale } from '@/components/PressableScale';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useBookings } from '@/screens/bookings/useBookings';
 
 export default function Bookings() {
@@ -17,16 +17,16 @@ export default function Bookings() {
   const { isWide, tiles } = vm;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <AnimatedScreen>
         <ScrollView
           contentContainerStyle={{ padding: t.space.s5, paddingBottom: t.space.s8, gap: t.space.s4, maxWidth: 1200, width: '100%', alignSelf: 'center' }}
           showsVerticalScrollIndicator={false}
         >
           <ScreenHeader title={tr('bookings.title')} subtitle={tr('bookings.subtitle')} />
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -5 : 0, gap: isWide ? 0 : 10 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: isWide ? -t.gridGutterHalf : 0, gap: isWide ? 0 : 10 }}>
             {tiles.map((tile) => (
-              <View key={tile.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? 5 : 0 }}>
+              <View key={tile.id} style={{ width: isWide ? '50%' : '100%', padding: isWide ? t.gridGutterHalf : 0 }}>
                 <PressableScale
                   onPress={() => vm.openManage(tile.id)}
                   scaleTo={0.98}
@@ -42,7 +42,7 @@ export default function Bookings() {
                     ...t.shadow1,
                   }}
                 >
-                  <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: tile.tint, alignItems: 'center', justifyContent: 'center' }}>
+                  <View style={{ width: 46, height: 46, borderRadius: t.radius.badge, backgroundColor: tile.tint, alignItems: 'center', justifyContent: 'center' }}>
                     <tile.Icon size={22} color={tile.color} strokeWidth={2} />
                   </View>
                   <View style={{ flex: 1 }}>
@@ -56,6 +56,6 @@ export default function Bookings() {
           </View>
         </ScrollView>
       </AnimatedScreen>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

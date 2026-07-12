@@ -1,5 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { HOME_HERO_IMAGE, HOME_HERO_BLURHASH } from '@/data/home';
 import { SERVICES, serviceRoute } from '@/data/services';
 import { useSearchStore } from '@/state/searchStore';
 import { useAuthStore } from '@/state/authStore';
@@ -26,6 +27,7 @@ export function useHome() {
     firstName,
     greeting,
     isWide,
+    hero: { image: HOME_HERO_IMAGE, blurhash: HOME_HERO_BLURHASH },
     openActiveSearch: () => router.push(serviceRoute(svc.id) as any),
     openServices: () => router.push('/services'),
   };

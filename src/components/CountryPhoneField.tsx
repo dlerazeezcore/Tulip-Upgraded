@@ -1,8 +1,9 @@
 import React from 'react';
-import { View, Text, TextInput, Pressable, Modal, ScrollView } from 'react-native';
+import { View, Text, TextInput, Pressable, ScrollView } from 'react-native';
 import { ChevronDown, Search, X } from 'lucide-react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
+import { BottomSheet } from '@/components/BottomSheet';
 import { Flag } from '@/components/Flag';
 import { useCountryPhoneField } from '@/components/useCountryPhoneField';
 
@@ -32,7 +33,7 @@ export function CountryPhoneField({
           backgroundColor: t.bgElev,
           borderColor: t.border,
           borderWidth: 1,
-          borderRadius: 14,
+          borderRadius: t.radius.md,
           overflow: 'hidden',
         }}
       >
@@ -45,8 +46,9 @@ export function CountryPhoneField({
             paddingHorizontal: 12,
             paddingVertical: 14,
             backgroundColor: t.bgSunken,
-            borderRightWidth: 1,
-            borderRightColor: t.border,
+            // Logical borderEnd so the prefix/input divider flips with RTL (ar/ku).
+            borderEndWidth: 1,
+            borderEndColor: t.border,
           }}
         >
           <Flag iso={country.iso} size={20} />
@@ -66,9 +68,9 @@ export function CountryPhoneField({
         />
       </View>
 
-      <Modal visible={open} transparent animationType="slide" onRequestClose={() => closePicker()}>
-        <Pressable onPress={() => closePicker()} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-          <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, maxHeight: '78%' }}>
+      {/* Shared BottomSheet adds the safe-area bottom inset the old inline sheet
+          omitted — the country list no longer sits under the home indicator. */}
+      <BottomSheet visible={open} onClose={() => closePicker()} maxHeight="78%">
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('phone.selectCountry')}</Text>
               <Pressable
@@ -79,7 +81,7 @@ export function CountryPhoneField({
                 <X size={20} color={t.fgMuted} />
               </Pressable>
             </View>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.bgSunken, borderRadius: 12, paddingHorizontal: 12, marginBottom: 10 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, backgroundColor: t.bgSunken, borderRadius: t.radius.md, paddingHorizontal: 12, marginBottom: 10 }}>
               <Search size={16} color={t.fgMuted} />
               <TextInput
                 value={query}
@@ -108,9 +110,7 @@ export function CountryPhoneField({
                 );
               })}
             </ScrollView>
-          </Pressable>
-        </Pressable>
-      </Modal>
+      </BottomSheet>
     </View>
   );
 }

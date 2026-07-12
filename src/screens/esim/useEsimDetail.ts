@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
+import { useEsimUsageFormatters } from '@/lib/esimUsage';
 import { useEsimStore } from '@/state/esimStore';
 import { useDeviceStore } from '@/state/deviceStore';
 import { checkEsimSupport, isDefinitelyUnsupported, type EsimSupportResult } from '@/services/device';
@@ -14,6 +15,7 @@ export function useEsimDetail() {
   const router = useRouter();
   const { t: tr } = useTranslation();
   const t = useTheme();
+  const fmt = useEsimUsageFormatters();
   const esims = useEsimStore((s) => s.esims);
   const byId = useEsimStore((s) => s.byId);
   const history = useEsimStore((s) => s.history);
@@ -21,6 +23,10 @@ export function useEsimDetail() {
   const refresh = useEsimStore((s) => s.refresh);
   const refreshUsage = useEsimStore((s) => s.refreshUsage);
   const refreshing = useEsimStore((s) => s.refreshing);
+  // Terminal bundles resolve via the history list, which loads separately —
+  // the not-found gate must wait for it too, or a cold deep-link to an
+  // expired eSIM flashes "not found" while history is still in flight.
+  const historyLoading = useEsimStore((s) => s.historyLoading);
   const install = useEsimStore((s) => s.install);
 
   const [support, setSupport] = useState<EsimSupportResult | null>(null);
@@ -257,11 +263,16 @@ export function useEsimDetail() {
   const ringColor = esim?.status === 'active' ? t.success : esim?.status === 'expired' ? t.danger : t.warning;
   const pillKind: PillKind = !esim || esim.status === 'provider_waiting' ? 'inactive' : esim.status;
   const pillLabel = esim?.status === 'provider_waiting' ? tr('status.provider_waiting') : undefined;
+  // ONE plan label derived from the store's pre-resolved dataLabel — the same
+  // helper the manage list uses. Never build "${planGb} GB" here: planGb is 0
+  // for package-kind / pending labels (e.g. a just-purchased profile before
+  // the provider populates totalDataMb), which used to render as "0 GB".
+  const planLabel = esim ? fmt.dataLabel(esim.dataLabel) : '';
+  // Plan label + validity suffix ("5 GB · 7 days") for the header row and the
+  // install card's share title. Suffix only when the validity is known.
   const dataLabel = !esim
     ? ''
-    : esim.unlimited
-      ? `${tr('esim.unlimited')} · ${esim.planDays} ${tr('esim.days')}`
-      : `${esim.planGb} GB · ${esim.planDays} ${tr('esim.days')}`;
+    : `${planLabel}${esim.planDays ? ` · ${esim.planDays} ${tr('esim.days')}` : ''}`;
   // Device advisory: hard "unsupported" only on positive native evidence;
   // soft "check compatibility" when we genuinely can't tell.
   const advisoryKind: 'unsupported' | 'check' | null =
@@ -291,9 +302,11 @@ export function useEsimDetail() {
     ringColor,
     pillKind,
     pillLabel,
+    planLabel,
     dataLabel,
     advisoryKind,
     refreshing,
+    historyLoading,
     detectingInstall,
     detectTimedOut,
     showInstall,

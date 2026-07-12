@@ -37,7 +37,7 @@ export function FibPaymentSheet({ sheet }: { sheet: FibPaymentSheetVM }) {
           </View>
 
           {/* QR — FIB's official image preferred; fall back to drawing the deeplink. */}
-          <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: 16 }}>
+          <View style={{ padding: 12, backgroundColor: '#fff', borderRadius: t.radius.card }}>
             <View style={{ width: 220, height: 220, alignItems: 'center', justifyContent: 'center' }}>
               {sheet.qrUri ? (
                 <Image source={{ uri: sheet.qrUri }} style={{ width: 220, height: 220 }} resizeMode="contain" />

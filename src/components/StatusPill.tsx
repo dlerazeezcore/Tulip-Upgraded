@@ -26,7 +26,7 @@ export function StatusPill({ kind, label }: { kind: PillKind; label?: string }) 
         alignSelf: 'flex-start',
         paddingVertical: 4,
         paddingHorizontal: 9,
-        borderRadius: 999,
+        borderRadius: t.radius.pill,
         backgroundColor: s.bg,
       }}
     >

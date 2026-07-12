@@ -44,6 +44,7 @@ export function PrimaryButton({
         {
           backgroundColor: ghost ? 'transparent' : t.primary,
           borderRadius: t.radius.pill,
+          minHeight: 48, // A11y (#24): keep the tap target at least 44pt regardless of text metrics.
           paddingVertical: 12,
           paddingHorizontal: 22,
           flexDirection: 'row',

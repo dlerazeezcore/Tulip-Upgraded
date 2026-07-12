@@ -66,7 +66,7 @@ export function TulipTabBar({ state, navigation }: BottomTabBarProps) {
                 style={{
                   paddingHorizontal: 16,
                   paddingVertical: 5,
-                  borderRadius: 999,
+                  borderRadius: t.radius.pill,
                   backgroundColor: focused ? t.primary + '1A' : 'transparent',
                 }}
               >

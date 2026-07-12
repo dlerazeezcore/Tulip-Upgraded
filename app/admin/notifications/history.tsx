@@ -1,11 +1,11 @@
 // THIN UI — wiring lives in src/screens/admin/notifications/useNotificationHistory.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { History } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useTheme } from '@/theme/ThemeContext';
 import { useIsRTL } from '@/lib/rtl';
 import { useNotificationHistory } from '@/screens/admin/notifications/useNotificationHistory';
@@ -19,7 +19,7 @@ export default function AdminNotificationHistory() {
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <DirectionalChevron direction="back" size={18} color={t.fg} />
@@ -53,7 +53,7 @@ export default function AdminNotificationHistory() {
                 key={row.id}
                 style={{
                   padding: 14,
-                  borderRadius: 14,
+                  borderRadius: t.radius.md,
                   backgroundColor: t.bgElev,
                   borderColor: t.border,
                   borderWidth: 1,
@@ -68,7 +68,7 @@ export default function AdminNotificationHistory() {
                   >
                     {row.title}
                   </Text>
-                  <View style={{ paddingVertical: 3, paddingHorizontal: 8, borderRadius: 999, backgroundColor: row.statusBg }}>
+                  <View style={{ paddingVertical: 3, paddingHorizontal: 8, borderRadius: t.radius.pill, backgroundColor: row.statusBg }}>
                     <Text style={{ fontSize: 10, fontWeight: '700', color: row.statusFg, textTransform: 'uppercase' }}>
                       {row.statusLabel}
                     </Text>
@@ -101,6 +101,6 @@ export default function AdminNotificationHistory() {
           )}
         </ScrollView>
       )}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

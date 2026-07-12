@@ -1,7 +1,6 @@
 // THIN UI — wiring lives in src/screens/admin/useAdminCurrency.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Check, Plus, X } from 'lucide-react-native';
@@ -11,6 +10,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { CenteredModal } from '@/components/CenteredModal';
 import { Toggle } from '@/components/Toggle';
 import { Flag } from '@/components/Flag';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useAdminCurrency } from '@/screens/admin/useAdminCurrency';
 
 export default function AdminCurrency() {
@@ -24,7 +24,7 @@ export default function AdminCurrency() {
     backgroundColor: t.bgElev,
     borderColor: t.border,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: t.radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 16,
@@ -33,10 +33,10 @@ export default function AdminCurrency() {
   } as const;
 
   const sectionLabel = { fontSize: 11, fontWeight: '700' as const, color: t.fgMuted, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
-  const card = { padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 };
+  const card = { padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 };
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
@@ -91,7 +91,7 @@ export default function AdminCurrency() {
             </View>
             <Pressable
               onPress={vm.openNew}
-              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: t.border, borderStyle: 'dashed' }}
+              style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderRadius: t.radius.md, borderWidth: 1.5, borderColor: t.border, borderStyle: 'dashed' }}
             >
               <Plus size={18} color={t.primary} />
               <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', color: t.primary }}>{tr('admin.currency.addCurrency')}</Text>
@@ -109,7 +109,7 @@ export default function AdminCurrency() {
                 <Text style={sectionLabel}>{tr('admin.currency.markupPercent')}</Text>
                 <TextInput value={vm.markup} onChangeText={vm.onChangeMarkup} keyboardType="decimal-pad" placeholder="100" placeholderTextColor={t.fgFaint} style={numStyle} />
               </View>
-              <View style={{ padding: 12, borderRadius: 12, backgroundColor: t.bgSunken }}>
+              <View style={{ padding: 12, borderRadius: t.radius.md, backgroundColor: t.bgSunken }}>
                 <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('admin.currency.previewLabel')}</Text>
                 <Text style={{ fontFamily: t.font.display, fontWeight: '800', fontSize: 20, color: t.fg }}>
                   {tr('admin.currency.previewValue', { amount: vm.preview.toLocaleString('en-US') })}
@@ -122,7 +122,7 @@ export default function AdminCurrency() {
 
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           {vm.saved && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 14, backgroundColor: t.successBg }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: t.radius.md, backgroundColor: t.successBg }}>
               <Check size={16} color={t.success} strokeWidth={2.5} />
               <Text style={{ color: t.success, fontWeight: '700' }}>{tr('admin.currency.savedPricesUpdated')}</Text>
             </View>
@@ -189,6 +189,6 @@ export default function AdminCurrency() {
 
             <PrimaryButton label={vm.busy ? tr('admin.currency.saving') : tr('admin.currency.saveCurrency')} onPress={vm.onSaveCurrency} />
       </CenteredModal>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

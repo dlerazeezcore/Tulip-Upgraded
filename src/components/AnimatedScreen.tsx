@@ -1,10 +1,13 @@
+// THIN UI — wiring lives in useAnimatedScreen.ts.
 import React from 'react';
 import { ViewStyle, StyleProp } from 'react-native';
-import Animated, { FadeInDown } from 'react-native-reanimated';
+import Animated from 'react-native-reanimated';
+import { useAnimatedScreen } from './useAnimatedScreen';
 
 /**
  * Wraps screen content with a subtle fade + slide-up entrance.
  * Gives navigation a polished, native-feeling reveal.
+ * Respects the OS "Reduce Motion" setting (renders without animation).
  */
 export function AnimatedScreen({
   children,
@@ -15,11 +18,9 @@ export function AnimatedScreen({
   style?: StyleProp<ViewStyle>;
   delay?: number;
 }) {
+  const { entering } = useAnimatedScreen(delay);
   return (
-    <Animated.View
-      entering={FadeInDown.duration(420).delay(delay).springify().damping(18)}
-      style={[{ flex: 1 }, style]}
-    >
+    <Animated.View entering={entering ?? undefined} style={[{ flex: 1 }, style]}>
       {children}
     </Animated.View>
   );

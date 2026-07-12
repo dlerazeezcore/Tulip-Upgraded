@@ -34,6 +34,24 @@ export type AuthMe = {
   permissions?: Record<string, boolean>;
 };
 
+/** POST /otp/send — a signed challenge the client returns with the code. */
+export type OtpSendResult = {
+  ok: boolean;
+  channel: string; // 'whatsapp'
+  expiresInSeconds: number;
+  resendInSeconds: number;
+  challenge: string;
+};
+
+/** POST /otp/verify — proof of phone ownership consumed by auth flows. */
+export type OtpVerifyResult = {
+  ok: boolean;
+  verified: boolean;
+  phone: string;
+  verificationToken: string;
+  verificationExpiresInSeconds: number;
+};
+
 export type ExchangeSettings = {
   enableIQD: boolean;
   exchangeRate: string; // units of IQD per 1 USD

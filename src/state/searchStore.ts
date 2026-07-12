@@ -24,7 +24,8 @@ type SearchState = {
 };
 
 export const useSearchStore = create<SearchState>((set, get) => ({
-  activeService: 'flights',
+  // eSIM is the only live service, so the home hero defaults to it.
+  activeService: 'esim',
   from: 'JFK · New York',
   to: 'LHR · London',
   departDate: 'Jun 9',

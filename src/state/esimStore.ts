@@ -109,7 +109,9 @@ function toDisplay(p: EsimProfile): Esim {
   if (expiryIso) {
     const expMs = Date.parse(expiryIso);
     if (Number.isFinite(expMs)) {
-      hoursLeft = Math.max(0, Math.floor((expMs - Date.now()) / 3_600_000));
+      // Keep fractional hours: flooring here made 0-59 remaining minutes
+      // render as "Expired" (timeParts derives minutes from the fraction).
+      hoursLeft = Math.max(0, (expMs - Date.now()) / 3_600_000);
     }
   }
   return {

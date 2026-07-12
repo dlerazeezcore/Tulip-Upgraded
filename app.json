@@ -18,6 +18,10 @@
         "ITSAppUsesNonExemptEncryption": false
       }
     },
+    "androidStatusBar": {
+      "translucent": true,
+      "backgroundColor": "#00000000"
+    },
     "android": {
       "package": "com.theesim.app",
       "versionCode": 10,
@@ -40,6 +44,7 @@
       "favicon": "./assets/tulip-logo-full.png"
     },
     "plugins": [
+      "./plugins/withEdgeToEdgeOptOut",
       "expo-router",
       "expo-font",
       [

@@ -21,7 +21,7 @@ export function PhoneField({
         backgroundColor: t.bgElev,
         borderColor: t.border,
         borderWidth: 1,
-        borderRadius: 14,
+        borderRadius: t.radius.md,
         overflow: 'hidden',
       }}
     >
@@ -30,8 +30,9 @@ export function PhoneField({
           paddingHorizontal: 14,
           paddingVertical: 14,
           backgroundColor: t.bgSunken,
-          borderRightWidth: 1,
-          borderRightColor: t.border,
+          // Logical borderEnd so the prefix/input divider flips with RTL (ar/ku).
+          borderEndWidth: 1,
+          borderEndColor: t.border,
         }}
       >
         <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 15, color: t.fg }}>

@@ -1,7 +1,6 @@
 // THIN UI — wiring lives in src/screens/manage/useEsimHistory.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Archive } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
@@ -12,6 +11,7 @@ import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
 import { EsimListSkeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useEsimHistory } from '@/screens/manage/useEsimHistory';
 
 /**
@@ -28,7 +28,7 @@ export default function EsimHistoryScreen() {
   const { history, loading, refreshHistory } = vm;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
@@ -71,7 +71,7 @@ export default function EsimHistoryScreen() {
                 backgroundColor: t.bgElev,
                 borderColor: t.border,
                 borderWidth: 1,
-                borderRadius: 16,
+                borderRadius: t.radius.card,
                 padding: 14,
                 opacity: 0.85,
                 ...t.shadow1,
@@ -98,6 +98,6 @@ export default function EsimHistoryScreen() {
           ))
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

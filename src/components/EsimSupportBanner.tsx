@@ -25,7 +25,7 @@ export function EsimSupportBanner({ message }: Props) {
         flexDirection: 'row',
         gap: 10,
         padding: 12,
-        borderRadius: 12,
+        borderRadius: t.radius.md,
         backgroundColor: t.warningBg,
         borderWidth: 1,
         borderColor: `${t.warning}66`,

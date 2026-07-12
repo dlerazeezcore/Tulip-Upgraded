@@ -15,8 +15,17 @@ const shared = {
   },
   // `card` is the single radius for tappable list surfaces (bookings, services,
   // eSIM store, manage, admin cards) so they stop drifting between 16/18/20.
-  radius: { xs: 6, sm: 10, md: 14, card: 16, lg: 20, xl: 28, pill: 999 },
+  // `badge` is the single radius for small icon-badge/tile surfaces and
+  // switcher containers (pins the old 12/13 drift); `segment` is the inner
+  // selected segment of a radius-`badge` switcher with 4px padding —
+  // concentric with the container (badge 12 − padding 4 = 8).
+  radius: { xs: 6, segment: 8, sm: 10, badge: 12, md: 14, card: 16, lg: 20, xl: 28, pill: 999 },
   space: { s1: 4, s2: 8, s3: 12, s4: 16, s5: 20, s6: 24, s7: 32, s8: 40, s9: 48, s10: 64 },
+  /** Half-gutter for wrap-row card grids (home services, services screen,
+   *  bookings wide-web): each cell uses `padding: gridGutterHalf` and the row
+   *  uses `marginHorizontal: -gridGutterHalf` (full gutter = 12). One shared
+   *  value so the service grids stop drifting between 10/14. */
+  gridGutterHalf: 6,
   font: {
     display: 'Outfit_700Bold',
     displayMedium: 'Outfit_600SemiBold',
@@ -46,6 +55,10 @@ const shared = {
     chip: 'rgba(255, 255, 255, 0.22)',
     badge: 'rgba(255, 255, 255, 0.9)',
     frost: 'rgba(255, 255, 255, 0.92)',
+    // Muted foreground ON the `frost` pill. The frost surface is near-white in
+    // BOTH themes, so its text is theme-independent by design — same value as
+    // light `fgMuted`, named here so screens stop importing the raw light palette.
+    frostFg: '#717182',
     fill: 'rgba(255, 255, 255, 0.28)',
     border: 'rgba(255, 255, 255, 0.35)',
   },

@@ -29,11 +29,17 @@ export function useIqdMoney() {
  * Pass `saleIqdOverride` (the backend-computed catalog price, with per-country /
  * per-bundle rules applied) to charge exactly the displayed price; otherwise it
  * falls back to the global-markup computation.
+ *
+ * A provided override is trusted verbatim (integer-rounded only, no 250-snap):
+ * the display path (`useMoney`/`useIqdNote`) renders the same value via
+ * `Math.round`, so re-rounding here could charge a different amount than the
+ * one shown (backend `absolute` pricing rules are deliberately not 250-based).
+ * The backend independently re-verifies the charge either way.
  */
 export function useIqdAmount() {
   const iqdPerUsd = useCurrencyStore((s) => s.iqdPerUsd);
   return useCallback(
-    (usd: number, saleIqdOverride?: number) => (saleIqdOverride != null ? roundIqd250(saleIqdOverride) : usdToIqd(usd, iqdPerUsd)),
+    (usd: number, saleIqdOverride?: number) => (saleIqdOverride != null ? Math.round(saleIqdOverride) : usdToIqd(usd, iqdPerUsd)),
     [iqdPerUsd],
   );
 }

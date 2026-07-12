@@ -21,7 +21,15 @@ export interface EsimStoreVM {
   popular: (FeaturedLocation & { displayName: string })[];
   regions: ProviderRegion[];
   loadingCountries: boolean;
+  /** First fetch still in flight — show a skeleton, never an empty state. */
+  popularLoading: boolean;
+  regionsLoading: boolean;
   filteredCountries: LocationCountry[];
+  /** Fetch failed with nothing cached to show — render ErrorState, not "no data". */
+  popularErrored: boolean;
+  countriesErrored: boolean;
+  regionsErrored: boolean;
+  retry: () => void;
   getCountryItemLayout: (_: unknown, index: number) => { length: number; offset: number; index: number };
   goBack: () => void;
   openPlace: (code: string, name: string) => void;
@@ -38,15 +46,35 @@ export function useEsimStore(): EsimStoreVM {
   const [countries, setCountries] = useState<LocationCountry[]>(cachedCountries());
   const [regions, setRegions] = useState<ProviderRegion[]>([]);
   const [loadingCountries, setLoadingCountries] = useState(cachedCountries().length === 0);
+  const [popularLoading, setPopularLoading] = useState(true);
+  const [regionsLoading, setRegionsLoading] = useState(true);
+  // Track failures separately from data: a failed fetch must render as an
+  // error with retry, never as an empty catalog (audit #2).
+  const [popularFailed, setPopularFailed] = useState(false);
+  const [countriesFailed, setCountriesFailed] = useState(false);
+  const [regionsFailed, setRegionsFailed] = useState(false);
 
-  useEffect(() => {
-    getFeaturedLocations('esim').then(setPopular).catch(() => setPopular([]));
-    getRegions().then(setRegions).catch(() => setRegions([]));
+  const load = useCallback(() => {
+    setLoadingCountries(cachedCountries().length === 0);
+    setPopularLoading(true);
+    setRegionsLoading(true);
+    getFeaturedLocations('esim')
+      .then((v) => { setPopular(v); setPopularFailed(false); })
+      .catch(() => setPopularFailed(true))
+      .finally(() => setPopularLoading(false));
+    getRegions()
+      .then((v) => { setRegions(v); setRegionsFailed(false); })
+      .catch(() => setRegionsFailed(true))
+      .finally(() => setRegionsLoading(false));
     getCountries()
-      .then(setCountries)
-      .catch(() => setCountries([]))
+      .then((v) => { setCountries(v); setCountriesFailed(false); })
+      .catch(() => setCountriesFailed(true))
       .finally(() => setLoadingCountries(false));
   }, []);
+
+  useEffect(() => {
+    load();
+  }, [load]);
 
   const goBack = () => {
     if (router.canGoBack()) router.back();
@@ -105,7 +133,15 @@ export function useEsimStore(): EsimStoreVM {
     popular: popularView,
     regions,
     loadingCountries,
+    popularLoading,
+    regionsLoading,
     filteredCountries,
+    // Errored only when there is nothing (not even a cache) to show — stale
+    // data with a failed background refresh still renders the data.
+    popularErrored: popularFailed && popular.length === 0,
+    countriesErrored: countriesFailed && countries.length === 0,
+    regionsErrored: regionsFailed && regions.length === 0,
+    retry: load,
     getCountryItemLayout,
     goBack,
     openPlace,

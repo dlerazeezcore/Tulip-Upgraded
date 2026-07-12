@@ -1,13 +1,13 @@
 // THIN UI — wiring lives in src/screens/admin/useAdminUsers.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { Search, Star, X, Ban, ShieldCheck, Trash2 } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { CenteredModal } from '@/components/CenteredModal';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useAdminUsers } from '@/screens/admin/useAdminUsers';
 
 export default function AdminUsers() {
@@ -23,7 +23,7 @@ export default function AdminUsers() {
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
@@ -39,7 +39,7 @@ export default function AdminUsers() {
       </View>
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 12, maxWidth: 780, width: '100%', alignSelf: 'center' }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 14, backgroundColor: t.bgSunken }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: t.radius.md, backgroundColor: t.bgSunken }}>
           <Search size={18} color={t.fgMuted} />
           <TextInput value={q} onChangeText={setQ} placeholder={tr('admin.users.searchPlaceholder')} placeholderTextColor={t.fgFaint} style={{ flex: 1, fontSize: 14, color: t.fg, fontFamily: t.font.bodyMedium, paddingVertical: 2 }} />
         </View>
@@ -49,7 +49,7 @@ export default function AdminUsers() {
         ) : error ? (
           <Text style={{ color: t.danger, textAlign: 'center', paddingVertical: 20 }}>{error}</Text>
         ) : (
-          <View style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
+          <View style={{ backgroundColor: t.bgElev, borderRadius: t.radius.md, borderColor: t.border, borderWidth: 1, overflow: 'hidden' }}>
             {users.map((u, i) => (
               <Pressable
                 key={u.id}
@@ -65,7 +65,7 @@ export default function AdminUsers() {
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
                     <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>{u.name}</Text>
                     {u.isLoyalty && (
-                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: 999, backgroundColor: t.infoBg }}>
+                      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingHorizontal: 6, paddingVertical: 2, borderRadius: t.radius.pill, backgroundColor: t.infoBg }}>
                         <Star size={9} color={t.primary} fill={t.primary} />
                         <Text style={{ fontSize: 9, fontWeight: '800', color: t.primary }}>{tr('admin.users.loyaltyBadge')}</Text>
                       </View>
@@ -81,7 +81,7 @@ export default function AdminUsers() {
                     style={{
                       paddingHorizontal: 6,
                       paddingVertical: 2,
-                      borderRadius: 999,
+                      borderRadius: t.radius.pill,
                       backgroundColor:
                         u.versionKind === 'latest' ? t.successBg : u.versionKind === 'outdated' ? t.warningBg : t.bgSunken,
                     }}
@@ -120,7 +120,7 @@ export default function AdminUsers() {
                 {/* App build this user is on (fills in as they use a header-sending build). */}
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingHorizontal: 2 }}>
                   <Text style={{ flex: 1, fontSize: 13, color: t.fgMuted }}>{tr('admin.users.appVersion')}</Text>
-                  <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: 999, backgroundColor: selected.versionKind === 'latest' ? t.successBg : selected.versionKind === 'outdated' ? t.warningBg : t.bgSunken }}>
+                  <View style={{ paddingHorizontal: 9, paddingVertical: 3, borderRadius: t.radius.pill, backgroundColor: selected.versionKind === 'latest' ? t.successBg : selected.versionKind === 'outdated' ? t.warningBg : t.bgSunken }}>
                     <Text style={{ fontSize: 12, fontWeight: '700', color: selected.versionKind === 'latest' ? t.successFg : selected.versionKind === 'outdated' ? t.warningFg : t.fgFaint }}>
                       {selected.appVersion ? `v${selected.appVersion}` : '—'}{selected.versionKind === 'latest' ? ` · ${tr('admin.users.onLatest')}` : ''}
                     </Text>
@@ -131,7 +131,7 @@ export default function AdminUsers() {
 
                 <Pressable
                   onPress={() => onToggleLoyalty(selected)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.bgSunken }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: t.radius.md, backgroundColor: t.bgSunken }}
                 >
                   <Star size={18} color={t.primary} fill={selected.isLoyalty ? t.primary : 'transparent'} />
                   <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>
@@ -141,7 +141,7 @@ export default function AdminUsers() {
 
                 <Pressable
                   onPress={() => onToggleBlock(selected)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.bgSunken }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: t.radius.md, backgroundColor: t.bgSunken }}
                 >
                   {selected.isBlocked ? <ShieldCheck size={18} color={t.success} /> : <Ban size={18} color={t.warning} />}
                   <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>
@@ -151,7 +151,7 @@ export default function AdminUsers() {
 
                 <Pressable
                   onPress={() => onDelete(selected)}
-                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: t.dangerBg }}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: t.radius.md, backgroundColor: t.dangerBg }}
                 >
                   <Trash2 size={18} color={t.danger} />
                   <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.danger }}>
@@ -161,6 +161,6 @@ export default function AdminUsers() {
               </>
             )}
       </CenteredModal>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

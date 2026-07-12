@@ -1,21 +1,120 @@
 // THIN UI — wiring lives in useServiceTile.ts.
 import React from 'react';
-import { View, Text } from 'react-native';
+import { View, Text, type ViewStyle } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { SERVICE_SLOT, Service } from '@/data/services';
 import { useServiceTile } from './useServiceTile';
+import { DirectionalArrow } from './DirectionalArrow';
 import { PressableScale } from './PressableScale';
 
 type TileProps = {
   svc: Service | typeof SERVICE_SLOT;
+  /** `sm`/`md`: compact home-grid tile. `lg`: the services-screen big card
+   *  (decorative tint circle + "Open" CTA pill). */
   size?: 'sm' | 'md' | 'lg';
 };
 
 export function ServiceTile({ svc, size = 'md' }: TileProps) {
   const t = useTheme();
-  const { placeholder, live, Icon, color, tint, name, verb, soonLabel, onPress } = useServiceTile(svc);
+  const { placeholder, live, Icon, color, tint, name, verb, soonLabel, openLabel, onPress } =
+    useServiceTile(svc);
   const big = size === 'lg';
   const small = size === 'sm';
+
+  // Coming-soon tiles render as a plain, non-pressable View (no onPress, no
+  // scale feedback) so a "Soon" service can't be tapped. Live tiles keep the
+  // PressableScale interaction.
+  const Wrapper: React.ComponentType<any> = live ? PressableScale : View;
+  const wrapperProps = (base: ViewStyle) =>
+    live ? { onPress, scaleTo: big ? 0.98 : 0.96, style: base } : { style: base };
+
+  // Big services-screen card. Content-sized (no fixed height) so long ar/ku
+  // strings grow the card instead of overflowing; flex:1 keeps wrap-grid rows even.
+  if (big && !placeholder) {
+    return (
+      <Wrapper
+        {...wrapperProps({
+          flex: 1,
+          padding: 22,
+          borderRadius: t.radius.card,
+          backgroundColor: t.bgElev,
+          borderColor: t.border,
+          borderWidth: 1,
+          overflow: 'hidden',
+        })}
+      >
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: -30,
+            end: -30,
+            width: 140,
+            height: 140,
+            borderRadius: 70,
+            backgroundColor: tint,
+            opacity: 0.6,
+          }}
+        />
+        <View
+          style={{
+            width: 52,
+            height: 52,
+            borderRadius: t.radius.md,
+            backgroundColor: tint,
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <Icon size={26} color={color} strokeWidth={2} />
+        </View>
+        <Text style={{ fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg, marginTop: 14 }}>
+          {name}
+        </Text>
+        <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 4, lineHeight: 18 }}>
+          {verb}
+        </Text>
+        {/* Non-live services show a "Soon" chip instead of an "Open" CTA, and
+            the card itself is non-pressable (see Wrapper) so the tap is a
+            genuine no-op rather than a dead-end into a coming-soon screen. */}
+        {live ? (
+          <View
+            style={{
+              marginTop: 16,
+              alignSelf: 'flex-start',
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 6,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+              backgroundColor: color,
+              borderRadius: t.radius.pill,
+            }}
+          >
+            <Text style={{ color: t.onPrimary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
+              {openLabel}
+            </Text>
+            <DirectionalArrow size={12} color={t.onPrimary} strokeWidth={2.4} />
+          </View>
+        ) : (
+          <View
+            style={{
+              marginTop: 16,
+              alignSelf: 'flex-start',
+              backgroundColor: t.bgSunken,
+              borderRadius: t.radius.pill,
+              paddingVertical: 8,
+              paddingHorizontal: 16,
+            }}
+          >
+            <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
+              {soonLabel}
+            </Text>
+          </View>
+        )}
+      </Wrapper>
+    );
+  }
 
   const content = (
     <>
@@ -23,7 +122,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
         style={{
           width: big ? 44 : small ? 34 : 38,
           height: big ? 44 : small ? 34 : 38,
-          borderRadius: 12,
+          borderRadius: t.radius.badge,
           backgroundColor: placeholder ? 'transparent' : tint,
           alignItems: 'center',
           justifyContent: 'center',
@@ -54,18 +153,22 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
     </>
   );
 
+  // minHeight (not height) so long titles/subtitles — ar/ku strings, Android
+  // font metrics, font scaling — grow the card instead of spilling past its
+  // border; flex:1 stretches every tile to its wrap-grid row so rows stay even.
   if (placeholder) {
     return (
       <View
         style={{
+          flex: 1,
           padding: big ? 18 : small ? 12 : 14,
-          borderRadius: 16,
+          borderRadius: t.radius.card,
           borderWidth: 1.5,
           borderColor: t.borderStrong,
           borderStyle: 'dashed',
           gap: big ? 14 : 10,
           opacity: 0.6,
-          height: big ? 148 : small ? 108 : 132,
+          minHeight: big ? 148 : small ? 108 : 132,
         }}
       >
         {content}
@@ -74,19 +177,20 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
   }
 
   return (
-    <PressableScale
-      onPress={onPress}
-      scaleTo={0.96}
-      style={{
+    <Wrapper
+      {...wrapperProps({
+        flex: 1,
         padding: big ? 18 : small ? 12 : 14,
-        borderRadius: 16,
+        borderRadius: t.radius.card,
         backgroundColor: t.bgElev,
         borderWidth: 1,
         borderColor: t.border,
         gap: big ? 14 : 10,
-        height: big ? 148 : small ? 108 : 132,
+        minHeight: big ? 148 : small ? 108 : 132,
+        // Coming-soon tiles read slightly recessed so "Soon" is legible at a glance.
+        opacity: live ? 1 : 0.7,
         ...t.shadow1,
-      }}
+      })}
     >
       {!live && (
         <View
@@ -95,7 +199,7 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
             top: 8,
             end: 8,
             backgroundColor: t.bgSunken,
-            borderRadius: 999,
+            borderRadius: t.radius.pill,
             paddingHorizontal: 8,
             paddingVertical: 3,
           }}
@@ -106,6 +210,6 @@ export function ServiceTile({ svc, size = 'md' }: TileProps) {
         </View>
       )}
       {content}
-    </PressableScale>
+    </Wrapper>
   );
 }

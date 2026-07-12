@@ -1,7 +1,6 @@
 // THIN UI — wiring lives in src/screens/profile/useProfile.ts.
 import React from 'react';
-import { ScrollView, View, Text, Pressable, Modal, TextInput, KeyboardAvoidingView, Platform } from 'react-native';
-import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
+import { ScrollView, View, Text, Pressable, TextInput } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { LinearGradient } from 'expo-linear-gradient';
 import { BlurView } from 'expo-blur';
@@ -15,8 +14,10 @@ import { ScreenHeader } from '@/components/ScreenHeader';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { LanguagePicker } from '@/components/LanguagePicker';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
+import { BottomSheet } from '@/components/BottomSheet';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { Toggle } from '@/components/Toggle';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useProfile } from '@/screens/profile/useProfile';
 
 const LANG_LABEL: Record<string, string> = { en: 'English', ar: 'العربية', ku: 'کوردی' };
@@ -46,7 +47,7 @@ function Row({
         borderBottomWidth: last ? 0 : 1,
       }}
     >
-      <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+      <View style={{ width: 34, height: 34, borderRadius: t.radius.sm, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
         {icon}
       </View>
       <View style={{ flex: 1 }}>
@@ -65,7 +66,7 @@ function Section({ label, children }: { label: string; children: React.ReactNode
       <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 8, paddingHorizontal: 4 }}>
         {label}
       </Text>
-      <View style={{ backgroundColor: t.bgElev, borderRadius: 14, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
+      <View style={{ backgroundColor: t.bgElev, borderRadius: t.radius.md, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
         {children}
       </View>
     </View>
@@ -76,7 +77,6 @@ export default function Profile() {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const vm = useProfile();
-  const insets = useSafeAreaInsets();
   const tierLabel = vm.isLoyalty ? tr('profile.loyalty') : tr('profile.member');
 
   // ─── Hero ───
@@ -101,7 +101,7 @@ export default function Profile() {
             <View style={{ flex: 1 }}>
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.onPrimary, letterSpacing: -0.4 }}>{vm.user.name}</Text>
               <Text style={{ fontSize: 12, color: t.onPrimary, opacity: 0.88 }}>{vm.user.email ?? vm.user.phone}</Text>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4, paddingHorizontal: 10, backgroundColor: t.onHero.chip, borderRadius: 999 }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4, paddingHorizontal: 10, backgroundColor: t.onHero.chip, borderRadius: t.radius.pill }}>
                 <Star size={11} color={t.onPrimary} fill={t.onPrimary} />
                 <Text style={{ color: t.onPrimary, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
                   {tierLabel}{vm.memberSince ? ` · ${tr('profile.memberSince', { year: vm.memberSince })}` : ''}
@@ -174,30 +174,27 @@ export default function Profile() {
   );
 
   const editModal = (
-    <Modal visible={vm.editOpen} transparent animationType="slide" onRequestClose={vm.closeEdit}>
-      <KeyboardAvoidingView behavior={Platform.OS === 'ios' ? 'padding' : 'height'} style={{ flex: 1 }}>
-      <Pressable onPress={vm.closeEdit} style={{ flex: 1, backgroundColor: t.scrim, justifyContent: 'flex-end' }}>
-        <Pressable style={{ backgroundColor: t.bgElev, borderTopLeftRadius: 24, borderTopRightRadius: 24, padding: 20, paddingBottom: 20 + insets.bottom, gap: 14 }}>
+    <BottomSheet visible={vm.editOpen} onClose={vm.closeEdit} gap={14} avoidKeyboard>
           <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.fg }}>{tr('profile.editProfile')}</Text>
-            <Pressable onPress={vm.closeEdit} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
+            <Pressable onPress={vm.closeEdit} hitSlop={12} accessibilityRole="button" accessibilityLabel={tr('a11y.close')}><X size={20} color={t.fgMuted} /></Pressable>
           </View>
 
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tr('profile.fullName')}</Text>
             <TextInput value={vm.editName} onChangeText={vm.setEditName} placeholder={tr('profile.yourName')} placeholderTextColor={t.fgFaint}
-              style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }} />
+              style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.md, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }} />
           </View>
 
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tr('profile.emailOptional')}</Text>
             <TextInput value={vm.editEmail} onChangeText={vm.setEditEmail} placeholder={tr('auth.emailPlaceholder')} placeholderTextColor={t.fgFaint} autoCapitalize="none" keyboardType="email-address"
-              style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }} />
+              style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.md, paddingHorizontal: 14, paddingVertical: 13, fontSize: 15, color: t.fg, fontFamily: t.font.bodyMedium }} />
           </View>
 
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>{tr('profile.phoneCannotChange')}</Text>
-            <View style={{ backgroundColor: t.bgSunken, borderColor: t.border, borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 13 }}>
+            <View style={{ backgroundColor: t.bgSunken, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.md, paddingHorizontal: 14, paddingVertical: 13 }}>
               <Text style={{ fontSize: 15, color: t.fgMuted, fontFamily: t.font.bodyMedium }}>{vm.user?.phone}</Text>
             </View>
           </View>
@@ -210,16 +207,13 @@ export default function Profile() {
             <Trash2 size={15} color={t.danger} />
             <Text style={{ color: t.danger, fontWeight: '700', fontSize: 13 }}>{tr('profile.deleteAccount')}</Text>
           </Pressable>
-        </Pressable>
-      </Pressable>
-      </KeyboardAvoidingView>
-    </Modal>
+    </BottomSheet>
   );
 
   const signOutBtn = vm.user ? (
     <Pressable
       onPress={vm.signOut}
-      style={({ pressed }) => ({ padding: 14, borderRadius: 14, borderColor: t.danger, borderWidth: 1.5, alignItems: 'center', opacity: pressed ? 0.7 : 1 })}
+      style={({ pressed }) => ({ padding: 14, borderRadius: t.radius.md, borderColor: t.danger, borderWidth: 1.5, alignItems: 'center', opacity: pressed ? 0.7 : 1 })}
     >
       <Text style={{ color: t.danger, fontWeight: '700', fontSize: 14 }}>{tr('common.signOut')}</Text>
     </Pressable>
@@ -240,13 +234,14 @@ export default function Profile() {
       </Pressable>
       <View style={{ alignItems: 'center', gap: 2 }}>
         <Text style={{ fontSize: 11, color: t.fgFaint }}>{tr('profile.broughtToYouBy')}</Text>
+        {/* Brand name — deliberately untranslated proper noun, kept out of i18n. */}
         <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 14, color: t.fgMuted, letterSpacing: -0.2 }}>Corevia Network</Text>
       </View>
     </View>
   );
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <AnimatedScreen>
         <ScrollView
           contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 20, maxWidth: vm.twoCol ? 1080 : 900, width: '100%', alignSelf: 'center' }}
@@ -256,19 +251,23 @@ export default function Profile() {
           {hero}
 
           {vm.twoCol && vm.user ? (
+            // #26: travelers (1 row) + account (3-4 rows) on the left vs
+            // preferences (4 rows) + sign-out on the right keeps the two
+            // columns near-equal height; the old travelers+preferences left
+            // column ran ~2 rows taller than the right.
             <View style={{ flexDirection: 'row', gap: 20, alignItems: 'flex-start' }}>
               <View style={{ flex: 1, gap: 20 }}>
-                {travelersSection}
-                {preferencesSection}
+                {vm.showTravelers && travelersSection}
+                {accountSection}
               </View>
               <View style={{ flex: 1, gap: 20 }}>
-                {accountSection}
+                {preferencesSection}
                 {signOutBtn}
               </View>
             </View>
           ) : (
             <>
-              {vm.user && travelersSection}
+              {vm.showTravelers && travelersSection}
               {preferencesSection}
               {accountSection}
               {signOutBtn}
@@ -279,6 +278,6 @@ export default function Profile() {
         </ScrollView>
       </AnimatedScreen>
       {editModal}
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

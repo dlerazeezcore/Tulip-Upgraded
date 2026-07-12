@@ -26,10 +26,13 @@ export type Service = {
   live: boolean;
 };
 
+// eSIM leads: it is the only live service today, so it sits first everywhere
+// the list renders (home grid, hero tabs, services screen). The rest are badged
+// "Soon" and are intentionally NOT tappable until they ship.
 export const SERVICES: Service[] = [
+  { id: 'esim',      label: 'eSIM',       verb: 'Stay connected',         Icon: Globe,       color: '#10B981', tint: 'rgba(16,185,129,0.12)',  live: true },
   { id: 'flights',   label: 'Flights',    verb: 'Find flights',           Icon: Plane,       color: '#1967D2', tint: 'rgba(25,103,210,0.10)',  live: false },
   { id: 'hotels',    label: 'Hotels',     verb: 'Find a place to stay',   Icon: Building2,   color: '#7C3AED', tint: 'rgba(124,58,237,0.10)',  live: false },
-  { id: 'esim',      label: 'eSIM',       verb: 'Stay connected',         Icon: Globe,       color: '#10B981', tint: 'rgba(16,185,129,0.12)',  live: true },
   { id: 'transfers', label: 'Transfers',  verb: 'Airport & city transfers', Icon: ArrowRight, color: '#F59E0B', tint: 'rgba(245,158,11,0.12)',  live: false },
   { id: 'cars',      label: 'Car Rental', verb: 'Rent a car',             Icon: Car,         color: '#DC2626', tint: 'rgba(220,38,38,0.10)',   live: false },
 ];

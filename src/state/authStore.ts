@@ -2,7 +2,7 @@ import { create } from 'zustand';
 import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import { setAuthToken } from '@/lib/api';
+import { setAuthToken, ApiError } from '@/lib/api';
 import * as authApi from '@/services/auth';
 import { registerDevice, unregisterDevice } from '@/services/push';
 import { getLocaleLanguage, registerAuthAccessor } from '@/state/storeAccess';
@@ -109,7 +109,9 @@ type AuthState = {
   isAuthed: () => boolean;
   hydrate: () => Promise<void>;
   setSession: (session: AuthSession) => AuthUser;
-  signInPassword: (input: { phone?: string; email?: string; password: string }) => Promise<AuthUser>;
+  signInPassword: (input: { phone: string; password: string }) => Promise<AuthUser>;
+  signInOtp: (input: { phone: string; verificationToken: string }) => Promise<AuthUser>;
+  resetPassword: (input: { phone: string; verificationToken: string; newPassword: string }) => Promise<AuthUser>;
   signUp: (input: authApi.SignupInput) => Promise<AuthUser>;
   updateProfile: (patch: { name?: string; email?: string | null; notificationsEnabled?: boolean }) => Promise<AuthUser>;
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
@@ -139,7 +141,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           const me = await authApi.fetchMe();
           const user = userFromMe(me);
           set({ user });
-          persist(user, token);
+          // Roll the session forward on every open so an active user never hits
+          // the token TTL (the durable-login guarantee). Best-effort: if refresh
+          // fails we keep the still-valid current token.
+          let liveToken = token;
+          try {
+            const refreshed = await authApi.refreshSession();
+            if (refreshed?.accessToken) {
+              liveToken = refreshed.accessToken;
+              setAuthToken(liveToken);
+              set({ token: liveToken });
+            }
+          } catch {
+            // keep current token
+          }
+          persist(user, liveToken);
           // Re-register the device on every successful hydration. This catches
           // the upgrade case where a user was already signed in on an older build
           // (so setSession never fires this time) and means we'll surface iOS'
@@ -151,11 +167,19 @@ export const useAuthStore = create<AuthState>((set, get) => ({
           } catch {
             // ignore
           }
-        } catch {
-          // token invalid/expired → clear session
-          setAuthToken(null);
-          set({ user: null, token: null });
-          persist(null, null);
+        } catch (err) {
+          // ONLY a real auth rejection ends the session — an invalid/expired
+          // token or a deleted/deactivated subject (401/403). A transient
+          // failure (offline, timeout, 5xx) MUST keep the cached session so the
+          // user stays signed in across flaky launches and app updates
+          // (previously ANY error here signed them out — the top sign-out bug).
+          const status = err instanceof ApiError ? err.status : undefined;
+          if (status === 401 || status === 403) {
+            setAuthToken(null);
+            set({ user: null, token: null });
+            persist(null, null);
+          }
+          // else: keep the cached user + token already set above.
         }
       }
     } catch {
@@ -180,6 +204,8 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   signInPassword: async (input) => get().setSession(await authApi.loginWithPassword(input)),
+  signInOtp: async (input) => get().setSession(await authApi.loginWithOtp(input)),
+  resetPassword: async (input) => get().setSession(await authApi.resetPassword(input)),
   signUp: async (input) => get().setSession(await authApi.signup(input)),
 
   updateProfile: async (patch) => {

@@ -29,6 +29,7 @@ export function useOrders() {
   const orders = useOrderStore((s) => s.orders);
   const loading = useOrderStore((s) => s.loading);
   const loaded = useOrderStore((s) => s.loaded);
+  const error = useOrderStore((s) => s.error);
   const refresh = useOrderStore((s) => s.refresh);
   const { formatShortDay, formatMonthYear } = useDateFormatters();
   // FE-6: re-fetch when the signed-in account changes (e.g. in-place sign-in),
@@ -68,6 +69,12 @@ export function useOrders() {
     loading,
     loaded,
     groups,
+    // First load failed with nothing to show — render ErrorState, not
+    // "no orders yet" (audit #2).
+    errored: !loaded && !loading && !!error,
+    retry: () => {
+      void refresh();
+    },
     goBack: () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile')),
     goOrder: (id: string | number) => router.push(`/orders/${id}`),
   };

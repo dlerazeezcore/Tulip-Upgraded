@@ -1,13 +1,13 @@
 // THIN UI — wiring lives in src/screens/admin/notifications/useCustomNotification.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Send, Check, Copy } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useCustomNotification } from '@/screens/admin/notifications/useCustomNotification';
 
 export default function AdminSendCustomNotification() {
@@ -21,7 +21,7 @@ export default function AdminSendCustomNotification() {
     backgroundColor: t.bgElev,
     borderColor: t.border,
     borderWidth: 1,
-    borderRadius: 12,
+    borderRadius: t.radius.md,
     paddingHorizontal: 14,
     paddingVertical: 12,
     fontSize: 14,
@@ -30,7 +30,7 @@ export default function AdminSendCustomNotification() {
   } as const;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <DirectionalChevron direction="back" size={18} color={t.fg} />
@@ -55,7 +55,7 @@ export default function AdminSendCustomNotification() {
                 onPress={() => vm.setAudience(opt.value)}
                 style={{
                   padding: 14,
-                  borderRadius: 14,
+                  borderRadius: t.radius.md,
                   backgroundColor: t.bgElev,
                   borderColor: selected ? t.primary : t.border,
                   borderWidth: selected ? 1.5 : 1,
@@ -93,7 +93,7 @@ export default function AdminSendCustomNotification() {
         </Text>
 
         {vm.langs.map(({ code, label }) => (
-          <View key={code} style={{ padding: 14, borderRadius: 14, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 8 }}>
+          <View key={code} style={{ padding: 14, borderRadius: t.radius.md, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, gap: 8 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
               <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', color: t.fg }}>{label}</Text>
               {code !== 'en' && (
@@ -128,7 +128,7 @@ export default function AdminSendCustomNotification() {
         {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
 
         {vm.lastDelivery && (
-          <View style={{ padding: 14, borderRadius: 14, backgroundColor: t.successBg, gap: 4 }}>
+          <View style={{ padding: 14, borderRadius: t.radius.md, backgroundColor: t.successBg, gap: 4 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <Check size={16} color={t.success} strokeWidth={2.5} />
               <Text style={{ color: t.success, fontWeight: '700' }}>{tr('admin.notifications.sent')}</Text>
@@ -145,18 +145,14 @@ export default function AdminSendCustomNotification() {
                     total: vm.lastDelivery.requestedTokens,
                   })}
             </Text>
-            {vm.lastDelivery.perLanguageCounts && (
-              <Text style={{ fontSize: 11, color: t.fgFaint }}>
-                {Object.entries(vm.lastDelivery.perLanguageCounts)
-                  .map(([lang, n]) => `${lang.toUpperCase()}: ${n}`)
-                  .join(' · ')}
-              </Text>
+            {vm.perLanguageLabel && (
+              <Text style={{ fontSize: 11, color: t.fgFaint }}>{vm.perLanguageLabel}</Text>
             )}
           </View>
         )}
 
         <PrimaryButton label={vm.sending ? tr('auth.sending') : tr('admin.notifications.send')} onPress={vm.send} />
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

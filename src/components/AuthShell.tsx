@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { ScrollView, View, Text, Pressable, KeyboardAvoidingView, Platform, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { Eye, EyeOff } from 'lucide-react-native';
@@ -8,6 +7,7 @@ import { DirectionalChevron } from './DirectionalChevron';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { TulipLogo } from './TulipLogo';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 
 /** Branded full-screen shell for auth screens: gradient header + card body. */
 export function AuthShell({
@@ -33,7 +33,7 @@ export function AuthShell({
         end={{ x: 1, y: 1 }}
         style={{ paddingBottom: 28 }}
       >
-        <SafeAreaView edges={['top']}>
+        <ScreenSafeArea>
           <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
             {canGoBack && (
               <Pressable
@@ -59,7 +59,7 @@ export function AuthShell({
                 style={{
                   width: 40,
                   height: 40,
-                  borderRadius: 12,
+                  borderRadius: t.radius.badge,
                   backgroundColor: t.onHero.badge,
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -78,7 +78,7 @@ export function AuthShell({
               <Text style={{ fontSize: 13, color: t.onPrimary, opacity: 0.9, marginTop: 4 }}>{subtitle}</Text>
             )}
           </View>
-        </SafeAreaView>
+        </ScreenSafeArea>
       </LinearGradient>
 
       <KeyboardAvoidingView
@@ -127,17 +127,19 @@ export function AuthSegmented<T extends string>({
 }) {
   const t = useTheme();
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: t.bgSunken, borderRadius: 12, padding: 4 }}>
+    <View style={{ flexDirection: 'row', backgroundColor: t.bgSunken, borderRadius: t.radius.badge, padding: 4 }}>
       {options.map((o) => {
         const on = o.id === value;
         return (
           <Pressable
             key={o.id}
             onPress={() => onChange(o.id)}
+            accessibilityRole="tab"
+            accessibilityState={{ selected: on }}
             style={{
               flex: 1,
               paddingVertical: 9,
-              borderRadius: 9,
+              borderRadius: t.radius.segment,
               alignItems: 'center',
               backgroundColor: on ? t.bgElev : 'transparent',
               ...(on ? t.shadow1 : {}),
@@ -186,7 +188,7 @@ export function Field({
           backgroundColor: t.bgElev,
           borderColor: showFocus ? t.primary : t.border,
           borderWidth: 1,
-          borderRadius: 14,
+          borderRadius: t.radius.md,
           paddingHorizontal: 14,
           paddingVertical: 14,
           fontSize: 15,
@@ -228,7 +230,7 @@ export function PasswordField({
           backgroundColor: t.bgElev,
           borderColor: showFocus ? t.primary : t.border,
           borderWidth: 1,
-          borderRadius: 14,
+          borderRadius: t.radius.md,
           overflow: 'hidden',
         }}
       >

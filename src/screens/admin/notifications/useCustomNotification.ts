@@ -37,6 +37,8 @@ export type CustomNotificationViewModel = {
   sending: boolean;
   error: string | null;
   lastDelivery: PushDeliverySummary | null;
+  /** Pre-formatted per-language delivery breakdown ("EN: 3 · AR: 1"), or null. */
+  perLanguageLabel: string | null;
   send: () => void;
 };
 
@@ -85,6 +87,14 @@ export function useCustomNotification(): CustomNotificationViewModel {
     () => audienceOptions.find((o) => o.value === audience)?.label ?? audience,
     [audienceOptions, audience],
   );
+
+  // Pre-formatted per-language delivery breakdown — the screen renders it as-is.
+  const perLanguageLabel = useMemo(() => {
+    if (!lastDelivery?.perLanguageCounts) return null;
+    return Object.entries(lastDelivery.perLanguageCounts)
+      .map(([lang, n]) => `${lang.toUpperCase()}: ${n}`)
+      .join(' · ');
+  }, [lastDelivery]);
 
   const performSend = async () => {
     setSending(true);
@@ -149,6 +159,7 @@ export function useCustomNotification(): CustomNotificationViewModel {
     sending,
     error,
     lastDelivery,
+    perLanguageLabel,
     send,
   };
 }

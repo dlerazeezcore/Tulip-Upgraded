@@ -4,16 +4,17 @@
 //   2) "pay"    — the same loyalty/FIB payment window used at checkout.
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
-import { Check, Lock, Landmark, Gift, Plus } from 'lucide-react-native';
+import { Check, Lock, Landmark, Gift, Plus, Smartphone } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { EmptyState } from '@/components/EmptyState';
+import { ErrorState } from '@/components/ErrorState';
 import { Skeleton } from '@/components/Skeleton';
 import { FibPaymentSheet } from '@/components/FibPaymentSheet';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useTopUp } from '@/screens/esim/useTopUp';
 
 function daysSuffix(days: number, word: string) {
@@ -44,24 +45,27 @@ export default function TopUp() {
 
   if (!esim) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
         {header}
-        <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, gap: 12 }}>
-          <Text style={{ color: t.fgMuted }}>{tr('esim.notFound')}</Text>
-          <PrimaryButton label={tr('common.back')} onPress={vm.goBack} />
+        <View style={{ flex: 1, justifyContent: 'center' }}>
+          <EmptyState
+            icon={Smartphone}
+            title={tr('esim.notFound')}
+            action={<PrimaryButton label={tr('common.back')} onPress={vm.goBack} />}
+          />
         </View>
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       {header}
       <ScrollView
         contentContainerStyle={{ padding: vm.isWide ? 28 : 20, paddingBottom: 40, gap: 14, maxWidth: 720, width: '100%', alignSelf: 'center' }}
       >
         {/* eSIM the top-up applies to */}
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
           <Flag iso={esim.iso} size={40} />
           <View style={{ flex: 1 }}>
             <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>{esim.country}</Text>
@@ -78,7 +82,7 @@ export default function TopUp() {
         )}
       </ScrollView>
       <FibPaymentSheet sheet={vm.fibSheet} />
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }
 
@@ -100,12 +104,9 @@ function ChooseStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso:
   }
 
   if (vm.loadError) {
-    return (
-      <View style={{ paddingVertical: 32, alignItems: 'center', gap: 14 }}>
-        <Text style={{ fontSize: 13, color: t.fgMuted, textAlign: 'center', maxWidth: 320 }}>{vm.loadError}</Text>
-        <PrimaryButton label={tr('common.tryAgain')} variant="ghost" onPress={vm.reload} />
-      </View>
-    );
+    // Same failed-fetch surface as every other list (ErrorState), with the
+    // hook's specific message as the subtitle.
+    return <ErrorState subtitle={vm.loadError} onRetry={vm.reload} />;
   }
 
   if (vm.plans.length === 0) {
@@ -121,7 +122,7 @@ function ChooseStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso:
         <Pressable
           key={p.id}
           onPress={() => vm.choose(p)}
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
         >
           <Flag iso={esimIso} size={36} />
           <View style={{ flex: 1 }}>
@@ -145,7 +146,7 @@ function PayStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso: st
   return (
     <View style={{ gap: 16 }}>
       {/* Selected plan */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
         <Flag iso={esimIso} size={40} />
         <View style={{ flex: 1 }}>
           <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg }}>
@@ -171,9 +172,9 @@ function PayStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso: st
               <Pressable
                 key={p.id}
                 onPress={() => vm.setMethod(p.id)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: 14, backgroundColor: on ? t.infoBg : t.bgElev, borderWidth: on ? 2 : 1.5, borderColor: on ? t.primary : t.border }}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: t.radius.md, backgroundColor: on ? t.infoBg : t.bgElev, borderWidth: on ? 2 : 1.5, borderColor: on ? t.primary : t.border }}
               >
-                <View style={{ width: 40, height: 40, borderRadius: 10, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
+                <View style={{ width: 40, height: 40, borderRadius: t.radius.sm, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
                   <Icon size={20} color={on ? t.primary : t.fgMuted} strokeWidth={2} />
                 </View>
                 <View style={{ flex: 1 }}>
@@ -190,7 +191,7 @@ function PayStep({ vm, esimIso }: { vm: ReturnType<typeof useTopUp>; esimIso: st
       </View>
 
       {/* Summary */}
-      <View style={{ padding: 16, borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
+      <View style={{ padding: 16, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}>
         <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4, marginBottom: 4 }}>
           {tr('checkout.orderSummary')}
         </Text>

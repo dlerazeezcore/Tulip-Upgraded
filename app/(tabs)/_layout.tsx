@@ -54,7 +54,7 @@ function Sidebar() {
               gap: 12,
               paddingVertical: 10,
               paddingHorizontal: 12,
-              borderRadius: 12,
+              borderRadius: t.radius.badge,
               // Web hover: subtle fill on inactive items (`hovered` is a
               // react-native-web extension; no-op on native).
               backgroundColor: on

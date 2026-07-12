@@ -1,7 +1,6 @@
 // THIN UI — wiring lives in src/screens/esim/useEsimDetail.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, ActivityIndicator, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Plus, Signal, Clock, RefreshCw, AlertTriangle } from 'lucide-react-native';
 import { StackHeader } from '@/components/StackHeader';
@@ -13,6 +12,7 @@ import { PrimaryButton } from '@/components/PrimaryButton';
 import { EmptyState } from '@/components/EmptyState';
 import { Skeleton } from '@/components/Skeleton';
 import { EsimInstallCard } from '@/components/EsimInstallCard';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useEsimUsageFormatters } from '@/lib/esimUsage';
 import { useEsimDetail } from '@/screens/esim/useEsimDetail';
 import { useIsWideWeb } from '@/lib/responsive';
@@ -63,12 +63,12 @@ export default function EsimDetail() {
 
   if (!esim) {
     return (
-      <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+      <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
         {screenHeader}
-        {vm.refreshing ? (
+        {vm.refreshing || vm.historyLoading ? (
           <View style={{ padding: 20, maxWidth: 720, width: '100%', alignSelf: 'center' }}>
             {/* Shaped like the usage card so the loaded screen doesn't jump. */}
-            <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 20, padding: 24, alignItems: 'center', gap: 18, ...t.shadow1 }}>
+            <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.lg, padding: 24, alignItems: 'center', gap: 18, ...t.shadow1 }}>
               <Skeleton width={180} height={180} radius={90} />
               <View style={{ flexDirection: 'row', width: '100%' }}>
                 {[0, 1, 2].map((i) => (
@@ -89,20 +89,21 @@ export default function EsimDetail() {
             />
           </View>
         )}
-      </SafeAreaView>
+      </ScreenSafeArea>
     );
   }
 
   // Content blocks defined once. On mobile/native they stack in the original
   // order (unchanged). On desktop web (≥1024) they split into two columns —
-  // plan/usage/manage on the left, the install card + its banners on the right.
+  // plan/usage on the left, the install card + its banners on the right; the
+  // technical details fill whichever column would otherwise run short.
   const headerRow = (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Flag iso={esim.iso} size={44} />
       <View style={{ flex: 1 }}>
         <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: t.fg, letterSpacing: -0.4 }}>{esim.country}</Text>
         <Text style={{ fontSize: 13, color: t.fgMuted, marginTop: 2 }}>
-          {esim.unlimited ? tr('esim.unlimitedData') : `${esim.planGb} GB`}{esim.planDays ? ` · ${esim.planDays} ${tr('esim.days')}` : ''}
+          {vm.dataLabel}
         </Text>
       </View>
       <StatusPill kind={vm.pillKind} label={vm.pillLabel} />
@@ -110,7 +111,7 @@ export default function EsimDetail() {
   );
 
   const deviceAdvisory = vm.advisoryKind ? (
-    <View style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: 14, backgroundColor: t.warningBg, borderWidth: 1, borderColor: `${t.warning}66` }}>
+    <View style={{ flexDirection: 'row', gap: 10, padding: 14, borderRadius: t.radius.md, backgroundColor: t.warningBg, borderWidth: 1, borderColor: `${t.warning}66` }}>
       <AlertTriangle size={18} color={t.warning} />
       <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>
         {vm.advisoryKind === 'unsupported' ? tr('esim.deviceUnsupported') : tr('esim.deviceCheck')}
@@ -119,7 +120,7 @@ export default function EsimDetail() {
   ) : null;
 
   const usageCard = (
-    <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 20, padding: 24, alignItems: 'center', gap: 18, ...t.shadow1 }}>
+    <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.lg, padding: 24, alignItems: 'center', gap: 18, ...t.shadow1 }}>
       {esim.status === 'active' ? (
         <>
           <UsageRing
@@ -133,7 +134,7 @@ export default function EsimDetail() {
             <View style={{ width: 1, backgroundColor: t.border }} />
             <Stat label={tr('esim.statTimeLeft')} value={fmt.timeAmount(esim.hoursLeft)} />
             <View style={{ width: 1, backgroundColor: t.border }} />
-            <Stat label={tr('esim.statPlan')} value={esim.unlimited ? tr('esim.unlimited') : `${esim.planGb} GB`} />
+            <Stat label={tr('esim.statPlan')} value={vm.planLabel} />
           </View>
         </>
       ) : esim.status === 'provider_waiting' ? (
@@ -191,7 +192,7 @@ export default function EsimDetail() {
         />
       )}
       {vm.showInstall && !vm.hasActivationData && (
-        <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, padding: 18, gap: 12, alignItems: 'center', ...t.shadow1 }}>
+        <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.card, padding: 18, gap: 12, alignItems: 'center', ...t.shadow1 }}>
           <ActivityIndicator color={t.primary} size="large" />
           <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, color: t.fg, textAlign: 'center' }}>
             {tr('esim.preparing')}
@@ -205,7 +206,7 @@ export default function EsimDetail() {
   );
 
   const detectingBanner = vm.detectingInstall ? (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: 12, backgroundColor: t.infoBg, borderWidth: 1, borderColor: `${t.info}59` }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 12, borderRadius: t.radius.md, backgroundColor: t.infoBg, borderWidth: 1, borderColor: `${t.info}59` }}>
       <ActivityIndicator size="small" color={t.primary} />
       <Text style={{ flex: 1, fontSize: 12, color: t.fg }}>{tr('esim.detecting')}</Text>
     </View>
@@ -214,7 +215,7 @@ export default function EsimDetail() {
   // Took longer than the ~3 min poll budget — tell the user what to do.
   const timeoutBanner =
     vm.detectTimedOut && !vm.detectingInstall && esim.status !== 'active' ? (
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: 12, backgroundColor: t.warningBg, borderWidth: 1, borderColor: `${t.warning}59` }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 10, padding: 12, borderRadius: t.radius.md, backgroundColor: t.warningBg, borderWidth: 1, borderColor: `${t.warning}59` }}>
         <AlertTriangle size={18} color={t.warning} />
         <Text style={{ flex: 1, fontSize: 12, color: t.fg, lineHeight: 18 }}>
           {tr('esim.takingLonger', { country: esim.country })}
@@ -233,7 +234,7 @@ export default function EsimDetail() {
           justifyContent: 'center',
           gap: 8,
           padding: 14,
-          borderRadius: 14,
+          borderRadius: t.radius.md,
           borderWidth: 1.5,
           borderColor: t.primary,
           backgroundColor: 'transparent',
@@ -251,15 +252,15 @@ export default function EsimDetail() {
     ) : null;
 
   const technicalDetails = (
-    <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, overflow: 'hidden' }}>
+    <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.card, overflow: 'hidden' }}>
       {esim.iccid ? <Row label={tr('esim.iccid')} value={esim.iccid} /> : null}
-      <Row label={tr('esim.plan')} value={`${esim.unlimited ? tr('esim.unlimited') : `${esim.planGb} GB`}`} />
+      <Row label={tr('esim.plan')} value={vm.planLabel} />
       <Row label={tr('esim.network')} value={tr('esim.networkValue')} />
     </View>
   );
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       {screenHeader}
 
       <ScrollView
@@ -281,13 +282,17 @@ export default function EsimDetail() {
               <View style={{ flex: 1, gap: 18 }}>
                 {usageCard}
                 {topUpButton}
-                {technicalDetails}
+                {/* When the install side has nothing to show (expired bundle),
+                    move the technical details over so the right column isn't
+                    an empty half of the screen. */}
+                {vm.showInstall ? technicalDetails : null}
               </View>
               <View style={{ flex: 1, gap: 18 }}>
                 {installPanel}
                 {detectingBanner}
                 {timeoutBanner}
                 {recheckButton}
+                {!vm.showInstall ? technicalDetails : null}
               </View>
             </View>
           </>
@@ -305,6 +310,6 @@ export default function EsimDetail() {
           </>
         )}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

@@ -16,6 +16,8 @@ export type ServiceTileVM = {
   name: string;
   verb: string;
   soonLabel: string;
+  /** CTA pill label on the big (`size="lg"`) services-screen card. */
+  openLabel: string;
   onPress: () => void;
 };
 
@@ -29,7 +31,10 @@ export function useServiceTile(svc: Service | typeof SERVICE_SLOT): ServiceTileV
   const live = (svc as any).live ?? true;
 
   const onPress = () => {
-    if (placeholder) return;
+    // Coming-soon services are inert: no navigation to a dead-end placeholder
+    // until they actually ship. The tile also renders non-pressable, this is
+    // defense-in-depth.
+    if (placeholder || !live) return;
     setActive(svc.id as Service['id']);
     router.push(serviceRoute(svc.id) as any);
   };
@@ -43,6 +48,7 @@ export function useServiceTile(svc: Service | typeof SERVICE_SLOT): ServiceTileV
     name: placeholder ? svc.label : tr(`serviceNames.${svc.id}`),
     verb: placeholder ? tr('servicesScreen.moreComing') : tr(`serviceVerbs.${svc.id}`),
     soonLabel: tr('common.soon'),
+    openLabel: tr('servicesScreen.open'),
     onPress,
   };
 }

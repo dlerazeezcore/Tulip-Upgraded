@@ -1,13 +1,12 @@
 // THIN UI — wiring lives in src/screens/home/useHome.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
-import { light } from '@/theme/tokens';
 import { BlurView } from 'expo-blur';
 import { useTranslation } from 'react-i18next';
-import { Search, ArrowRight } from 'lucide-react-native';
+import { Search } from 'lucide-react-native';
+import { DirectionalArrow } from '@/components/DirectionalArrow';
 import { useTheme } from '@/theme/ThemeContext';
 import { ServiceTile } from '@/components/ServiceTile';
 import { MultiServiceTabs } from '@/components/MultiServiceTabs';
@@ -15,10 +14,9 @@ import { ActiveEsimCard } from '@/components/ActiveEsimCard';
 import { CurrencyPicker } from '@/components/CurrencyPicker';
 import { AnimatedScreen } from '@/components/AnimatedScreen';
 import { PressableScale } from '@/components/PressableScale';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { SERVICES } from '@/data/services';
 import { useHome } from '@/screens/home/useHome';
-
-const blurhash = 'L9Gugw00of%MM_RP4nbHIVRPRPxu';
 
 export default function Home() {
   const t = useTheme();
@@ -27,7 +25,7 @@ export default function Home() {
   const { svc, firstName, greeting, isWide } = vm;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <AnimatedScreen>
       <ScrollView
         contentContainerStyle={{
@@ -71,8 +69,8 @@ export default function Home() {
           }}
         >
           <Image
-            source="https://images.unsplash.com/photo-1488646953014-85cb44e25828?auto=format&fit=crop&w=1200&q=85"
-            placeholder={{ blurhash }}
+            source={vm.hero.image}
+            placeholder={{ blurhash: vm.hero.blurhash }}
             style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }}
             contentFit="cover"
             transition={400}
@@ -97,18 +95,18 @@ export default function Home() {
                 alignItems: 'center',
                 gap: 10,
                 padding: 14,
-                borderRadius: 14,
+                borderRadius: t.radius.md,
                 backgroundColor: t.onHero.frost,
               }}
             >
-              <Search size={18} color={light.fgMuted} />
-              <Text style={{ flex: 1, fontSize: 14, color: light.fgMuted }}>{tr(`serviceVerbs.${svc.id}`)}</Text>
+              <Search size={18} color={t.onHero.frostFg} />
+              <Text numberOfLines={1} style={{ flex: 1, fontSize: 14, color: t.onHero.frostFg }}>{tr(`serviceVerbs.${svc.id}`)}</Text>
               <View
                 style={{
                   paddingVertical: 8,
                   paddingHorizontal: 14,
                   backgroundColor: svc.color,
-                  borderRadius: 999,
+                  borderRadius: t.radius.pill,
                   flexDirection: 'row',
                   alignItems: 'center',
                   gap: 4,
@@ -124,7 +122,7 @@ export default function Home() {
                 >
                   {tr('common.search')}
                 </Text>
-                <ArrowRight size={12} color={t.onPrimary} strokeWidth={2.4} />
+                <DirectionalArrow size={12} color={t.onPrimary} strokeWidth={2.4} />
               </View>
             </PressableScale>
           </BlurView>
@@ -161,14 +159,14 @@ export default function Home() {
               style={{ flexDirection: 'row', alignItems: 'center', gap: 3, paddingVertical: 4 }}
             >
               <Text style={{ fontSize: 12, color: t.primary, fontWeight: '600' }}>{tr('home.seeAll')}</Text>
-              <ArrowRight size={13} color={t.primary} strokeWidth={2.4} />
+              <DirectionalArrow size={13} color={t.primary} strokeWidth={2.4} />
             </Pressable>
           </View>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -5 }}>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -t.gridGutterHalf }}>
             {SERVICES.map((s) => (
               // 4 columns on desktop web (≥1024), 3 on mobile/native — unchanged off-web.
-              <View key={s.id} style={{ width: isWide ? '25%' : '33.33%', padding: 5 }}>
-                <ServiceTile svc={s as any} />
+              <View key={s.id} style={{ width: isWide ? '25%' : '33.33%', padding: t.gridGutterHalf }}>
+                <ServiceTile svc={s} />
               </View>
             ))}
           </View>
@@ -176,6 +174,6 @@ export default function Home() {
 
       </ScrollView>
       </AnimatedScreen>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

@@ -89,6 +89,30 @@ export function EsimListSkeleton({ count = 3 }: { count?: number }) {
   );
 }
 
+/** A skeleton shaped like the travelers list — one card per traveler (avatar
+ *  circle, two text lines, edit + remove action circles). */
+export function TravelerListSkeleton({ count = 3 }: { count?: number }) {
+  const t = useTheme();
+  return (
+    <View style={{ gap: 10, width: '100%' }}>
+      {Array.from({ length: count }).map((_, i) => (
+        <View
+          key={i}
+          style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, ...t.shadow1 }}
+        >
+          <Skeleton width={44} height={44} radius={22} />
+          <View style={{ flex: 1, gap: 6 }}>
+            <Skeleton width="45%" height={14} />
+            <Skeleton width="30%" height={11} />
+          </View>
+          <Skeleton width={36} height={36} radius={18} />
+          <Skeleton width={36} height={36} radius={18} />
+        </View>
+      ))}
+    </View>
+  );
+}
+
 /** A skeleton shaped like the orders list — a group label above a card of
  *  order rows (flag circle, two text lines, price + status pill). */
 export function OrderListSkeleton({ rows = 4 }: { rows?: number }) {
@@ -96,7 +120,7 @@ export function OrderListSkeleton({ rows = 4 }: { rows?: number }) {
   return (
     <View style={{ gap: 10 }}>
       <Skeleton width={90} height={11} style={{ marginHorizontal: 4 }} />
-      <View style={{ backgroundColor: t.bgElev, borderRadius: 16, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
+      <View style={{ backgroundColor: t.bgElev, borderRadius: t.radius.card, borderColor: t.border, borderWidth: 1, overflow: 'hidden', ...t.shadow1 }}>
         {Array.from({ length: rows }).map((_, i) => (
           <View
             key={i}

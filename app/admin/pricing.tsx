@@ -1,7 +1,6 @@
 // THIN UI — wiring lives in src/screens/admin/usePricing.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { Check, Plus, X, Trash2 } from 'lucide-react-native';
@@ -9,17 +8,18 @@ import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { CenteredModal } from '@/components/CenteredModal';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { usePricing } from '@/screens/admin/usePricing';
 import type { RuleScope, AdjustmentType } from '@/services/admin';
 
 function Seg<T extends string>({ value, options, onChange }: { value: T; options: { id: T; label: string }[]; onChange: (v: T) => void }) {
   const t = useTheme();
   return (
-    <View style={{ flexDirection: 'row', backgroundColor: t.bgSunken, borderRadius: 10, padding: 4, gap: 4 }}>
+    <View style={{ flexDirection: 'row', backgroundColor: t.bgSunken, borderRadius: t.radius.badge, padding: 4, gap: 4 }}>
       {options.map((o) => {
         const on = o.id === value;
         return (
-          <Pressable key={o.id} onPress={() => onChange(o.id)} style={{ flex: 1, paddingVertical: 9, borderRadius: 8, alignItems: 'center', backgroundColor: on ? t.bgElev : 'transparent', ...(on ? t.shadow1 : {}) }}>
+          <Pressable key={o.id} onPress={() => onChange(o.id)} style={{ flex: 1, paddingVertical: 9, borderRadius: t.radius.segment, alignItems: 'center', backgroundColor: on ? t.bgElev : 'transparent', ...(on ? t.shadow1 : {}) }}>
             <Text style={{ fontSize: 13, fontWeight: '700', color: on ? t.fg : t.fgMuted, fontFamily: t.font.displayMedium }}>{o.label}</Text>
           </Pressable>
         );
@@ -35,9 +35,9 @@ export default function AdminPricing() {
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
-  const numStyle = { backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 12, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: t.fg, fontFamily: t.font.bodyMedium } as const;
+  const numStyle = { backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.md, paddingHorizontal: 14, paddingVertical: 12, fontSize: 16, color: t.fg, fontFamily: t.font.bodyMedium } as const;
   const sectionLabel = { fontSize: 11, fontWeight: '700' as const, color: t.fgMuted, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
-  const card = { borderRadius: 16, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, overflow: 'hidden' as const, ...t.shadow1 };
+  const card = { borderRadius: t.radius.card, backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, overflow: 'hidden' as const, ...t.shadow1 };
 
   const fmtVal = (type: AdjustmentType, value: number) =>
     type === 'percent'
@@ -50,7 +50,7 @@ export default function AdminPricing() {
     scope === 'global' ? tr('admin.pricing.scopeGeneral') : scope === 'country' ? vm.countryName(country) : pkg || '';
 
   const addBtn = (label: string, onPress: () => void) => (
-    <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderRadius: 14, borderWidth: 1.5, borderColor: t.border, borderStyle: 'dashed' }}>
+    <Pressable onPress={onPress} style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 14, borderRadius: t.radius.md, borderWidth: 1.5, borderColor: t.border, borderStyle: 'dashed' }}>
       <Plus size={18} color={t.primary} />
       <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', color: t.primary }}>{label}</Text>
     </Pressable>
@@ -73,7 +73,7 @@ export default function AdminPricing() {
   const ed = vm.editing;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable onPress={vm.goBack} accessibilityRole="button" accessibilityLabel={tr('a11y.back')} hitSlop={8} style={{ width: 36, height: 36, borderRadius: 18, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}>
           <DirectionalChevron direction="back" size={18} color={t.fg} />
@@ -90,7 +90,7 @@ export default function AdminPricing() {
           {/* ── Markup overrides ── */}
           <View style={{ gap: 10 }}>
             <Text style={sectionLabel}>{tr('admin.pricing.markupOverrides')}</Text>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: 12, backgroundColor: t.bgSunken }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, padding: 12, borderRadius: t.radius.md, backgroundColor: t.bgSunken }}>
               <Text style={{ flex: 1, fontSize: 13, color: t.fg, fontWeight: '600' }}>{tr('admin.pricing.generalMarkup')}</Text>
               <Text style={{ fontSize: 13, color: t.fgMuted }}>{tr('admin.pricing.generalValue', { percent: vm.generalMarkup })}</Text>
             </View>
@@ -136,7 +136,7 @@ export default function AdminPricing() {
 
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           {vm.saved && (
-            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: 14, backgroundColor: t.successBg }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8, padding: 12, borderRadius: t.radius.md, backgroundColor: t.successBg }}>
               <Check size={16} color={t.success} strokeWidth={2.5} />
               <Text style={{ color: t.success, fontWeight: '700' }}>{tr('admin.currency.savedPricesUpdated')}</Text>
             </View>
@@ -190,7 +190,7 @@ export default function AdminPricing() {
                       {vm.bundles.map((b) => {
                         const on = b.packageCode === ed.packageCode;
                         return (
-                          <Pressable key={b.packageCode} onPress={() => vm.pickBundle(b)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, paddingHorizontal: 12, borderRadius: 10, backgroundColor: on ? t.bgSunken : 'transparent' }}>
+                          <Pressable key={b.packageCode} onPress={() => vm.pickBundle(b)} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 11, paddingHorizontal: 12, borderRadius: t.radius.sm, backgroundColor: on ? t.bgSunken : 'transparent' }}>
                             <View style={{ flex: 1 }}>
                               <Text style={{ fontSize: 14, fontWeight: '600', color: t.fg }}>{b.label}</Text>
                               {!!b.slug && <Text style={{ fontSize: 11, color: t.fgMuted, marginTop: 1 }}>{b.slug} · {b.packageCode}</Text>}
@@ -247,6 +247,6 @@ export default function AdminPricing() {
 
             <PrimaryButton label={vm.busy ? tr('admin.currency.saving') : tr('admin.pricing.saveRule')} onPress={vm.onSave} />
       </CenteredModal>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

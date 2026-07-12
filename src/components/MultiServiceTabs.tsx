@@ -37,6 +37,9 @@ export function MultiServiceTabs({
       {SERVICES.map((s) => {
         const on = s.id === active;
         const Icon = s.Icon;
+        // Coming-soon services stay visible but are inert — selecting one would
+        // point the hero search at a dead-end coming-soon screen.
+        const disabled = !s.live;
 
         // Colors differ for the dark hero vs normal surfaces. On-hero tints are
         // derived from t.onPrimary with hex-alpha suffixes (0x29≈16%, 0x47≈28%,
@@ -66,19 +69,24 @@ export function MultiServiceTabs({
         return (
           <Pressable
             key={s.id}
-            onPress={() => (onSelect ? onSelect(s.id as Service['id']) : setActive(s.id as Service['id']))}
+            onPress={() => {
+              if (disabled) return;
+              onSelect ? onSelect(s.id as Service['id']) : setActive(s.id as Service['id']);
+            }}
+            disabled={disabled}
             accessibilityRole="tab"
-            accessibilityState={{ selected: on }}
+            accessibilityState={{ selected: on, disabled }}
             style={{
               paddingVertical: compact ? 8 : 9,
               paddingHorizontal: compact ? 12 : 14,
-              borderRadius: 999,
+              borderRadius: t.radius.pill,
               flexDirection: 'row',
               alignItems: 'center',
               gap: 6,
               backgroundColor: bg,
               borderWidth: 1.5,
               borderColor,
+              opacity: disabled ? 0.5 : 1,
             }}
           >
             <Icon size={compact ? 13 : 15} color={contentColor} strokeWidth={2} />

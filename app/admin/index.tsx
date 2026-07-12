@@ -1,13 +1,13 @@
 // THIN UI — wiring lives in src/screens/admin/useAdminHome.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { ShieldCheck } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { PressableScale } from '@/components/PressableScale';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useAdminHome } from '@/screens/admin/useAdminHome';
 
 export default function AdminHome() {
@@ -19,7 +19,7 @@ export default function AdminHome() {
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 20, paddingVertical: 12 }}>
         <Pressable
           onPress={vm.goBack}
@@ -48,7 +48,7 @@ export default function AdminHome() {
                 alignItems: isWide ? 'flex-start' : 'center',
                 gap: isWide ? 12 : 14,
                 padding: 16,
-                borderRadius: 16,
+                borderRadius: t.radius.card,
                 backgroundColor: t.bgElev,
                 borderColor: t.border,
                 borderWidth: 1,
@@ -56,7 +56,7 @@ export default function AdminHome() {
                 ...t.shadow1,
               }}
             >
-              <View style={{ width: 46, height: 46, borderRadius: 13, backgroundColor: `${c.color}1A`, alignItems: 'center', justifyContent: 'center' }}>
+              <View style={{ width: 46, height: 46, borderRadius: t.radius.badge, backgroundColor: `${c.color}1A`, alignItems: 'center', justifyContent: 'center' }}>
                 <c.Icon size={22} color={c.color} strokeWidth={2} />
               </View>
               <View style={{ flex: 1 }}>
@@ -69,6 +69,6 @@ export default function AdminHome() {
           ))}
         </View>
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

@@ -1,7 +1,6 @@
 // THIN UI — wiring lives in src/screens/search/useServiceSearch.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import {
   ArrowUpDown,
@@ -14,6 +13,7 @@ import { StackHeader } from '@/components/StackHeader';
 import { useTheme } from '@/theme/ThemeContext';
 import { MultiServiceTabs } from '@/components/MultiServiceTabs';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useServiceSearch } from '@/screens/search/useServiceSearch';
 import { useIsWideWeb } from '@/lib/responsive';
 
@@ -44,7 +44,7 @@ function Stepper({
         backgroundColor: t.bgElev,
         borderColor: t.border,
         borderWidth: 1,
-        borderRadius: 16,
+        borderRadius: t.radius.card,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
@@ -62,14 +62,16 @@ function Stepper({
         </View>
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        {/* A11y (#5): 40x40 circles + hitSlop 2 = 44pt effective targets; the
+            2px slops stay inside the 10px gaps so the two buttons never overlap. */}
         <Pressable
           onPress={onDec}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.decrease')}
-          hitSlop={6}
-          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
+          hitSlop={2}
+          style={{ width: 40, height: 40, borderRadius: t.radius.pill, backgroundColor: t.bgSunken, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Minus size={14} color={t.fg} />
+          <Minus size={16} color={t.fg} />
         </Pressable>
         <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 16, minWidth: 18, textAlign: 'center', color: t.fg }}>
           {value}
@@ -78,10 +80,10 @@ function Stepper({
           onPress={onInc}
           accessibilityRole="button"
           accessibilityLabel={tr('a11y.increase')}
-          hitSlop={6}
-          style={{ width: 32, height: 32, borderRadius: 16, backgroundColor: t.primary, alignItems: 'center', justifyContent: 'center' }}
+          hitSlop={2}
+          style={{ width: 40, height: 40, borderRadius: t.radius.pill, backgroundColor: t.primary, alignItems: 'center', justifyContent: 'center' }}
         >
-          <Plus size={14} color={t.onPrimary} />
+          <Plus size={16} color={t.onPrimary} />
         </Pressable>
       </View>
     </View>
@@ -109,7 +111,7 @@ export default function SearchScreen() {
               onPress={() => vm.setTripType(tt.id)}
               accessibilityRole="button"
               accessibilityState={{ selected: on }}
-              style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, backgroundColor: on ? t.primary : t.bgSunken }}
+              style={{ paddingVertical: 8, paddingHorizontal: 14, borderRadius: t.radius.pill, backgroundColor: on ? t.primary : t.bgSunken }}
             >
               <Text style={{ fontSize: 12, fontWeight: '700', fontFamily: t.font.displayMedium, color: on ? t.onPrimary : t.fgMuted }}>
                 {tr(tt.labelKey)}
@@ -121,7 +123,7 @@ export default function SearchScreen() {
     ) : null;
 
   const fromToCard = (
-    <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: 16, overflow: 'hidden' }}>
+    <View style={{ backgroundColor: t.bgElev, borderColor: t.border, borderWidth: 1, borderRadius: t.radius.card, overflow: 'hidden' }}>
       <View style={{ flexDirection: 'row', alignItems: 'center' }}>
         <View style={{ flex: 1, padding: 14 }}>
           <Text style={{ fontSize: 10, color: t.fgFaint, textTransform: 'uppercase', letterSpacing: 0.4 }}>
@@ -208,7 +210,7 @@ export default function SearchScreen() {
   );
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <StackHeader title={tr('search.title')} onBack={vm.goBack} />
 
       <ScrollView
@@ -250,6 +252,6 @@ export default function SearchScreen() {
 
         {searchButton}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

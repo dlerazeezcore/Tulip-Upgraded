@@ -1,7 +1,6 @@
 // THIN UI — wiring lives in src/screens/manage/useManageService.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable, RefreshControl } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { useTranslation } from 'react-i18next';
 import { Archive, Smartphone, Sparkles, type LucideIcon } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
@@ -12,6 +11,8 @@ import { StatusPill } from '@/components/StatusPill';
 import { PressableScale } from '@/components/PressableScale';
 import { EsimListSkeleton } from '@/components/Skeleton';
 import { EmptyState } from '@/components/EmptyState';
+import { ErrorState } from '@/components/ErrorState';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useManageService } from '@/screens/manage/useManageService';
 
 function Card({ children, onPress }: { children: React.ReactNode; onPress?: () => void }) {
@@ -78,6 +79,7 @@ function EsimList({ vm }: { vm: ReturnType<typeof useManageService> }) {
   const loaded = vm.loaded;
 
   if (!loaded) {
+    if (vm.errored) return <ErrorState onRetry={vm.retry} />;
     return <EsimListSkeleton count={3} />;
   }
 
@@ -166,7 +168,7 @@ export default function ManageService() {
   const { svc, service, title } = vm;
 
   return (
-    <SafeAreaView edges={['top']} style={{ flex: 1, backgroundColor: t.bg }}>
+    <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
       <StackHeader
         title={title}
         onBack={vm.goBack}
@@ -177,7 +179,7 @@ export default function ManageService() {
               onPress={vm.goBookNew}
               accessibilityRole="button"
               hitSlop={8}
-              style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: 999, backgroundColor: svc.color }}
+              style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: t.radius.pill, backgroundColor: svc.color }}
             >
               <Text style={{ color: t.onPrimary, fontWeight: '700', fontSize: 12, fontFamily: t.font.displayMedium }}>
                 {tr('manage.bookNew')}
@@ -197,6 +199,6 @@ export default function ManageService() {
       >
         {service === 'esim' ? <EsimList vm={vm} /> : <ComingSoon label={svc ? tr(`serviceNames.${svc.id}`) : String(service ?? '')} Icon={svc?.Icon} />}
       </ScrollView>
-    </SafeAreaView>
+    </ScreenSafeArea>
   );
 }

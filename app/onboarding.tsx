@@ -1,14 +1,15 @@
 // THIN UI — wiring lives in src/screens/onboarding/useOnboarding.ts.
 import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTranslation } from 'react-i18next';
-import { Check, ArrowRight } from 'lucide-react-native';
+import { Check } from 'lucide-react-native';
+import { DirectionalArrow } from '@/components/DirectionalArrow';
 import { useTheme } from '@/theme/ThemeContext';
 import { TulipLogo } from '@/components/TulipLogo';
 import { Flag } from '@/components/Flag';
 import { PrimaryButton } from '@/components/PrimaryButton';
+import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import type { CurrencyCode } from '@/data/currency';
 import { useOnboarding } from '@/screens/onboarding/useOnboarding';
 
@@ -20,7 +21,7 @@ export default function Onboarding() {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <LinearGradient colors={t.gradHero as any} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ paddingBottom: 28 }}>
-        <SafeAreaView edges={['top']}>
+        <ScreenSafeArea>
           <View style={{ paddingHorizontal: 24, paddingTop: 16, alignItems: 'center', gap: 12 }}>
             <View style={{ width: 56, height: 56, borderRadius: t.radius.card, backgroundColor: t.onHero.frost, alignItems: 'center', justifyContent: 'center' }}>
               <TulipLogo size={34} color={t.primary} />
@@ -32,7 +33,7 @@ export default function Onboarding() {
               {tr('onboarding.subtitle')}
             </Text>
           </View>
-        </SafeAreaView>
+        </ScreenSafeArea>
       </LinearGradient>
 
       <ScrollView
@@ -116,7 +117,7 @@ export default function Onboarding() {
 
         <PrimaryButton
           label={tr('onboarding.getStarted')}
-          icon={<ArrowRight size={16} color={t.onPrimary} strokeWidth={2.2} />}
+          icon={<DirectionalArrow size={16} color={t.onPrimary} strokeWidth={2.2} />}
           onPress={vm.onStart}
         />
       </ScrollView>

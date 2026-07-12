@@ -18,7 +18,7 @@ export function EsimCompatibilityBanner() {
       accessibilityLabel={vm.title}
       style={{
         padding: 12,
-        borderRadius: 14,
+        borderRadius: t.radius.md,
         backgroundColor: vm.bg,
         borderWidth: 1,
         borderColor: vm.borderColor,

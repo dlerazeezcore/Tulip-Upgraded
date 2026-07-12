@@ -46,9 +46,14 @@ export function useActiveEsimCard() {
       id: e.id,
       iso: e.iso,
       country: e.country,
+      // planGb is 0 for package-kind/pending labels — fall back to the store's
+      // pre-resolved dataLabel (same source the manage list uses) so the card
+      // never reads "0 GB" (mirrors the eSIM detail fix for audit finding #1).
       planSummary: e.unlimited
         ? tr('home.planSummaryUnlimited', { days: e.planDays })
-        : tr('home.planSummary', { gb: e.planGb, days: e.planDays }),
+        : e.planGb > 0
+          ? tr('home.planSummary', { gb: e.planGb, days: e.planDays })
+          : `${fmt.dataLabel(e.dataLabel)}${e.planDays > 0 ? ` · ${fmt.planDays(e.planDays)}` : ''}`,
       amountLabel: e.unlimited ? '∞' : fmt.dataAmount(e.remainingMb),
       amountSub: e.unlimited ? tr('home.unlimitedShort') : tr('home.left'),
       usedLabel: e.unlimited ? '—' : tr('home.used', { value: fmt.dataAmount(e.usedMb) }),
