@@ -28,7 +28,11 @@ export const useTravelersStore = create<TravelersState>((set, get) => ({
   loaded: false,
   error: null,
   refresh: async () => {
-    if (!useAuthStore.getState().isAuthed()) {
+    const auth = useAuthStore.getState();
+    // Travelers are user-scoped: admin accounts have no app-user row and 403 on
+    // /travelers/my (the profile also hides the section for them), so skip the
+    // fetch entirely instead of firing a guaranteed 403 on every admin login.
+    if (!auth.isAuthed() || auth.user?.isAdmin) {
       set({ travelers: [], loaded: true, error: null });
       return;
     }
