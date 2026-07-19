@@ -57,10 +57,14 @@ export function useCheckout() {
     // refresh between fib.start and onPaid used to recompute it — audit L1).
     salePriceMinor: number,
     providerPriceMinor: number,
+    // Minted once per checkout attempt (see performPay) and shared with the
+    // orderIntent we hand FIB, so the server-side finalizer recovers THIS order
+    // under the same id instead of creating a second one.
+    orderTransactionId: string,
   ) => {
     if (!place || !bundle || !user) return;
     await createManagedOrder({
-      transactionId: `APP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      transactionId: orderTransactionId,
       packageCode: bundle.packageCode!,
       periodNum: bundle.periodNum ?? bundle.days,
       providerPriceMinor,
@@ -97,10 +101,21 @@ export function useCheckout() {
     }
     // Freeze the customer amount once, before any payment starts (audit L1).
     const amountIqd = iqdAmount(bundle.usd, bundle.saleIqdMinor);
+    // One id for this checkout attempt, minted BEFORE payment starts so the
+    // same id travels to FIB (as orderIntent) and to createManagedOrder. If the
+    // app dies after paying, the backend finalizer replays this exact order id
+    // — the server treats a matching id as an idempotent resubmit, so the
+    // customer can never end up with two eSIMs (or a stuck 409) for one charge.
+    const orderTransactionId = `APP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     setBusy(true);
     try {
       if (method === 'loyalty') {
-        await placeOrder({ method: 'loyalty', status: 'paid' }, amountIqd, providerPriceMinor);
+        await placeOrder(
+          { method: 'loyalty', status: 'paid' },
+          amountIqd,
+          providerPriceMinor,
+          orderTransactionId,
+        );
         return;
       }
 
@@ -111,7 +126,29 @@ export function useCheckout() {
           amount: amountIqd,
           currency: 'IQD',
           description: `${place.name} eSIM`,
-          metadata: { packageCode: bundle.packageCode, place: place.name },
+          metadata: {
+            packageCode: bundle.packageCode,
+            place: place.name,
+            // Everything the backend needs to place THIS order without us. It
+            // rides the checkout context onto the payment row once FIB confirms
+            // the charge, so a paid-but-abandoned checkout is still delivered
+            // instead of leaving the customer charged with nothing (no refunds).
+            orderIntent: {
+              transactionId: orderTransactionId,
+              packageCode: bundle.packageCode,
+              count: 1,
+              periodNum: bundle.periodNum ?? bundle.days,
+              providerPriceMinor,
+              salePriceMinor: amountIqd,
+              countryCode: place.iso,
+              countryName: place.name,
+              packageName: `${place.name} ${planLabel} · ${bundle.days}d`,
+              currencyCode: 'IQD',
+              providerCurrencyCode: 'USD',
+              platformCode: 'tulip-mobile-app',
+              platformName: 'Tulip Mobile App',
+            },
+          },
         },
         {
           onPaid: (p) =>
@@ -119,6 +156,7 @@ export function useCheckout() {
               { method: 'fib', status: 'paid', transactionId: p.paymentId },
               amountIqd,
               providerPriceMinor,
+              orderTransactionId,
             ),
         },
       );

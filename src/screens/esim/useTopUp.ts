@@ -118,13 +118,19 @@ export function useTopUp() {
   /** Human label for a bundle, e.g. "10 GB" or "Unlimited data". */
   const planLabel = (b: Bundle) => (b.type === 'unlimited' ? tr('esim.unlimitedData') : `${b.gb} GB`);
 
-  const apply = async (payment: { method: 'fib' | 'loyalty'; providerPaymentId?: string }) => {
+  const apply = async (
+    payment: { method: 'fib' | 'loyalty'; providerPaymentId?: string },
+    // Minted once per top-up attempt (see performPay) and shared with the
+    // topupIntent we hand FIB, so the server-side finalizer replays THIS top-up
+    // under the same id instead of applying a second one.
+    topupTransactionId: string,
+  ) => {
     if (!selected?.packageCode || !iccid) return;
     await applyTopUp({
       iccid,
       esimTranNo: profile?.esimTranNo ?? undefined,
       packageCode: selected.packageCode,
-      transactionId: `TOPUP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      transactionId: topupTransactionId,
       paymentMethod: payment.method,
       paymentProviderPaymentId: payment.providerPaymentId,
     });
@@ -139,11 +145,17 @@ export function useTopUp() {
 
   const performPay = async () => {
     if (!selected || !user) return;
+    // One id for this top-up attempt, minted BEFORE payment starts so the same
+    // id travels to FIB (as topupIntent) and to applyTopUp. If the app dies
+    // after paying, the backend finalizer replays this exact top-up — the
+    // server treats a matching id as an idempotent resubmit, so the customer
+    // can never be charged once and topped up twice.
+    const topupTransactionId = `TOPUP-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
     setBusy(true);
     setPayError(null);
     try {
       if (method === 'loyalty') {
-        await apply({ method: 'loyalty' });
+        await apply({ method: 'loyalty' }, topupTransactionId);
         return;
       }
       // FIB: open the QR + "pay by phone" sheet. It polls and shows its own
@@ -154,9 +166,26 @@ export function useTopUp() {
           amount: amountIqd,
           currency: 'IQD',
           description: `${esim?.country ?? 'eSIM'} top-up`,
-          metadata: { packageCode: selected.packageCode, iccid, kind: 'topup' },
+          metadata: {
+            packageCode: selected.packageCode,
+            iccid,
+            kind: 'topup',
+            // Everything the backend needs to apply THIS top-up without us, so a
+            // paid-but-abandoned top-up is still delivered instead of leaving the
+            // customer charged with nothing (no refunds). The price is NOT sent —
+            // the server re-quotes it from the provider's own top-up catalog.
+            topupIntent: {
+              transactionId: topupTransactionId,
+              iccid,
+              esimTranNo: profile?.esimTranNo ?? undefined,
+              packageCode: selected.packageCode,
+            },
+          },
         },
-        { onPaid: (p) => apply({ method: 'fib', providerPaymentId: p.paymentId }) },
+        {
+          onPaid: (p) =>
+            apply({ method: 'fib', providerPaymentId: p.paymentId }, topupTransactionId),
+        },
       );
     } catch (e: any) {
       setPayError(e?.message || tr('checkout.failed'));
