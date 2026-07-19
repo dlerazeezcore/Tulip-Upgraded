@@ -67,6 +67,10 @@ function ThemedStack() {
         <Stack.Screen name="esim-store/index" />
         <Stack.Screen name="esim-store/[place]" />
         <Stack.Screen name="esim-store/checkout" />
+        {/* FIB return deep link (tulip://payment/result). Transient bounce back
+            to the still-polling payment sheet — no animation so it never flashes
+            a visible slide in/out. */}
+        <Stack.Screen name="payment/result" options={{ animation: 'none' }} />
         <Stack.Screen name="auth/sign-in" options={{ presentation: 'modal' }} />
         <Stack.Screen name="auth/sign-up" options={{ presentation: 'modal' }} />
         <Stack.Screen name="auth/forgot" options={{ presentation: 'modal' }} />
