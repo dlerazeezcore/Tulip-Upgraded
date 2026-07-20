@@ -47,6 +47,11 @@ on:
         required: false
         default: ""
         type: string
+      changes_not_sent_for_review:
+        description: "Stage the release instead of auto-sending for review. Flip to true only if Play says changes CANNOT be sent automatically."
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -134,9 +139,15 @@ jobs:
           track: ${{ inputs.track }}
           status: ${{ inputs.status }}
           userFraction: ${{ inputs.status == 'inProgress' && inputs.user_fraction || '' }}
-          # Stage the release rather than auto-sending it for review. The Play
-          # API refuses to auto-submit when other changes are pending review
-          # (e.g. a Data safety edit), and staging lets you review + submit
-          # everything together from Play Console → Publishing overview →
-          # "Send changes for review". One extra click, but robust.
-          changesNotSentForReview: true
+          # Play accepts this flag in exactly one of two states, and rejects it
+          # in the other — so it is an input, not a constant:
+          #   false (default) — Play auto-sends changes for review. Setting the
+          #     flag here fails with "Changes are sent for review automatically.
+          #     The query parameter changesNotSentForReview must not be set."
+          #   true — required only when OTHER changes are pending review (e.g. a
+          #     Data safety edit). Then Play fails the other way with "Changes
+          #     cannot be sent for review automatically", and you stage the
+          #     release and submit everything together from Play Console →
+          #     Publishing overview → "Send changes for review".
+          # If a run fails on either message, re-run with the flag flipped.
+          changesNotSentForReview: ${{ inputs.changes_not_sent_for_review }}
