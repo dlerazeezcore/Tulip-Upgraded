@@ -1,35 +1,29 @@
 import { Platform } from 'react-native';
-import * as NavigationBar from 'expo-navigation-bar';
+import { NavigationBar } from 'expo-navigation-bar';
 import type { Theme } from '@/theme/tokens';
 
 /**
- * Colour the Android system navigation bar to match the app surface.
+ * Match the Android system navigation bar buttons to the app theme.
  *
- * IMPORTANT: on Android 15 (targetSdkVersion 35) edge-to-edge is enforced by
- * the OS, so `setPositionAsync('relative')` and `setBackgroundColorAsync` are
- * effectively no-ops there — the system nav bar is a transparent overlay by
- * design and can NOT be made to "reserve" its own space. The real defense
- * against the nav bar covering content is per-screen safe-area insets
- * (`useSafeAreaInsets().bottom`) — see `TulipTabBar` and the eSIM plan footer,
- * which pad their bottom edge by the inset so nothing hides underneath.
+ * IMPORTANT: at targetSdkVersion 36 edge-to-edge is enforced by the OS and can
+ * no longer be opted out of, so the nav bar is ALWAYS a transparent overlay.
+ * `setPositionAsync` and `setBackgroundColorAsync` were removed from
+ * expo-navigation-bar accordingly — there is no bar background left to colour.
+ * All that remains controllable is the button/content contrast.
  *
- * These calls still help on older Android versions, so keep them — but make
- * each best-effort and INDEPENDENT so a call that throws/na-ops on Android 15
- * never skips the others. No-op on iOS and web.
+ * The real defense against the nav bar covering content is per-screen safe-area
+ * insets (`useSafeAreaInsets().bottom`) — see `TulipTabBar` and the eSIM plan
+ * footer, which pad their bottom edge by the inset so nothing hides underneath.
+ *
+ * Note `NavigationBar.setStyle` takes the BAR style, which is the inverse of the
+ * old `setButtonStyleAsync` BUTTON style: 'dark' means a dark bar with light
+ * content, so a dark theme maps to 'dark'. No-op on iOS and web.
  */
 export async function applySystemNavBar(theme: Theme): Promise<void> {
   if (Platform.OS !== 'android') return;
-  // Non-overlay position (older Android only; no-op under edge-to-edge).
   try {
-    await NavigationBar.setPositionAsync('relative');
+    NavigationBar.setStyle(theme.mode === 'dark' ? 'dark' : 'light');
   } catch {
     // Best-effort: never let nav-bar styling crash app startup.
-  }
-  // Theme-matched bar colour + button contrast.
-  try {
-    await NavigationBar.setBackgroundColorAsync(theme.bgElev);
-    await NavigationBar.setButtonStyleAsync(theme.mode === 'dark' ? 'light' : 'dark');
-  } catch {
-    // Best-effort.
   }
 }

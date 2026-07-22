@@ -11,7 +11,12 @@
 //   https://esimsetup.apple.com/esim_qrcode_provisioning?carddata=<url-encoded-LPA>
 import { Platform } from 'react-native';
 import QRCode from 'qrcode';
-import * as FileSystem from 'expo-file-system';
+// SDK 56 replaced the module-level FileSystem API with the File/Directory
+// classes. `shareEsimQr` writes base64 straight to disk, which the legacy API
+// does in one call (EncodingType.Base64) and the new one does not — so this
+// deliberately keeps the legacy entrypoint. Migrate when the new API grows a
+// base64 write; the legacy shim is supported but deprecated.
+import * as FileSystem from 'expo-file-system/legacy';
 import * as Sharing from 'expo-sharing';
 
 const APPLE_UNIVERSAL_BASE = 'https://esimsetup.apple.com/esim_qrcode_provisioning';

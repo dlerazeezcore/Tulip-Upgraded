@@ -3,7 +3,9 @@ import { View, Text, Pressable, Platform } from 'react-native';
 import { BlurView } from 'expo-blur';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import * as Haptics from 'expo-haptics';
-import type { BottomTabBarProps } from '@react-navigation/bottom-tabs';
+// expo-router 6 (SDK 56) no longer depends on react-navigation — it vendors it,
+// and re-exports the tab types from its own `js-tabs` entrypoint.
+import type { BottomTabBarProps } from 'expo-router/js-tabs';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { NAV } from '@/data/services';

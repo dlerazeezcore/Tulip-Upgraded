@@ -139,8 +139,12 @@ export function configureNotificationHandler(): void {
   if (Platform.OS === 'web') return; // no notification surface on web; expo-notifications shim varies
   try {
     Notifications.setNotificationHandler({
+      // SDK 56 split the old `shouldShowAlert` into `shouldShowBanner` (heads-up
+      // banner) and `shouldShowList` (notification centre entry). Both true
+      // preserves the previous behaviour.
       handleNotification: async () => ({
-        shouldShowAlert: true,
+        shouldShowBanner: true,
+        shouldShowList: true,
         shouldPlaySound: true,
         shouldSetBadge: false,
       }),

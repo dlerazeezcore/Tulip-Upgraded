@@ -7,8 +7,12 @@
 // under the status bar) and then visibly jump down once the real inset lands.
 // useSafeAreaInsets() reads the root provider's already-resolved context value,
 // so the padding is part of the screen's FIRST commit — no second layout.
-// (Safe to revert to SafeAreaView after the Expo SDK 52+ / safe-area-context
-// 5.x upgrade, which computes insets synchronously on Fabric.)
+//
+// KEEP THIS. An older note here said it was safe to revert to SafeAreaView once
+// we reached safe-area-context 5.x — we now have (SDK 56), but don't. At
+// targetSdkVersion 36 edge-to-edge is enforced and cannot be opted out of, so
+// the status and nav bars are permanently transparent overlays and inset
+// padding is the ONLY thing keeping content clear of them.
 import React from 'react';
 import { View, type StyleProp, type ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';

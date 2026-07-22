@@ -56,22 +56,30 @@ sideload testing (not usable for Play).
 
 ---
 
-## ⚠️ Known follow-up: Expo SDK upgrade (Android 15 / API 35)
+## Android target API level (Play requirement)
 
-Google Play requires apps to **target API level 35** (Android 15). This project is on
-**Expo SDK 51 (RN 0.74)**, which defaults to API 34 and isn't designed to build for 35.
-We got it shipping with two workarounds:
+Google Play requires the target API level to stay within one year of the latest Android
+release, or you can no longer ship updates (the listing stays live; only updates are
+blocked). The current bar is **API 36 (Android 16)**, deadline **Aug 31, 2026**.
 
-1. `expo-build-properties` forces `compileSdkVersion`/`targetSdkVersion` 35 (in `app.json`).
-2. `patches/expo-modules-core+1.12.26.patch` fixes a compile error — `PackageInfo.requestedPermissions`
-   became nullable in API 35 and `PermissionsService.kt` called `.contains()` on it directly.
+This project is on **Expo SDK 56 (RN 0.85)**, which supports API 36 natively.
+`expo-build-properties` pins `compileSdkVersion`/`targetSdkVersion` 36 in `app.json` —
+keep those in step with the Play requirement when it next moves.
 
-This works, but it's **off Expo 51's supported path for Android 15**, so:
-- After each Android release, sanity-check the **internal testing** build on a real device
-  for permission prompts and Android 15 **edge-to-edge** layout (status/nav-bar overlap).
-- The clean long-term fix is upgrading to **Expo SDK 52/53** (RN 0.76+), which supports
-  API 35 natively and lets both workarounds above be removed. Schedule it as its own
-  test-worthy task, not during a release.
+The SDK 51 era workarounds are **gone** — do not reintroduce them:
+- `plugins/withEdgeToEdgeOptOut.js` (deleted). `android:windowOptOutEdgeToEdgeEnforcement`
+  is **ignored at targetSdk 36**, so edge-to-edge is permanent and cannot be opted out of.
+- `patches/expo-modules-core`, `patches/react-native-screens`, `patches/expo-localization`
+  (deleted) — all three are fixed upstream in SDK 56.
+- Only `patches/@react-native-firebase+messaging+21.14.0.patch` remains: RNFirebase's
+  library manifest still declares `default_notification_channel_id` / `_color`, which the
+  expo-notifications plugin also injects, causing a duplicate-meta-data merge failure.
+
+Because edge-to-edge is now enforced, the status and nav bars are permanently transparent
+overlays. Safe-area insets are the ONLY thing keeping content clear of them — see
+`ScreenSafeArea`, `TulipTabBar`, `BottomSheet`, and the eSIM plan footer. After each
+Android release, sanity-check the **internal testing** build on a real device for
+status/nav-bar overlap, keyboard behaviour, and permission prompts.
 
 ---
 
