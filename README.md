@@ -45,10 +45,17 @@ See the root [`CLAUDE.md`](../CLAUDE.md). In short:
 
 GitHub Actions:
 
-- **Typecheck** — `.github/workflows/check.yml` (`tsc --noEmit` on PRs).
-- **Android Build APK** — `.github/workflows/android-build.yml`.
-- **Deploy web → GitHub Pages** — `.github/workflows/deploy.yml` (serves https://tulipbookings.com).
+- **Typecheck** — `.github/workflows/check.yml` (`tsc --noEmit` on PRs and pushes to `main`).
+- **Android Build APK** — `.github/workflows/android-build.yml` (debug-signed, sideload testing only).
+- **Android Play release (AAB)** — `.github/workflows/android-play-release.yml` (signed AAB → Google Play; manual trigger, start on the `internal` track).
+- **Deploy web → GitHub Pages** — `.github/workflows/deploy.yml` (serves https://tulipbookings.com). Runs automatically on every push to `main`.
 - **iOS App Store Connect** — `.github/workflows/ios-appstoreconnect.yml`.
+
+> **Android target API level.** Google Play requires the target API to stay within one year of the
+> latest Android release, enforced each **Aug 31** — miss it and you can't ship updates. Currently
+> **Expo SDK 56 → `targetSdkVersion` 36**. Bumping it requires an Expo SDK upgrade, not a config
+> edit. See the recurring-deadline section in [`CLAUDE.md`](./CLAUDE.md) and
+> [`RELEASING.md`](./RELEASING.md).
 
 Firebase client config (`google-services.json`, `GoogleService-Info.plist`) is committed
 intentionally — these are app-embedded client identifiers, not server secrets.
