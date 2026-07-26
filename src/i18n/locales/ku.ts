@@ -1,3 +1,5 @@
+import type { LocaleShape } from '../localeShape';
+
 export default {
   common: {
     appName: 'Tulip Booking',
@@ -790,4 +792,4 @@ export default {
     swapOriginDestination: 'گۆڕینی خاڵی دەستپێک و مەنزڵ',
     removeSelectedUser: 'لابردنی بەکارهێنەری هەڵبژێردراو',
   },
-};
+} satisfies LocaleShape;
