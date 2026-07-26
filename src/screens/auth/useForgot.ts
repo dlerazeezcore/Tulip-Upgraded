@@ -2,7 +2,9 @@ import { useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
-import { sendOtp, verifyOtp, OTP_CODE_LENGTH } from '@/services/auth';
+import { ApiError } from '@/lib/api';
+import { authErrorMessage } from '@/lib/authErrors';
+import { useOtpChallenge } from '@/screens/auth/useOtpChallenge';
 
 type Step = 'phone' | 'otp' | 'reset' | 'done';
 
@@ -13,13 +15,12 @@ export function useForgot() {
 
   const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
-  const [code, setCode] = useState('');
-  const [challenge, setChallenge] = useState<string | null>(null);
   const [verificationToken, setVerificationToken] = useState<string | null>(null);
   const [pw, setPw] = useState('');
   const [pw2, setPw2] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const otp = useOtpChallenge();
 
   const run = async (fn: () => Promise<void>) => {
     if (busy) return;
@@ -27,8 +28,8 @@ export function useForgot() {
     setError(null);
     try {
       await fn();
-    } catch (e: any) {
-      setError(e?.message || tr('common.somethingWrong'));
+    } catch (e) {
+      setError(authErrorMessage(e, tr));
     } finally {
       setBusy(false);
     }
@@ -43,41 +44,63 @@ export function useForgot() {
           ? tr('auth.resetResetStep')
           : tr('auth.resetDoneStep');
 
+  /** Back to the very start, discarding the proof — also the recovery path when the
+   *  verification token expires under the user on the 'reset' step. */
+  const startOver = (message?: string) => {
+    setStep('phone');
+    setVerificationToken(null);
+    setPw('');
+    setPw2('');
+    otp.reset();
+    setError(message ?? null);
+  };
+
   const onSendResetCode = () =>
     run(async () => {
       if (!phone) {
         setError(tr('auth.enterPhone'));
         return;
       }
-      const res = await sendOtp(phone);
-      setChallenge(res.challenge);
-      setCode('');
-      setStep('otp');
+      if (await otp.send(phone)) setStep('otp');
     });
 
   const onContinueOtp = () =>
     run(async () => {
-      if (!challenge || code.length < OTP_CODE_LENGTH) {
+      if (!otp.codeComplete) {
         setError(tr('auth.otpTooShort'));
         return;
       }
-      const res = await verifyOtp({ phone, code, challenge });
-      setVerificationToken(res.verificationToken);
+      setVerificationToken(await otp.verify(phone));
       setStep('reset');
     });
 
   const onResetPassword = () =>
     run(async () => {
-      if (pw.length < 8 || pw !== pw2) {
+      if (pw.length < 8) {
         setError(tr('auth.passwordRule'));
         return;
       }
-      if (!verificationToken) {
-        setError(tr('common.somethingWrong'));
+      if (pw !== pw2) {
+        setError(tr('auth.passwordsDontMatch'));
         return;
       }
-      // Succeeds → the store sets the session, so the user lands signed in.
-      await resetPassword({ phone, verificationToken, newPassword: pw });
+      if (!verificationToken) {
+        startOver(tr('auth.errors.challengeMissing'));
+        return;
+      }
+      try {
+        // Succeeds → the store sets the session, so the user lands signed in.
+        await resetPassword({ phone, verificationToken, newPassword: pw });
+      } catch (e) {
+        // The proof is only valid for a few minutes. If it lapsed while the user was
+        // choosing a password, this step had no way out — send them back to the
+        // start with an explanation rather than leaving them stuck on a dead form.
+        if (e instanceof ApiError && (e.status === 400 || e.code === 'AUTH_OTP_INVALID')) {
+          startOver(tr('auth.errors.proofExpired'));
+          return;
+        }
+        throw e;
+      }
       setStep('done');
     });
 
@@ -85,23 +108,31 @@ export function useForgot() {
     // state
     step,
     phone,
-    code,
+    code: otp.code,
     pw,
     pw2,
     busy,
     error,
     // derived
     subtitle,
+    // OTP affordances
+    maybeSent: otp.maybeSent,
+    resendIn: otp.resendIn,
+    expiresIn: otp.expiresIn,
+    canResend: otp.resendIn === 0 && !busy,
     // setters
     setPhone,
-    setCode,
+    setCode: otp.setCode,
     setPw,
     setPw2,
     // step navigation
     backToPhone: () => {
-      setStep('phone');
-      setCode('');
-      setError(null);
+      if (busy) return;
+      startOver();
+    },
+    startOver: () => {
+      if (busy) return;
+      startOver();
     },
     // actions
     onSendResetCode,

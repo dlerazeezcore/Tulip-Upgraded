@@ -2,9 +2,10 @@ import { useState } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
-import { sendOtp, verifyOtp, OTP_CODE_LENGTH } from '@/services/auth';
+import { authErrorMessage } from '@/lib/authErrors';
+import { useOtpChallenge } from '@/screens/auth/useOtpChallenge';
 
-type Method = 'password' | 'otp';
+type Method = 'otp' | 'password';
 type OtpStep = 'phone' | 'code';
 
 export function useSignIn() {
@@ -13,14 +14,16 @@ export function useSignIn() {
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { signInPassword, signInOtp } = useAuthStore();
 
-  const [method, setMethod] = useState<Method>('password');
+  // WhatsApp code is the primary way in: it is the only method every account has
+  // (a password is optional), and it needs no remembered secret. The password tab
+  // stays one tap away for anyone who prefers it.
+  const [method, setMethod] = useState<Method>('otp');
   const [phone, setPhone] = useState(''); // E.164 from CountryPhoneField
   const [password, setPassword] = useState('');
   const [otpStep, setOtpStep] = useState<OtpStep>('phone');
-  const [code, setCode] = useState('');
-  const [challenge, setChallenge] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const otp = useOtpChallenge();
 
   const done = () => {
     if (returnTo === 'checkout') router.replace('/esim-store/checkout');
@@ -34,8 +37,8 @@ export function useSignIn() {
     setError(null);
     try {
       await fn();
-    } catch (e: any) {
-      setError(e?.message || tr('common.somethingWrong'));
+    } catch (e) {
+      setError(authErrorMessage(e, tr));
     } finally {
       setBusy(false);
     }
@@ -45,6 +48,10 @@ export function useSignIn() {
     run(async () => {
       if (!phone) {
         setError(tr('auth.enterPhone'));
+        return;
+      }
+      if (!password) {
+        setError(tr('auth.enterPassword'));
         return;
       }
       await signInPassword({ phone, password });
@@ -57,19 +64,19 @@ export function useSignIn() {
         setError(tr('auth.enterPhone'));
         return;
       }
-      const res = await sendOtp(phone);
-      setChallenge(res.challenge);
-      setCode('');
-      setOtpStep('code');
+      // Advances even when the response was lost in transit — the code has very
+      // likely been delivered, and leaving the user on the phone field with no way
+      // forward was the original bug. otp.maybeSent drives the explanatory copy.
+      if (await otp.send(phone)) setOtpStep('code');
     });
 
   const onVerifyAndSignIn = () =>
     run(async () => {
-      if (!challenge || code.length < OTP_CODE_LENGTH) {
+      if (!otp.codeComplete) {
         setError(tr('auth.otpTooShort'));
         return;
       }
-      const { verificationToken } = await verifyOtp({ phone, code, challenge });
+      const verificationToken = await otp.verify(phone);
       await signInOtp({ phone, verificationToken });
       done();
     });
@@ -78,7 +85,7 @@ export function useSignIn() {
     setMethod(v as Method);
     setError(null);
     setOtpStep('phone');
-    setCode('');
+    otp.reset();
   };
 
   return {
@@ -87,13 +94,18 @@ export function useSignIn() {
     phone,
     password,
     otpStep,
-    code,
+    code: otp.code,
     busy,
     error,
+    // OTP affordances
+    maybeSent: otp.maybeSent,
+    resendIn: otp.resendIn,
+    expiresIn: otp.expiresIn,
+    canResend: otp.resendIn === 0 && !busy,
     // setters used by presentational fields
     setPhone,
     setPassword,
-    setCode,
+    setCode: otp.setCode,
     // handlers
     onChangeMethod,
     onPasswordSignIn,
@@ -101,8 +113,9 @@ export function useSignIn() {
     onVerifyAndSignIn,
     onResend: onSendCode,
     backToPhone: () => {
+      if (busy) return; // an in-flight verify must not resolve onto a dead step
       setOtpStep('phone');
-      setCode('');
+      otp.reset();
       setError(null);
     },
     // navigation

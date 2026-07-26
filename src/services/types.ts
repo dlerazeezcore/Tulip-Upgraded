@@ -178,6 +178,10 @@ export type AdminUserRow = {
   createdAt?: string | null;
   /** Last app build this user was seen on (X-App-Version, stamped by auth/me). */
   appVersion?: string | null;
+  /** False for WhatsApp/OTP-only signups whose password_hash is still NULL —
+   *  they can sign in with a code but have no password yet. Derived server-side;
+   *  the hash itself is never sent. */
+  hasPassword?: boolean;
 };
 
 export type FeaturedLocationAdmin = {

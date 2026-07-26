@@ -15,14 +15,18 @@ import { useCountryPhoneField } from '@/components/useCountryPhoneField';
 export function CountryPhoneField({
   onChange,
   autoFocus,
+  value,
 }: {
   onChange: (e164: string) => void;
   autoFocus?: boolean;
+  /** Pass the parent's E.164 state to make the field controlled, so resetting or
+   *  restoring that state is reflected on screen. */
+  value?: string;
 }) {
   const t = useTheme();
   const { t: tr } = useTranslation();
   const { country, local, open, query, filtered, setQuery, openPicker, closePicker, onChangeLocal, onSelectCountry } =
-    useCountryPhoneField({ onChange, autoFocus });
+    useCountryPhoneField({ onChange, autoFocus, value });
 
   return (
     <View>

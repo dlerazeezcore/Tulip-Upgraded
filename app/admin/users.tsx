@@ -2,11 +2,13 @@
 import React from 'react';
 import { ScrollView, View, Text, Pressable, TextInput, ActivityIndicator } from 'react-native';
 import { Redirect } from 'expo-router';
-import { Search, Star, X, Ban, ShieldCheck, Trash2 } from 'lucide-react-native';
+import { Search, Star, X, Ban, ShieldCheck, Trash2, KeyRound } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
+import { PasswordField } from '@/components/AuthShell';
 import { CenteredModal } from '@/components/CenteredModal';
+import { PrimaryButton } from '@/components/PrimaryButton';
 import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 import { useAdminUsers } from '@/screens/admin/useAdminUsers';
 
@@ -18,6 +20,7 @@ export default function AdminUsers() {
     q, setQ, rows, users, loading, error,
     selected, setSelected, clearError, busy,
     onToggleLoyalty, onToggleBlock, onDelete,
+    pwOpen, pwValue, pwNotice, setPwValue, togglePasswordForm, onSetPassword,
   } = vm;
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
@@ -148,6 +151,40 @@ export default function AdminUsers() {
                     {selected.isBlocked ? tr('admin.users.unblockUser') : tr('admin.users.blockUser')}
                   </Text>
                 </Pressable>
+
+                {/* Set OR reset the password. A WhatsApp-only signup has none yet
+                    (hasPassword === false), so the label reflects which it is. */}
+                <Pressable
+                  onPress={togglePasswordForm}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 14, borderRadius: t.radius.md, backgroundColor: t.bgSunken }}
+                >
+                  <KeyRound size={18} color={t.primary} />
+                  <Text style={{ flex: 1, fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 14, color: t.fg }}>
+                    {selected.hasPassword ? tr('admin.users.resetPassword') : tr('admin.users.setPassword')}
+                  </Text>
+                </Pressable>
+
+                {pwOpen && (
+                  <View style={{ gap: 10, padding: 14, borderRadius: t.radius.md, backgroundColor: t.bgSunken }}>
+                    <PasswordField
+                      label={tr('admin.users.newPasswordLabel')}
+                      value={pwValue}
+                      onChangeText={setPwValue}
+                      placeholder={tr('auth.newPasswordPlaceholder')}
+                    />
+                    <Text style={{ fontSize: 11, color: t.fgMuted }}>{tr('admin.users.passwordHint')}</Text>
+                    {/* Bearer tokens have no revocation list, so an existing session
+                        survives a password change — say so instead of implying it. */}
+                    <Text style={{ fontSize: 11, color: t.fgMuted }}>{tr('admin.users.sessionsNotRevokedHint')}</Text>
+                    <PrimaryButton
+                      label={tr('admin.users.savePassword')}
+                      onPress={() => onSetPassword(selected)}
+                      loading={busy}
+                    />
+                  </View>
+                )}
+
+                {pwNotice && <Text style={{ fontSize: 12, color: t.success }}>{pwNotice}</Text>}
 
                 <Pressable
                   onPress={() => onDelete(selected)}

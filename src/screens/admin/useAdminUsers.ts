@@ -6,7 +6,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
-import { getUsers, updateUser, deleteUser, getAppVersionInfo } from '@/services/admin';
+import { getUsers, updateUser, deleteUser, setUserPassword, getAppVersionInfo } from '@/services/admin';
 import { compareVersions } from '@/state/updateStore';
 import { initials } from '@/lib/initials';
 import type { AdminUserRow } from '@/services/types';
@@ -40,6 +40,15 @@ export type AdminUsersViewModel = {
   onToggleLoyalty: (u: AdminUserRow) => void;
   onToggleBlock: (u: AdminUserRow) => void;
   onDelete: (u: AdminUserRow) => void;
+  // password set/reset
+  /** Whether the inline password form is revealed in the edit modal. */
+  pwOpen: boolean;
+  pwValue: string;
+  /** Success confirmation shown after a password is set. */
+  pwNotice: string | null;
+  setPwValue: (v: string) => void;
+  togglePasswordForm: () => void;
+  onSetPassword: (u: AdminUserRow) => void;
 };
 
 export function useAdminUsers(): AdminUsersViewModel {
@@ -53,6 +62,9 @@ export function useAdminUsers(): AdminUsersViewModel {
   const [error, setError] = useState<string | null>(null);
   const [selected, setSelected] = useState<AdminUserView | null>(null);
   const [busy, setBusy] = useState(false);
+  const [pwOpen, setPwOpen] = useState(false);
+  const [pwValue, setPwValue] = useState('');
+  const [pwNotice, setPwNotice] = useState<string | null>(null);
 
   useEffect(() => {
     // FE-4: only fetch once we know the actor is an admin (matches sibling admin
@@ -122,6 +134,30 @@ export function useAdminUsers(): AdminUsersViewModel {
       setSelected(null);
     });
 
+  /** Set or reset this user's password. Works for WhatsApp-only signups that never
+   *  had one (hasPassword === false) as well as replacing an existing password. */
+  const onSetPassword = (u: AdminUserRow) =>
+    run(async () => {
+      if (pwValue.length < 8) {
+        setError(tr('auth.passwordRule'));
+        return;
+      }
+      // The response carries hasPassword: true, so the row's Set/Reset label and
+      // the list both update without a refetch.
+      applyLocal(await setUserPassword(u.id, pwValue));
+      setPwValue('');
+      setPwOpen(false);
+      setPwNotice(tr('admin.users.passwordSet'));
+    });
+
+  /** Close the modal and discard any half-typed password with it. */
+  const selectUser = (u: AdminUserView | null) => {
+    setSelected(u);
+    setPwOpen(false);
+    setPwValue('');
+    setPwNotice(null);
+  };
+
   return {
     isAdmin,
     goBack: () => (router.canGoBack() ? router.back() : router.replace('/admin')),
@@ -132,11 +168,22 @@ export function useAdminUsers(): AdminUsersViewModel {
     loading,
     error,
     selected,
-    setSelected,
+    setSelected: selectUser,
     clearError: () => setError(null),
     busy,
     onToggleLoyalty,
     onToggleBlock,
     onDelete,
+    pwOpen,
+    pwValue,
+    pwNotice,
+    setPwValue,
+    togglePasswordForm: () => {
+      setPwOpen((open) => !open);
+      setPwValue('');
+      setPwNotice(null);
+      setError(null);
+    },
+    onSetPassword,
   };
 }

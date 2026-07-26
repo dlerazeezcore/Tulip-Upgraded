@@ -6,7 +6,7 @@ import { LogIn, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { AuthShell, AuthSegmented, PasswordField } from '@/components/AuthShell';
 import { CountryPhoneField } from '@/components/CountryPhoneField';
-import { OtpInput } from '@/components/OtpInput';
+import { OtpCodeStep } from '@/components/OtpCodeStep';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useSignIn } from '@/screens/auth/useSignIn';
 
@@ -27,20 +27,56 @@ export default function SignIn() {
 
   return (
     <AuthShell title={tr('auth.signInTitle')} subtitle={tr('auth.signInSubtitle')}>
+      {/* WhatsApp code first: it is the default and the only method every account
+          has. Password stays one tap away. */}
       <AuthSegmented
         options={[
-          { id: 'password', label: tr('auth.tabPassword') },
           { id: 'otp', label: tr('auth.tabOtp') },
+          { id: 'password', label: tr('auth.tabPassword') },
         ]}
         value={vm.method}
         onChange={vm.onChangeMethod}
       />
 
-      {vm.method === 'password' ? (
+      {vm.method === 'otp' ? (
+        vm.otpStep === 'phone' ? (
+          <>
+            <View style={{ gap: 6 }}>
+              <PhoneLabel />
+              <CountryPhoneField onChange={vm.setPhone} value={vm.phone} />
+            </View>
+            <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.otpSignInHint')}</Text>
+            {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
+            <PrimaryButton
+              label={vm.busy ? tr('auth.sending') : tr('auth.sendCode')}
+              icon={<MessageCircle size={16} color={t.onPrimary} strokeWidth={2.2} />}
+              onPress={vm.onSendCode}
+              loading={vm.busy}
+            />
+          </>
+        ) : (
+          <OtpCodeStep
+            phone={vm.phone}
+            code={vm.code}
+            onChangeCode={vm.setCode}
+            maybeSent={vm.maybeSent}
+            resendIn={vm.resendIn}
+            expiresIn={vm.expiresIn}
+            canResend={vm.canResend}
+            busy={vm.busy}
+            error={vm.error}
+            submitLabel={vm.busy ? tr('auth.verifying') : tr('auth.verifyAndSignIn')}
+            onSubmit={vm.onVerifyAndSignIn}
+            onBack={vm.backToPhone}
+            backLabel={tr('auth.changeNumber')}
+            onResend={vm.onResend}
+          />
+        )
+      ) : (
         <>
           <View style={{ gap: 6 }}>
             <PhoneLabel />
-            <CountryPhoneField onChange={vm.setPhone} />
+            <CountryPhoneField onChange={vm.setPhone} value={vm.phone} />
           </View>
           <PasswordField
             label={tr('auth.password')}
@@ -48,48 +84,22 @@ export default function SignIn() {
             onChangeText={vm.setPassword}
             placeholder={tr('auth.passwordPlaceholder')}
           />
-          <Pressable onPress={vm.goForgot} hitSlop={8} accessibilityRole="button" style={{ alignSelf: 'flex-end' }}>
-            <Text style={{ fontSize: 12, color: t.primary, fontWeight: '700' }}>{tr('auth.forgotPassword')}</Text>
-          </Pressable>
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton
             label={vm.busy ? tr('auth.signingIn') : tr('common.signIn')}
             icon={<LogIn size={16} color={t.onPrimary} strokeWidth={2.2} />}
             onPress={vm.onPasswordSignIn}
+            loading={vm.busy}
           />
         </>
-      ) : vm.otpStep === 'phone' ? (
-        <>
-          <View style={{ gap: 6 }}>
-            <PhoneLabel />
-            <CountryPhoneField onChange={vm.setPhone} />
-          </View>
-          <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.otpWhatsappHint')}</Text>
-          {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
-          <PrimaryButton
-            label={vm.busy ? tr('auth.sending') : tr('auth.sendCode')}
-            icon={<MessageCircle size={16} color={t.onPrimary} strokeWidth={2.2} />}
-            onPress={vm.onSendCode}
-          />
-        </>
-      ) : (
-        <>
-          <Text style={{ fontSize: 13, color: t.fg }}>{tr('auth.enterCodeSentTo', { phone: vm.phone })}</Text>
-          <OtpInput value={vm.code} onChange={vm.setCode} />
-          {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
-          <PrimaryButton
-            label={vm.busy ? tr('auth.verifying') : tr('auth.verifyAndSignIn')}
-            onPress={vm.onVerifyAndSignIn}
-          />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Pressable onPress={vm.backToPhone} hitSlop={8} accessibilityRole="button">
-              <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.changeNumber')}</Text>
-            </Pressable>
-            <Pressable onPress={vm.onResend} hitSlop={8} accessibilityRole="button" disabled={vm.busy}>
-              <Text style={{ fontSize: 12, color: t.primary, fontWeight: '700' }}>{tr('auth.resendCode')}</Text>
-            </Pressable>
-          </View>
-        </>
+      )}
+
+      {/* Outside the method branches: this is also how a WhatsApp-only account SETS
+          a first password, so it must not be reachable only from the password tab. */}
+      {!(vm.method === 'otp' && vm.otpStep === 'code') && (
+        <Pressable onPress={vm.goForgot} hitSlop={8} accessibilityRole="button" style={{ alignSelf: 'flex-end' }}>
+          <Text style={{ fontSize: 12, color: t.primary, fontWeight: '700' }}>{tr('auth.forgotPassword')}</Text>
+        </Pressable>
       )}
 
       <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 4, marginTop: 4 }}>

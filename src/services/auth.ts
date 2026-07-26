@@ -46,12 +46,20 @@ export function signup(input: SignupInput): Promise<AuthSession> {
 
 // ── WhatsApp OTP ───────────────────────────────────────────────────────────
 
-/** Send a WhatsApp OTP; returns the signed challenge to pass back on verify. */
+/** Send a WhatsApp OTP; returns the signed challenge to pass back on verify.
+ *
+ *  TIMEOUT INVARIANT: this must stay ABOVE the backend's own VerifyWay budget
+ *  (VERIFYWAY_TIMEOUT_SECONDS, 10s) plus load-balancer slack. The challenge is
+ *  minted from this response and stored nowhere else, so if we abort first the
+ *  server still finishes the send — the code lands on the user's phone while the
+ *  only token that can redeem it is discarded. That was the "OTP arrives but the
+ *  screen never changes" bug; the default 20s sat BELOW the old 30s server budget. */
 export function sendOtp(phone: string): Promise<OtpSendResult> {
   return apiFetch<OtpSendResult>('/api/v1/otp/send', {
     method: 'POST',
     auth: false,
     body: { phone },
+    timeoutMs: 25000,
   });
 }
 

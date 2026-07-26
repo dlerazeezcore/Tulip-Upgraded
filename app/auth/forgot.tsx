@@ -6,7 +6,7 @@ import { Check, MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { AuthShell, PasswordField } from '@/components/AuthShell';
 import { CountryPhoneField } from '@/components/CountryPhoneField';
-import { OtpInput } from '@/components/OtpInput';
+import { OtpCodeStep } from '@/components/OtpCodeStep';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { useForgot } from '@/screens/auth/useForgot';
 
@@ -23,7 +23,7 @@ export default function Forgot() {
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
               {tr('auth.phoneNumber')}
             </Text>
-            <CountryPhoneField onChange={vm.setPhone} autoFocus />
+            <CountryPhoneField onChange={vm.setPhone} value={vm.phone} autoFocus />
           </View>
           <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.otpWhatsappHint')}</Text>
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
@@ -31,25 +31,28 @@ export default function Forgot() {
             label={vm.busy ? tr('auth.sending') : tr('auth.sendResetCode')}
             icon={<MessageCircle size={16} color={t.onPrimary} strokeWidth={2.2} />}
             onPress={vm.onSendResetCode}
+            loading={vm.busy}
           />
         </>
       )}
 
       {vm.step === 'otp' && (
-        <>
-          <Text style={{ fontSize: 13, color: t.fg }}>{tr('auth.enterCodeSentTo', { phone: vm.phone })}</Text>
-          <OtpInput value={vm.code} onChange={vm.setCode} />
-          {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
-          <PrimaryButton label={vm.busy ? tr('auth.verifying') : tr('common.continue')} onPress={vm.onContinueOtp} />
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
-            <Pressable onPress={vm.backToPhone} hitSlop={8} accessibilityRole="button">
-              <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.changeNumber')}</Text>
-            </Pressable>
-            <Pressable onPress={vm.onResend} hitSlop={8} accessibilityRole="button" disabled={vm.busy}>
-              <Text style={{ fontSize: 12, color: t.primary, fontWeight: '700' }}>{tr('auth.resendCode')}</Text>
-            </Pressable>
-          </View>
-        </>
+        <OtpCodeStep
+          phone={vm.phone}
+          code={vm.code}
+          onChangeCode={vm.setCode}
+          maybeSent={vm.maybeSent}
+          resendIn={vm.resendIn}
+          expiresIn={vm.expiresIn}
+          canResend={vm.canResend}
+          busy={vm.busy}
+          error={vm.error}
+          submitLabel={vm.busy ? tr('auth.verifying') : tr('common.continue')}
+          onSubmit={vm.onContinueOtp}
+          onBack={vm.backToPhone}
+          backLabel={tr('auth.changeNumber')}
+          onResend={vm.onResend}
+        />
       )}
 
       {vm.step === 'reset' && (
@@ -63,7 +66,19 @@ export default function Forgot() {
           <PrimaryButton
             label={vm.busy ? tr('auth.resetting') : tr('auth.resetPassword')}
             onPress={vm.onResetPassword}
+            loading={vm.busy}
           />
+          {/* This step used to be a dead end — no back, no resend — and the OTP proof
+              behind it expires after a few minutes. */}
+          <Pressable
+            onPress={vm.startOver}
+            hitSlop={8}
+            accessibilityRole="button"
+            disabled={vm.busy}
+            style={{ alignSelf: 'center' }}
+          >
+            <Text style={{ fontSize: 12, color: vm.busy ? t.fgFaint : t.fgMuted }}>{tr('auth.startOver')}</Text>
+          </Pressable>
         </>
       )}
 

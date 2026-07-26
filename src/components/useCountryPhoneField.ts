@@ -23,7 +23,24 @@ function localeCountry(): Country | undefined {
 export type CountryPhoneFieldProps = {
   onChange: (e164: string) => void;
   autoFocus?: boolean;
+  /** Current E.164 value owned by the parent. Supplying it makes the field
+   *  CONTROLLED, so clearing or restoring the parent's state is reflected on
+   *  screen. Omit for legacy uncontrolled usage. */
+  value?: string;
 };
+
+/** Split an E.164 string into its country and national part, longest dial code
+ *  first so +1 does not shadow +1242. */
+function parseE164(e164: string): { country: Country; local: string } | undefined {
+  if (!e164.startsWith('+')) return undefined;
+  let best: Country | undefined;
+  for (const candidate of COUNTRIES) {
+    if (!e164.startsWith(`+${candidate.dial}`)) continue;
+    if (!best || candidate.dial.length > best.dial.length) best = candidate;
+  }
+  if (!best) return undefined;
+  return { country: best, local: e164.slice(best.dial.length + 1) };
+}
 
 export type CountryPhoneFieldViewModel = {
   country: Country;
@@ -39,7 +56,7 @@ export type CountryPhoneFieldViewModel = {
   onSelectCountry: (c: Country) => void;
 };
 
-export function useCountryPhoneField({ onChange, autoFocus }: CountryPhoneFieldProps): CountryPhoneFieldViewModel {
+export function useCountryPhoneField({ onChange, autoFocus, value }: CountryPhoneFieldProps): CountryPhoneFieldViewModel {
   // Default to Iraq instantly; refine via IP geolocation unless the user picks one.
   const [country, setCountry] = useState<Country>(DEFAULT_COUNTRY);
   const [local, setLocal] = useState('');
@@ -55,16 +72,45 @@ export function useCountryPhoneField({ onChange, autoFocus }: CountryPhoneFieldP
     detectCountryByIp().then((iso) => {
       if (cancelled || userPicked.current) return;
       const detected = (iso && findCountryByIso(iso)) || localeCountry();
-      if (detected) {
-        setCountry(detected);
-        emit(detected, localRef.current);
-      }
+      if (!detected) return;
+      // Never re-home a number the user has already begun typing. This used to
+      // setCountry AND re-emit with the existing digits, so a geolocation result
+      // landing a moment after the first keystroke silently changed the dial code
+      // — and therefore which number we would actually text.
+      if (localRef.current) return;
+      setCountry(detected);
+      // Nothing to emit: there is no subscriber number yet, and a bare dial code
+      // is not a phone number.
     });
     return () => {
       cancelled = true;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // Controlled mode: mirror the parent's value into the visible field. Without
+  // this the input was write-only — a parent that reset its phone state (e.g.
+  // "Change number") kept showing the old digits, and a parent that held a number
+  // the field had cleared would send to a number the user could no longer see.
+  useEffect(() => {
+    if (value === undefined) return; // uncontrolled usage — parent owns nothing
+    if (value === toE164(country.dial, local)) return; // already in sync
+    if (!value) {
+      if (local !== '') {
+        setLocal('');
+        localRef.current = '';
+      }
+      return;
+    }
+    const parsed = parseE164(value);
+    if (!parsed) return;
+    if (parsed.country.iso !== country.iso) setCountry(parsed.country);
+    if (parsed.local !== local) {
+      setLocal(parsed.local);
+      localRef.current = parsed.local;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [value]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();

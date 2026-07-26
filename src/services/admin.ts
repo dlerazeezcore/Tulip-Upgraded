@@ -29,6 +29,22 @@ export async function deleteUser(id: string): Promise<void> {
   await apiFetch(`/api/v1/admin/users/${id}`, { method: 'DELETE' });
 }
 
+/**
+ * Set (or reset) an app user's password from the admin panel. Works whether or not
+ * the user already had one — a WhatsApp/OTP-only signup starts with none.
+ *
+ * The plaintext is sent once and never echoed back. Note this does NOT sign the
+ * user out of existing sessions (bearer tokens have no revocation list); to cut
+ * off access, block the account as well.
+ */
+export async function setUserPassword(id: string, password: string): Promise<AdminUserRow> {
+  const res: any = await apiFetch(`/api/v1/admin/users/${id}/password`, {
+    method: 'POST',
+    body: { password },
+  });
+  return res.user as AdminUserRow;
+}
+
 export async function getAdminOrders(params: { month?: string } = {}): Promise<AdminOrder[]> {
   const res = await apiFetch('/api/v1/admin/orders/detailed', { method: 'GET', query: params });
   return unwrap<{ orders: AdminOrder[] }>(res).orders;
