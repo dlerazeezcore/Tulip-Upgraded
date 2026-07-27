@@ -6,8 +6,8 @@
 //   - The publish action — writes latestVersion to the backend (which BLOCKS
 //     every older app build until it updates), then sends the push to all users.
 import { useEffect, useMemo, useState } from 'react';
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { confirmAction, notify } from '@/lib/dialog';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import {
@@ -118,21 +118,22 @@ export function useUpdateNotification(): UpdateNotificationViewModel {
     }
   };
 
-  const send = () => {
+  const send = async () => {
     const version = latestVersion.trim();
     if (!VERSION_RE.test(version)) {
       setError(tr('admin.notifications.update.invalidVersion'));
       return;
     }
     setError(null);
-    Alert.alert(
-      tr('admin.notifications.update.confirmTitle', { version }),
-      tr('admin.notifications.update.confirmBody'),
-      [
-        { text: tr('common.cancel'), style: 'cancel' },
-        { text: tr('admin.notifications.update.confirmPublish'), style: 'destructive', onPress: () => performSend(version) },
-      ],
-    );
+    const confirmed = await confirmAction({
+      title: tr('admin.notifications.update.confirmTitle', { version }),
+      message: tr('admin.notifications.update.confirmBody'),
+      confirmLabel: tr('admin.notifications.update.confirmPublish'),
+      cancelLabel: tr('common.cancel'),
+      destructive: true,
+    });
+    if (!confirmed) return;
+    await performSend(version);
   };
 
   const goBack = () => {

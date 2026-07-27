@@ -2,8 +2,9 @@
 // CLIENT-SIDE from the activation data the API returned, so we don't depend
 // on the backend filling appleInstallUrl / qrCodeUrl.
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Linking, Platform } from 'react-native';
+import { Linking, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
+import { confirmAction, notify } from '@/lib/dialog';
 import {
   buildActivationDeeplink,
   buildLpaString,
@@ -107,10 +108,10 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
         dataLabel: input.dataLabel,
       });
       if (!ok && Platform.OS !== 'web') {
-        Alert.alert(tr('install.sharingUnavailableTitle'), tr('install.sharingUnavailable'));
+        notify(tr('install.sharingUnavailableTitle'), tr('install.sharingUnavailable'));
       }
     } catch (e: any) {
-      Alert.alert(tr('install.couldNotShare'), e?.message || tr('common.tryAgain'));
+      notify(tr('install.couldNotShare'), e?.message || tr('common.tryAgain'));
     } finally {
       setBusy(false);
     }
@@ -124,22 +125,23 @@ export function useEsimInstallCard(input: Input): EsimInstallCardViewModel {
   const promptInstallFallback = () => {
     const bodyKey =
       Platform.OS === 'android' ? 'install.couldNotOpenAndroid' : 'install.couldNotOpenIos';
-    Alert.alert(
-      tr('install.couldNotOpenTitle'),
-      tr(bodyKey),
-      Platform.OS === 'web'
-        ? [{ text: tr('common.ok') }]
-        : [
-            { text: tr('install.shareToDevice'), onPress: () => { void share(); } },
-            { text: tr('common.ok'), style: 'cancel' },
-          ],
-    );
+    // The web branch here used to hand Alert a single OK button, but Alert is a
+    // no-op on web, so the whole explanation was invisible in the browser — the
+    // dead-end this function exists to prevent.
+    void confirmAction({
+      title: tr('install.couldNotOpenTitle'),
+      message: tr(bodyKey),
+      confirmLabel: tr('install.shareToDevice'),
+      cancelLabel: tr('common.ok'),
+    }).then((shareIt) => {
+      if (shareIt) void share();
+    });
   };
 
   const activate = () => {
     if (!activateEnabled || !activationUrl) {
       // Disabled tap (web / no install handler): point at the on-phone path.
-      Alert.alert(tr('install.openOnPhoneTitle'), tr('install.openOnPhoneBody'));
+      notify(tr('install.openOnPhoneTitle'), tr('install.openOnPhoneBody'));
       return;
     }
     // Notify the parent screen BEFORE we open iOS Settings so it can arm an

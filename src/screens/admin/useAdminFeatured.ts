@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Alert } from 'react-native';
+import { notify } from '@/lib/dialog';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
@@ -48,7 +48,7 @@ export function useAdminFeatured(): AdminFeaturedViewModel {
     setLoading(true);
     listFeaturedLocations()
       .then(setRows)
-      .catch((e: any) => Alert.alert(tr('admin.errors.title'), e?.message || tr('admin.errors.loadFailed')))
+      .catch((e: any) => notify(tr('admin.errors.title'), e?.message || tr('admin.errors.loadFailed')))
       .finally(() => setLoading(false));
   };
   useEffect(() => { if (isAdmin) load(); }, [isAdmin]);
@@ -56,7 +56,7 @@ export function useAdminFeatured(): AdminFeaturedViewModel {
   const run = async (fn: () => Promise<void>) => {
     if (busy) return;
     setBusy(true);
-    try { await fn(); load(); } catch (e: any) { Alert.alert(tr('admin.errors.title'), e?.message || tr('admin.errors.actionFailed')); }
+    try { await fn(); load(); } catch (e: any) { notify(tr('admin.errors.title'), e?.message || tr('admin.errors.actionFailed')); }
     finally { setBusy(false); }
   };
 

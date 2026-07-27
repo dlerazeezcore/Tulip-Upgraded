@@ -1,8 +1,8 @@
 // Wiring for the "send custom notification" admin screen.
 // Owns: audience picker, 3-language form state, validation, submission.
 import { useCallback, useMemo, useState } from 'react';
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { confirmAction, notify } from '@/lib/dialog';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { sendPushNotification } from '@/services/admin';
@@ -124,19 +124,20 @@ export function useCustomNotification(): CustomNotificationViewModel {
     }
   };
 
-  const send = () => {
+  const send = async () => {
     if (validationError) {
-      Alert.alert(tr('admin.notifications.alerts.missingInfo'), validationError);
+      notify(tr('admin.notifications.alerts.missingInfo'), validationError);
       return;
     }
-    Alert.alert(
-      tr('admin.notifications.custom.confirmTitle', { audience: audienceLabel }),
-      tr('admin.notifications.custom.confirmBody'),
-      [
-        { text: tr('common.cancel'), style: 'cancel' },
-        { text: tr('admin.notifications.send'), style: 'destructive', onPress: performSend },
-      ],
-    );
+    const confirmed = await confirmAction({
+      title: tr('admin.notifications.custom.confirmTitle', { audience: audienceLabel }),
+      message: tr('admin.notifications.custom.confirmBody'),
+      confirmLabel: tr('admin.notifications.send'),
+      cancelLabel: tr('common.cancel'),
+      destructive: true,
+    });
+    if (!confirmed) return;
+    await performSend();
   };
 
   const goBack = () => {

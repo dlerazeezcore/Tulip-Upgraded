@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Alert, Linking, Platform, useWindowDimensions } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { confirmAction, notify } from '@/lib/dialog';
 import { useThemeStore } from '@/state/themeStore';
 import { useCurrencyStore } from '@/state/currencyStore';
 import { useAuthStore } from '@/state/authStore';
@@ -88,7 +89,7 @@ export function useProfile() {
     // The store reverts the optimistic toggle on failure; tell the user why
     // their switch snapped back instead of failing silently.
     setNotificationsEnabled(next).catch((e: any) => {
-      Alert.alert(tr('common.error'), e?.message || tr('profile.notifUpdateFailed'));
+      notify(tr('common.error'), e?.message || tr('profile.notifUpdateFailed'));
     });
   };
 
@@ -119,21 +120,16 @@ export function useProfile() {
     signOut,
     /** Ends the session on every device, not just this one — for a lost or stolen
      *  phone. Confirmed first, since it cannot be undone from the other devices. */
-    signOutEverywhere: () => {
-      Alert.alert(
-        tr('profile.signOutEverywhereTitle'),
-        tr('profile.signOutEverywhereBody'),
-        [
-          { text: tr('common.cancel'), style: 'cancel' },
-          {
-            text: tr('profile.signOutEverywhere'),
-            style: 'destructive',
-            onPress: () => {
-              signOutEverywhereAction().catch(() => {});
-            },
-          },
-        ],
-      );
+    signOutEverywhere: async () => {
+      const confirmed = await confirmAction({
+        title: tr('profile.signOutEverywhereTitle'),
+        message: tr('profile.signOutEverywhereBody'),
+        confirmLabel: tr('profile.signOutEverywhere'),
+        cancelLabel: tr('common.cancel'),
+        destructive: true,
+      });
+      if (!confirmed) return;
+      await signOutEverywhereAction().catch(() => {});
     },
     openEdit,
     closeEdit,

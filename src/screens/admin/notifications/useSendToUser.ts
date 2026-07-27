@@ -1,8 +1,8 @@
 // Wiring for the "send to a specific user" admin screen.
 // Owns: user search/list, selected user, 3-language form state, validation, submission.
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
+import { confirmAction, notify } from '@/lib/dialog';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { getUsers, sendPushNotification } from '@/services/admin';
@@ -122,25 +122,27 @@ export function useSendToUser(): SendToUserViewModel {
     }
   };
 
-  const send = () => {
+  const send = async () => {
     if (validationError || !selectedUser) {
-      Alert.alert(
+      notify(
         tr('admin.notifications.alerts.missingInfo'),
         validationError || tr('admin.notifications.validation.completeForm'),
       );
       return;
     }
-    Alert.alert(
-      tr('admin.notifications.user.confirmTitle'),
-      tr('admin.notifications.user.confirmBody', {
-        name: selectedUser.name,
+    const confirmed = await confirmAction({
+      title: tr('admin.notifications.user.confirmTitle'),
+      message: tr('admin.notifications.user.confirmBody', {
+        // Phone-only signups have no name — fall back so this never reads
+        // "Send to  (+964…)" with a hole in it.
+        name: selectedUser.name?.trim() || selectedUser.phone,
         phone: selectedUser.phone,
       }),
-      [
-        { text: tr('common.cancel'), style: 'cancel' },
-        { text: tr('admin.notifications.send'), onPress: performSend },
-      ],
-    );
+      confirmLabel: tr('admin.notifications.send'),
+      cancelLabel: tr('common.cancel'),
+    });
+    if (!confirmed) return;
+    await performSend();
   };
 
   const goBack = () => {

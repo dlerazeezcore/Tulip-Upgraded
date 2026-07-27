@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Alert } from 'react-native';
+import { confirmAction } from '@/lib/dialog';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useIqdAmount } from '@/lib/pricing';
@@ -169,7 +169,7 @@ export function useCheckout() {
     }
   };
 
-  const onPay = () => {
+  const onPay = async () => {
     if (busy) return;
     setError(null);
     if (!bundle?.packageCode) {
@@ -181,14 +181,15 @@ export function useCheckout() {
     // The Share QR feature from the install screen makes "buying for another
     // person's phone" a real use case, so we don't hard-block — confirm.
     if (esimSupport === 'unsupported') {
-      Alert.alert(
-        tr('checkout.unsupportedTitle'),
-        tr('checkout.unsupportedBody'),
-        [
-          { text: tr('common.cancel'), style: 'cancel' },
-          { text: tr('checkout.continueAnyway'), style: 'destructive', onPress: performPay },
-        ],
-      );
+      const proceed = await confirmAction({
+        title: tr('checkout.unsupportedTitle'),
+        message: tr('checkout.unsupportedBody'),
+        confirmLabel: tr('checkout.continueAnyway'),
+        cancelLabel: tr('common.cancel'),
+        destructive: true,
+      });
+      if (!proceed) return;
+      await performPay();
       return;
     }
     performPay();

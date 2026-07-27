@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
-import { Alert, Platform } from 'react-native';
+import { Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
+import { confirmAction, notify } from '@/lib/dialog';
 import { useTravelersStore, type Traveler } from '@/state/travelersStore';
 import { useIsWideWeb } from '@/lib/responsive';
 import { initials } from '@/lib/initials';
@@ -56,24 +57,19 @@ export function useTravelers() {
       setBusy(false);
     }
   };
-  const removeFailed = (e: any) => {
-    const message = e?.message || tt('travelers.failed');
-    if (Platform.OS === 'web') window.alert(message);
-    else Alert.alert(tt('common.error'), message);
-  };
-  const onRemove = (id: number) => {
-    // Alert.alert (and its buttons) is a no-op on react-native-web, which made
-    // web deletes do literally nothing — use the browser confirm there.
-    if (Platform.OS === 'web') {
-      if (window.confirm(`${tt('travelers.removeTitle')}\n${tt('travelers.removeBody')}`)) {
-        remove(id).catch(removeFailed);
-      }
-      return;
-    }
-    Alert.alert(tt('travelers.removeTitle'), tt('travelers.removeBody'), [
-      { text: tt('common.cancel'), style: 'cancel' },
-      { text: tt('travelers.remove'), style: 'destructive', onPress: () => { remove(id).catch(removeFailed); } },
-    ]);
+  // The per-platform branching this used to do now lives in @/lib/dialog, so
+  // every confirm in the app behaves the same way.
+  const removeFailed = (e: any) => notify(tt('common.error'), e?.message || tt('travelers.failed'));
+  const onRemove = async (id: number) => {
+    const confirmed = await confirmAction({
+      title: tt('travelers.removeTitle'),
+      message: tt('travelers.removeBody'),
+      confirmLabel: tt('travelers.remove'),
+      cancelLabel: tt('common.cancel'),
+      destructive: true,
+    });
+    if (!confirmed) return;
+    await remove(id).catch(removeFailed);
   };
 
   const goBack = () => (router.canGoBack() ? router.back() : router.replace('/(tabs)/profile'));
