@@ -8,13 +8,15 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { getUsers, updateUser, deleteUser, setUserPassword, getAppVersionInfo } from '@/services/admin';
 import { compareVersions } from '@/state/updateStore';
-import { initials } from '@/lib/initials';
+import { displayInitials, displayName } from '@/lib/initials';
 import type { AdminUserRow } from '@/services/types';
 
 export type UserVersionKind = 'latest' | 'outdated' | 'unknown';
 
 /** A user row enriched with the derived initials + app-version verdict. */
 export type AdminUserView = AdminUserRow & {
+  /** Name if set, otherwise the phone number. */
+  displayName: string;
   initials: string;
   versionKind: UserVersionKind;
   versionLabel: string;
@@ -103,7 +105,15 @@ export function useAdminUsers(): AdminUsersViewModel {
               : versionKind === 'outdated'
                 ? `v${reported}`
                 : '—';
-          return { ...u, initials: initials(u.name), versionKind, versionLabel };
+          // Accounts created by the phone-only sign-up have no name yet, so the
+          // row would otherwise be a blank line you could not identify.
+          return {
+            ...u,
+            displayName: displayName(u.name, u.phone),
+            initials: displayInitials(u.name, u.phone),
+            versionKind,
+            versionLabel,
+          };
         }),
     [rows, q, latestVersion, tr],
   );

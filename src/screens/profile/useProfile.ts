@@ -21,6 +21,7 @@ export function useProfile() {
   const language = useLocaleStore((s) => s.language);
   const user = useAuthStore((s) => s.user);
   const signOut = useAuthStore((s) => s.signOut);
+  const signOutEverywhereAction = useAuthStore((s) => s.signOutEverywhere);
   const updateProfile = useAuthStore((s) => s.updateProfile);
   const deleteAccount = useAuthStore((s) => s.deleteAccount);
   const setNotificationsEnabled = useAuthStore((s) => s.setNotificationsEnabled);
@@ -116,6 +117,24 @@ export function useProfile() {
     // actions
     toggleTheme,
     signOut,
+    /** Ends the session on every device, not just this one — for a lost or stolen
+     *  phone. Confirmed first, since it cannot be undone from the other devices. */
+    signOutEverywhere: () => {
+      Alert.alert(
+        tr('profile.signOutEverywhereTitle'),
+        tr('profile.signOutEverywhereBody'),
+        [
+          { text: tr('common.cancel'), style: 'cancel' },
+          {
+            text: tr('profile.signOutEverywhere'),
+            style: 'destructive',
+            onPress: () => {
+              signOutEverywhereAction().catch(() => {});
+            },
+          },
+        ],
+      );
+    },
     openEdit,
     closeEdit,
     saveProfile,

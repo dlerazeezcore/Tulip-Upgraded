@@ -2,9 +2,9 @@
 import React from 'react';
 import { View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
-import { UserPlus, MessageCircle } from 'lucide-react-native';
+import { MessageCircle } from 'lucide-react-native';
 import { useTheme } from '@/theme/ThemeContext';
-import { AuthShell, Field, PasswordField } from '@/components/AuthShell';
+import { AuthShell } from '@/components/AuthShell';
 import { CountryPhoneField } from '@/components/CountryPhoneField';
 import { OtpCodeStep } from '@/components/OtpCodeStep';
 import { PrimaryButton } from '@/components/PrimaryButton';
@@ -17,24 +17,18 @@ export default function SignUp() {
 
   return (
     <AuthShell title={tr('auth.signUpTitle')} subtitle={tr('auth.signUpSubtitle')}>
-      {vm.step === 'details' ? (
+      {vm.step === 'phone' ? (
         <>
-          <Field label={tr('auth.fullName')} value={vm.name} onChangeText={vm.setName} placeholder={tr('auth.namePlaceholder')} />
-
+          {/* One field. Name and password are set later, not asked for here. */}
           <View style={{ gap: 6 }}>
             <Text style={{ fontSize: 11, fontWeight: '700', color: t.fgMuted, textTransform: 'uppercase', letterSpacing: 0.4 }}>
               {tr('auth.phoneNumber')}
             </Text>
-            <CountryPhoneField onChange={vm.setPhone} value={vm.phone} />
+            <CountryPhoneField onChange={vm.setPhone} value={vm.phone} autoFocus />
           </View>
 
-          <PasswordField
-            label={tr('auth.password')}
-            value={vm.password}
-            onChangeText={vm.setPassword}
-            placeholder={tr('auth.createPasswordPlaceholder')}
-          />
           <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.otpWhatsappHint')}</Text>
+          <Text style={{ fontSize: 12, color: t.fgMuted }}>{tr('auth.addNameLater')}</Text>
           {vm.error && <Text style={{ fontSize: 12, color: t.danger }}>{vm.error}</Text>}
           <PrimaryButton
             label={vm.busy ? tr('auth.sending') : tr('auth.sendCode')}
@@ -48,17 +42,18 @@ export default function SignUp() {
           phone={vm.phone}
           code={vm.code}
           onChangeCode={vm.setCode}
+          focusSignal={vm.focusSignal}
           maybeSent={vm.maybeSent}
           resendIn={vm.resendIn}
           expiresIn={vm.expiresIn}
           canResend={vm.canResend}
+          canRetry={vm.canRetry}
           busy={vm.busy}
           error={vm.error}
-          submitLabel={vm.busy ? tr('auth.creating') : tr('auth.verifyAndCreate')}
-          submitIcon={<UserPlus size={16} color={t.onPrimary} strokeWidth={2.2} />}
-          onSubmit={vm.onVerifyAndCreate}
-          onBack={vm.backToDetails}
-          backLabel={tr('auth.back')}
+          busyLabel={tr('auth.creating')}
+          onRetry={vm.onRetryVerify}
+          onBack={vm.backToPhone}
+          backLabel={tr('auth.changeNumber')}
           onResend={vm.onResend}
         />
       )}

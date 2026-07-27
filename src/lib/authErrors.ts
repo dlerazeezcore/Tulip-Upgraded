@@ -9,6 +9,23 @@ import { ApiError } from '@/lib/api';
 
 type Translate = (key: string, options?: Record<string, unknown>) => string;
 
+/**
+ * True when the CODE itself was wrong, expired, or unusable — as opposed to the
+ * request never completing.
+ *
+ * This distinction decides whether we erase what the user typed. A wrong code
+ * should be cleared so they can type a new one. A dropped connection must NOT
+ * clear it: the digits may have been perfectly correct and simply never reached
+ * the server, and wiping them would leave the user retyping the same correct code
+ * with no idea why it "failed".
+ */
+export function isBadCodeError(err: unknown): boolean {
+  if (!(err instanceof ApiError)) return false;
+  if (err.code === 'AUTH_OTP_INVALID' || err.code === 'OTP_CHALLENGE_MISSING') return true;
+  // /otp/verify answers a wrong or expired code with a plain 400.
+  return err.status === 400;
+}
+
 export function authErrorMessage(err: unknown, tr: Translate): string {
   if (!(err instanceof ApiError)) {
     return tr('common.somethingWrong');

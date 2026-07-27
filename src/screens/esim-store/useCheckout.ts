@@ -68,7 +68,9 @@ export function useCheckout() {
       packageCode: bundle.packageCode!,
       periodNum: bundle.periodNum ?? bundle.days,
       providerPriceMinor,
-      user: { phone: user.phone, name: user.name, email: user.email ?? null },
+      // displayName, not name: an order must identify its customer, and a
+      // phone-only signup has no name yet.
+      user: { phone: user.phone, name: user.displayName, email: user.email ?? null },
       countryCode: place.iso,
       countryName: place.name,
       packageName: `${place.name} ${planLabel} · ${bundle.days}d`,

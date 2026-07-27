@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { ApiError } from '@/lib/api';
 import { authErrorMessage } from '@/lib/authErrors';
-import { useOtpChallenge } from '@/screens/auth/useOtpChallenge';
+import { useOtpAutoSubmit, useOtpChallenge } from '@/screens/auth/useOtpChallenge';
 
 type Step = 'phone' | 'otp' | 'reset' | 'done';
 
@@ -64,15 +64,23 @@ export function useForgot() {
       if (await otp.send(phone)) setStep('otp');
     });
 
+  // Verifies by itself once the last digit is typed.
   const onContinueOtp = () =>
     run(async () => {
       if (!otp.codeComplete) {
         setError(tr('auth.otpTooShort'));
         return;
       }
-      setVerificationToken(await otp.verify(phone));
+      try {
+        setVerificationToken(await otp.verify(phone));
+      } catch (e) {
+        otp.noteVerifyFailure(e);
+        throw e;
+      }
       setStep('reset');
     });
+
+  useOtpAutoSubmit({ code: otp.code, busy, onSubmit: onContinueOtp });
 
   const onResetPassword = () =>
     run(async () => {
@@ -120,6 +128,9 @@ export function useForgot() {
     resendIn: otp.resendIn,
     expiresIn: otp.expiresIn,
     canResend: otp.resendIn === 0 && !busy,
+    canRetry: otp.canRetry,
+    focusSignal: otp.focusSignal,
+    onRetryVerify: onContinueOtp,
     // setters
     setPhone,
     setCode: otp.setCode,

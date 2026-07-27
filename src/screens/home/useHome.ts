@@ -18,7 +18,10 @@ export function useHome() {
   const activeService = useSearchStore((s) => s.activeService);
   const svc = SERVICES.find((s) => s.id === activeService)!;
   const user = useAuthStore((s) => s.user);
-  const firstName = user?.name?.trim().split(/\s+/)[0];
+  // First word of the name, or the whole phone number when no name is set — a
+  // phone has no "first word", and greeting someone by half their number would
+  // look like a bug.
+  const firstName = user?.name?.trim() ? user.name.trim().split(/\s+/)[0] : user?.displayName;
   const greeting = tr(greetingKeyForHour(new Date().getHours()));
   const isWide = useIsWideWeb();
 

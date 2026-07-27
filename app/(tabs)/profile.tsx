@@ -99,8 +99,11 @@ export default function Profile() {
               <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 22, color: t.onPrimary, letterSpacing: -0.4 }}>{vm.user.initials}</Text>
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.onPrimary, letterSpacing: -0.4 }}>{vm.user.name}</Text>
-              <Text style={{ fontSize: 12, color: t.onPrimary, opacity: 0.88 }}>{vm.user.email ?? vm.user.phone}</Text>
+              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 20, color: t.onPrimary, letterSpacing: -0.4 }}>{vm.user.displayName}</Text>
+              {/* Don't repeat the phone underneath when it IS the display name. */}
+              <Text style={{ fontSize: 12, color: t.onPrimary, opacity: 0.88 }}>
+                {vm.user.email ?? (vm.user.name.trim() ? vm.user.phone : '')}
+              </Text>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4, marginTop: 8, alignSelf: 'flex-start', paddingVertical: 4, paddingHorizontal: 10, backgroundColor: t.onHero.chip, borderRadius: t.radius.pill }}>
                 <Star size={11} color={t.onPrimary} fill={t.onPrimary} />
                 <Text style={{ color: t.onPrimary, fontSize: 10, fontWeight: '800', letterSpacing: 0.6 }}>
@@ -211,12 +214,19 @@ export default function Profile() {
   );
 
   const signOutBtn = vm.user ? (
-    <Pressable
-      onPress={vm.signOut}
-      style={({ pressed }) => ({ padding: 14, borderRadius: t.radius.md, borderColor: t.danger, borderWidth: 1.5, alignItems: 'center', opacity: pressed ? 0.7 : 1 })}
-    >
-      <Text style={{ color: t.danger, fontWeight: '700', fontSize: 14 }}>{tr('common.signOut')}</Text>
-    </Pressable>
+    <View style={{ gap: 10 }}>
+      <Pressable
+        onPress={vm.signOut}
+        style={({ pressed }) => ({ padding: 14, borderRadius: t.radius.md, borderColor: t.danger, borderWidth: 1.5, alignItems: 'center', opacity: pressed ? 0.7 : 1 })}
+      >
+        <Text style={{ color: t.danger, fontWeight: '700', fontSize: 14 }}>{tr('common.signOut')}</Text>
+      </Pressable>
+      {/* Signs out this device only, above. This one revokes the session on every
+          device — the answer to a lost or stolen phone. */}
+      <Pressable onPress={vm.signOutEverywhere} hitSlop={8} accessibilityRole="button" style={{ alignItems: 'center' }}>
+        <Text style={{ color: t.fgMuted, fontSize: 12 }}>{tr('profile.signOutEverywhere')}</Text>
+      </Pressable>
+    </View>
   ) : null;
 
   const footer = (

@@ -1,8 +1,14 @@
 // Presentational "enter the code we sent you" step, shared by sign-in, sign-up and
-// forgot-password so the three flows cannot drift apart again. Pure props in, no
-// state of its own — the calling screen's hook owns everything via useOtpChallenge.
+// forgot-password so the three flows cannot drift apart. Pure props in, no state of
+// its own — the calling screen's hook owns everything via useOtpChallenge.
+//
+// There is no submit button in the normal path: the code verifies itself as soon as
+// the last digit is typed. A button only reappears when a verification failed for a
+// reason that leaves the typed digits worth keeping (no connection, timeout, rate
+// limit) — a wrong code clears the boxes instead, and the next code the user types
+// submits itself.
 import React from 'react';
-import { View, Text, Pressable } from 'react-native';
+import { ActivityIndicator, View, Text, Pressable } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
 import { OtpInput } from '@/components/OtpInput';
@@ -18,15 +24,16 @@ export function OtpCodeStep({
   phone,
   code,
   onChangeCode,
+  focusSignal,
   maybeSent,
   resendIn,
   expiresIn,
   canResend,
+  canRetry,
   busy,
   error,
-  submitLabel,
-  submitIcon,
-  onSubmit,
+  busyLabel,
+  onRetry,
   onBack,
   backLabel,
   onResend,
@@ -34,16 +41,19 @@ export function OtpCodeStep({
   phone: string;
   code: string;
   onChangeCode: (v: string) => void;
-  /** The send may not have been confirmed — tell the user to check WhatsApp anyway. */
+  /** Increment to pull focus back into the boxes (after a rejected code). */
+  focusSignal: number;
+  /** The send was never confirmed — tell the user to check WhatsApp anyway. */
   maybeSent: boolean;
   resendIn: number;
   expiresIn: number;
   canResend: boolean;
+  /** A verification failed without invalidating the code — offer to resend it. */
+  canRetry: boolean;
   busy: boolean;
   error: string | null;
-  submitLabel: string;
-  submitIcon?: React.ReactNode;
-  onSubmit: () => void;
+  busyLabel: string;
+  onRetry: () => void;
   onBack: () => void;
   backLabel: string;
   onResend: () => void;
@@ -69,17 +79,27 @@ export function OtpCodeStep({
         </View>
       )}
 
-      <OtpInput value={code} onChange={onChangeCode} />
+      <OtpInput value={code} onChange={onChangeCode} focusSignal={focusSignal} editable={!busy} />
 
-      {expiresIn > 0 && (
-        <Text style={{ fontSize: 12, color: t.fgMuted }}>
-          {tr('auth.codeExpiresIn', { time: formatClock(expiresIn) })}
-        </Text>
+      {busy ? (
+        <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 8 }}>
+          <ActivityIndicator size="small" color={t.primary} />
+          <Text style={{ fontSize: 12, color: t.fgMuted }}>{busyLabel}</Text>
+        </View>
+      ) : (
+        expiresIn > 0 && (
+          <Text style={{ fontSize: 12, color: t.fgMuted }}>
+            {tr('auth.codeExpiresIn', { time: formatClock(expiresIn) })}
+          </Text>
+        )
       )}
 
       {error && <Text style={{ fontSize: 12, color: t.danger }}>{error}</Text>}
 
-      <PrimaryButton label={submitLabel} icon={submitIcon} onPress={onSubmit} loading={busy} />
+      {/* Only after a failure that did NOT invalidate what they typed. */}
+      {canRetry && !busy && (
+        <PrimaryButton label={tr('common.tryAgain')} onPress={onRetry} />
+      )}
 
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
         <Pressable onPress={onBack} hitSlop={8} accessibilityRole="button" disabled={busy}>

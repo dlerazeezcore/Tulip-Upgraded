@@ -3,7 +3,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { authErrorMessage } from '@/lib/authErrors';
-import { useOtpChallenge } from '@/screens/auth/useOtpChallenge';
+import { useOtpAutoSubmit, useOtpChallenge } from '@/screens/auth/useOtpChallenge';
 
 type Method = 'otp' | 'password';
 type OtpStep = 'phone' | 'code';
@@ -70,16 +70,26 @@ export function useSignIn() {
       if (await otp.send(phone)) setOtpStep('code');
     });
 
+  // Fires by itself once the 4th digit lands — there is no submit button.
   const onVerifyAndSignIn = () =>
     run(async () => {
       if (!otp.codeComplete) {
         setError(tr('auth.otpTooShort'));
         return;
       }
-      const verificationToken = await otp.verify(phone);
-      await signInOtp({ phone, verificationToken });
+      try {
+        const verificationToken = await otp.verify(phone);
+        await signInOtp({ phone, verificationToken });
+      } catch (e) {
+        // Wrong code → boxes cleared for another try. Connection problem → digits
+        // kept and a "Try again" button offered.
+        otp.noteVerifyFailure(e);
+        throw e;
+      }
       done();
     });
+
+  useOtpAutoSubmit({ code: otp.code, busy, onSubmit: onVerifyAndSignIn });
 
   const onChangeMethod = (v: string) => {
     setMethod(v as Method);
@@ -102,6 +112,9 @@ export function useSignIn() {
     resendIn: otp.resendIn,
     expiresIn: otp.expiresIn,
     canResend: otp.resendIn === 0 && !busy,
+    canRetry: otp.canRetry,
+    focusSignal: otp.focusSignal,
+    onRetryVerify: onVerifyAndSignIn,
     // setters used by presentational fields
     setPhone,
     setPassword,

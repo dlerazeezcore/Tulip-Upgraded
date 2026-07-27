@@ -135,7 +135,9 @@ export function useAdminOrders(): AdminOrdersViewModel {
         return {
           id: o.id,
           countryCode: it?.countryCode ?? null,
-          userName: o.user?.name || tr('admin.orders.unknownUser'),
+          // Phone before "Unknown": a phone-only signup has no name, and the
+          // number is a far more useful label than a placeholder.
+          userName: o.user?.name || o.user?.phone || tr('admin.orders.unknownUser'),
           userPhone: o.user?.phone || '',
           subLabel: `${it?.countryName || it?.countryCode || tr('admin.orders.esim')}${date ? ` · ${new Date(date).toLocaleDateString()}` : ''}`,
           statusLabel: esimLabel(o.esimStatus).toUpperCase(),

@@ -3,20 +3,25 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
 import { useAuthStore } from '@/state/authStore';
 import { authErrorMessage } from '@/lib/authErrors';
-import { useOtpChallenge } from '@/screens/auth/useOtpChallenge';
+import { useOtpAutoSubmit, useOtpChallenge } from '@/screens/auth/useOtpChallenge';
 
-type Step = 'details' | 'code';
+type Step = 'phone' | 'code';
 
+/**
+ * Sign-up asks for a phone number and nothing else.
+ *
+ * No name and no password: the account is created with an empty name (screens show
+ * the phone number until the user sets one in Profile) and no password (they sign
+ * in by WhatsApp code until one is set via forgot-password or by an admin).
+ */
 export function useSignUp() {
   const { t: tr } = useTranslation();
   const router = useRouter();
   const { returnTo } = useLocalSearchParams<{ returnTo?: string }>();
   const { signUp } = useAuthStore();
 
-  const [step, setStep] = useState<Step>('details');
-  const [name, setName] = useState('');
+  const [step, setStep] = useState<Step>('phone');
   const [phone, setPhone] = useState('');
-  const [password, setPassword] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const otp = useOtpChallenge();
@@ -40,54 +45,38 @@ export function useSignUp() {
     }
   };
 
-  const validateDetails = (): boolean => {
-    if (name.trim().length < 2) {
-      setError(tr('auth.nameTooShort'));
-      return false;
-    }
-    if (!phone) {
-      setError(tr('auth.enterPhone'));
-      return false;
-    }
-    if (password.length < 8) {
-      setError(tr('auth.passwordRule'));
-      return false;
-    }
-    return true;
-  };
-
-  // Step 1: validate the details, then send the WhatsApp code to verify the phone.
   const onContinue = () =>
     run(async () => {
-      if (!validateDetails()) return;
+      if (!phone) {
+        setError(tr('auth.enterPhone'));
+        return;
+      }
       if (await otp.send(phone)) setStep('code');
     });
 
-  // Resending from the code step must not re-run details validation against state
-  // the user can no longer see — it only needs another code for the same phone.
-  const onResend = () =>
-    run(async () => {
-      await otp.send(phone);
-    });
-
-  // Step 2: verify the code, then create the account with the verification proof.
+  // Verifies by itself once the last digit is typed.
   const onVerifyAndCreate = () =>
     run(async () => {
       if (!otp.codeComplete) {
         setError(tr('auth.otpTooShort'));
         return;
       }
-      const verificationToken = await otp.verify(phone);
-      await signUp({ phone, name: name.trim(), password, verificationToken });
+      try {
+        const verificationToken = await otp.verify(phone);
+        await signUp({ phone, verificationToken });
+      } catch (e) {
+        otp.noteVerifyFailure(e);
+        throw e;
+      }
       done();
     });
+
+  useOtpAutoSubmit({ code: otp.code, busy, onSubmit: onVerifyAndCreate });
 
   return {
     // state
     step,
-    name,
     phone,
-    password,
     code: otp.code,
     busy,
     error,
@@ -96,18 +85,19 @@ export function useSignUp() {
     resendIn: otp.resendIn,
     expiresIn: otp.expiresIn,
     canResend: otp.resendIn === 0 && !busy,
+    canRetry: otp.canRetry,
+    focusSignal: otp.focusSignal,
     // setters used by presentational fields
-    setName,
     setPhone,
-    setPassword,
     setCode: otp.setCode,
     // handlers
     onContinue,
     onVerifyAndCreate,
-    onResend,
-    backToDetails: () => {
+    onRetryVerify: onVerifyAndCreate,
+    onResend: onContinue,
+    backToPhone: () => {
       if (busy) return;
-      setStep('details');
+      setStep('phone');
       otp.reset();
       setError(null);
     },

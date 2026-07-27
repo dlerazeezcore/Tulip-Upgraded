@@ -1,4 +1,4 @@
-import React, { useRef } from 'react';
+import React, { useEffect, useRef } from 'react';
 import { View, Text, TextInput, Pressable } from 'react-native';
 import { useTheme } from '@/theme/ThemeContext';
 import { OTP_CODE_LENGTH } from '@/services/auth';
@@ -11,14 +11,25 @@ export function OtpInput({
   onChange,
   length = OTP_CODE_LENGTH,
   autoFocus = true,
+  focusSignal = 0,
+  editable = true,
 }: {
   value: string;
   onChange: (v: string) => void;
   length?: number;
   autoFocus?: boolean;
+  /** Increment to pull focus back — used after a rejected code clears the boxes,
+   *  so the user can type the next one without tapping first. */
+  focusSignal?: number;
+  /** False while a verification is in flight, so the code cannot change mid-request. */
+  editable?: boolean;
 }) {
   const t = useTheme();
   const ref = useRef<TextInput>(null);
+
+  useEffect(() => {
+    if (focusSignal > 0) ref.current?.focus();
+  }, [focusSignal]);
 
   return (
     <Pressable onPress={() => ref.current?.focus()} style={{ flexDirection: 'row', gap: 8 }}>
@@ -52,6 +63,7 @@ export function OtpInput({
         keyboardType="number-pad"
         maxLength={length}
         autoFocus={autoFocus}
+        editable={editable}
         // Enables SMS/WhatsApp autofill of the one-time code on iOS/Android.
         textContentType="oneTimeCode"
         autoComplete="one-time-code"

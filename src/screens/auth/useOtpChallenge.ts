@@ -19,7 +19,46 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { ApiError, isTransportError } from '@/lib/api';
+import { isBadCodeError } from '@/lib/authErrors';
 import { OTP_CODE_LENGTH, sendOtp, verifyOtp } from '@/services/auth';
+
+/**
+ * Verify as soon as the last digit lands, instead of waiting for a button press.
+ *
+ * Two guards are not optional. Without them this fires far more often than the
+ * user acts, and the server only allows a handful of verify attempts per code:
+ *  - never submit the same code twice (an ordinary re-render would otherwise
+ *    spend a second attempt on the identical digits), and
+ *  - never submit while a request is already running.
+ *
+ * The "already submitted" memory is cleared once the field is emptied, so after a
+ * rejected code the next thing typed submits normally — even if it happens to be
+ * the same digits the user deliberately retyped.
+ */
+export function useOtpAutoSubmit({
+  code,
+  busy,
+  onSubmit,
+}: {
+  code: string;
+  busy: boolean;
+  onSubmit: () => void;
+}): void {
+  const submittedRef = useRef<string | null>(null);
+  const onSubmitRef = useRef(onSubmit);
+  onSubmitRef.current = onSubmit;
+
+  useEffect(() => {
+    if (code.length === 0) {
+      submittedRef.current = null; // re-arm for the next attempt
+      return;
+    }
+    if (busy || code.length < OTP_CODE_LENGTH) return;
+    if (submittedRef.current === code) return;
+    submittedRef.current = code;
+    onSubmitRef.current();
+  }, [code, busy]);
+}
 
 const CACHE_KEY = 'tulip.auth.otpChallenge';
 
@@ -81,6 +120,11 @@ export function useOtpChallenge() {
   const [maybeSent, setMaybeSent] = useState(false);
   const [resendAt, setResendAt] = useState<number | null>(null);
   const [expiresAt, setExpiresAt] = useState<number | null>(null);
+  // Set only when a verify failed for a reason that is NOT the code being wrong,
+  // so the screen can offer "Try again" on the digits the user still has typed.
+  const [canRetry, setCanRetry] = useState(false);
+  // Bumped to ask OtpInput to take focus again after the field is cleared.
+  const [focusSignal, setFocusSignal] = useState(0);
   // Re-rendered once per second only while a countdown is actually running.
   const [, forceTick] = useState(0);
   const challengeRef = useRef<string | null>(null);
@@ -171,30 +215,65 @@ export function useOtpChallenge() {
     return res.verificationToken;
   }, [code]);
 
+  /** Empty the boxes and put the cursor back, ready for another try. */
+  const clearCode = useCallback(() => {
+    setCode('');
+    setFocusSignal((n) => n + 1);
+  }, []);
+
+  /**
+   * Classify a failed verification and react to it.
+   *
+   * Wrong/expired code → wipe the boxes so the user can type a new one (which
+   * auto-submits). Anything else — no connection, timed out, rate limited — keeps
+   * the digits, because they may well be correct and simply never got through;
+   * the screen shows "Try again" instead.
+   */
+  const noteVerifyFailure = useCallback(
+    (err: unknown) => {
+      if (isBadCodeError(err)) {
+        setCanRetry(false);
+        clearCode();
+        return;
+      }
+      setCanRetry(true);
+    },
+    [clearCode],
+  );
+
   const reset = useCallback(() => {
     setCode('');
     setChallengeBoth(null);
     setMaybeSent(false);
     setResendAt(null);
     setExpiresAt(null);
+    setCanRetry(false);
     clearCache();
   }, [setChallengeBoth]);
 
   return {
     // state
     code,
-    setCode,
+    setCode: (value: string) => {
+      // Typing again dismisses a stale "Try again" prompt.
+      if (canRetry) setCanRetry(false);
+      setCode(value);
+    },
     challenge,
     hasChallenge: challenge !== null,
     maybeSent,
     resendIn,
     expiresIn,
+    canRetry,
+    focusSignal,
     codeComplete: code.length >= OTP_CODE_LENGTH,
     // actions
     send,
     verify,
     reset,
     restore,
+    clearCode,
+    noteVerifyFailure,
     clearMaybeSent: () => setMaybeSent(false),
   };
 }

@@ -30,10 +30,14 @@ export function adminLogin(input: { phone?: string; email?: string; password: st
 
 export type SignupInput = {
   phone: string;
-  name: string;
-  password: string;
   /** WhatsApp-OTP proof from verifyOtp — signup requires a verified phone. */
   verificationToken: string;
+  /** Optional. Sign-up asks for a phone number only; the account starts with no
+   *  name (screens fall back to the phone) until it is set in Profile. */
+  name?: string;
+  /** Optional. An account created without one signs in by WhatsApp code until a
+   *  password is set via forgot-password or by an admin. */
+  password?: string;
 };
 
 export function signup(input: SignupInput): Promise<AuthSession> {
@@ -100,6 +104,13 @@ export function resetPassword(input: {
  *  session forward so an active user never hits the token TTL). */
 export function refreshSession(): Promise<AuthSession> {
   return apiFetch<AuthSession>('/api/v1/auth/refresh', { method: 'POST' });
+}
+
+/** End every session for this account, on every device INCLUDING this one.
+ *  Ordinary sign-out only drops the local copy of the token; this invalidates the
+ *  token itself server-side, which is what a lost or stolen phone needs. */
+export function logoutEverywhere(): Promise<unknown> {
+  return apiFetch('/api/v1/auth/logout-all', { method: 'POST' });
 }
 
 export function fetchMe(): Promise<AuthMe> {

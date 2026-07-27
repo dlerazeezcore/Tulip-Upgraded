@@ -3,6 +3,7 @@ import { Platform } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import { setAuthToken, ApiError } from '@/lib/api';
+import { displayInitials, displayName } from '@/lib/initials';
 import * as authApi from '@/services/auth';
 import { registerDevice, unregisterDevice } from '@/services/push';
 import { getLocaleLanguage, registerAuthAccessor } from '@/state/storeAccess';
@@ -10,9 +11,14 @@ import type { AuthSession, AuthMe } from '@/services/types';
 
 export type AuthUser = {
   id: string;
+  /** Raw value — EMPTY until the user sets one in Profile (sign-up only asks for
+   *  a phone). Use `displayName` for anything shown on screen. */
   name: string;
   phone: string; // full E.164, e.g. +9647501234567
   email?: string;
+  /** The name if set, otherwise the phone number. Computed once here so no screen
+   *  has to decide, and they cannot disagree with each other. */
+  displayName: string;
   initials: string;
   isAdmin?: boolean;
   isLoyalty?: boolean;
@@ -59,20 +65,14 @@ const tokenStorage = {
   },
 };
 
-function initials(name: string): string {
-  const parts = (name || '').trim().split(/\s+/).filter(Boolean);
-  if (parts.length === 0) return 'TU';
-  if (parts.length === 1) return parts[0].slice(0, 2).toUpperCase();
-  return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
-}
-
 function userFromSession(s: AuthSession): AuthUser {
   return {
     id: s.id,
-    name: s.name,
+    name: s.name ?? '',
     phone: s.phone,
     email: s.email ?? undefined,
-    initials: initials(s.name),
+    displayName: displayName(s.name, s.phone),
+    initials: displayInitials(s.name, s.phone),
     isAdmin: !!s.isAdmin,
     isLoyalty: !!s.isLoyalty,
     createdAt: s.createdAt ?? null,
@@ -83,10 +83,11 @@ function userFromSession(s: AuthSession): AuthUser {
 function userFromMe(m: AuthMe): AuthUser {
   return {
     id: m.id,
-    name: m.name,
+    name: m.name ?? '',
     phone: m.phone,
     email: m.email ?? undefined,
-    initials: initials(m.name),
+    displayName: displayName(m.name, m.phone),
+    initials: displayInitials(m.name, m.phone),
     isAdmin: m.subjectType === 'admin',
     isLoyalty: !!m.isLoyalty,
     createdAt: m.createdAt ?? null,
@@ -117,6 +118,7 @@ type AuthState = {
   setNotificationsEnabled: (enabled: boolean) => Promise<void>;
   deleteAccount: () => Promise<void>;
   signOut: () => void;
+  signOutEverywhere: () => Promise<void>;
 };
 
 export const useAuthStore = create<AuthState>((set, get) => ({
@@ -251,6 +253,17 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     setAuthToken(null);
     set({ user: null, token: null });
     persist(null, null);
+  },
+
+  /** Revoke every session for this account server-side, then clear this device.
+   *  The local sign-out still runs even if the request fails — the user asked to
+   *  be signed out, and leaving them logged in here would be the wrong answer. */
+  signOutEverywhere: async () => {
+    try {
+      await authApi.logoutEverywhere();
+    } finally {
+      get().signOut();
+    }
   },
 }));
 
