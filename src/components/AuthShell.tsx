@@ -6,6 +6,7 @@ import { Eye, EyeOff } from 'lucide-react-native';
 import { DirectionalChevron } from './DirectionalChevron';
 import { useTranslation } from 'react-i18next';
 import { useTheme } from '@/theme/ThemeContext';
+import { useKeyboardVisible } from '@/lib/keyboard';
 import { TulipLogo } from './TulipLogo';
 import { ScreenSafeArea } from '@/components/ScreenSafeArea';
 
@@ -24,6 +25,11 @@ export function AuthShell({
   const t = useTheme();
   const { t: tr } = useTranslation();
   const router = useRouter();
+  // While the keyboard is up it can take half a small screen, so the decorative
+  // half of the hero (logo lockup, subtitle, generous spacing) collapses and the
+  // form keeps the room. Everything still visible stays in the same place, so it
+  // reads as the header shrinking rather than the page jumping.
+  const compact = useKeyboardVisible();
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
@@ -31,10 +37,10 @@ export function AuthShell({
         colors={t.gradHero as any}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
-        style={{ paddingBottom: 28 }}
+        style={{ paddingBottom: compact ? 12 : 28 }}
       >
         <ScreenSafeArea>
-          <View style={{ paddingHorizontal: 20, paddingTop: 8 }}>
+          <View style={{ paddingHorizontal: 20, paddingTop: compact ? 4 : 8 }}>
             {canGoBack && (
               <Pressable
                 onPress={() => router.back()}
@@ -42,39 +48,52 @@ export function AuthShell({
                 accessibilityLabel={tr('a11y.back')}
                 hitSlop={8}
                 style={{
-                  width: 38,
-                  height: 38,
-                  borderRadius: 19,
+                  width: compact ? 32 : 38,
+                  height: compact ? 32 : 38,
+                  borderRadius: compact ? 16 : 19,
                   backgroundColor: t.onHero.chip,
                   alignItems: 'center',
                   justifyContent: 'center',
-                  marginBottom: 14,
+                  marginBottom: compact ? 8 : 14,
                 }}
               >
-                <DirectionalChevron direction="back" size={20} color={t.onPrimary} />
+                <DirectionalChevron direction="back" size={compact ? 18 : 20} color={t.onPrimary} />
               </Pressable>
             )}
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
-              <View
-                style={{
-                  width: 40,
-                  height: 40,
-                  borderRadius: t.radius.badge,
-                  backgroundColor: t.onHero.badge,
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                }}
-              >
-                <TulipLogo size={26} color={t.primary} />
+            {/* Branding is the first thing to go — the user knows which app they
+                are in by the time they are typing into it. */}
+            {!compact && (
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginBottom: 14 }}>
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: t.radius.badge,
+                    backgroundColor: t.onHero.badge,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <TulipLogo size={26} color={t.primary} />
+                </View>
+                <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.onPrimary }}>
+                  {tr('common.appName')}
+                </Text>
               </View>
-              <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 18, color: t.onPrimary }}>
-                {tr('common.appName')}
-              </Text>
-            </View>
-            <Text style={{ fontFamily: t.font.display, fontWeight: '700', fontSize: 28, color: t.onPrimary, letterSpacing: -0.6 }}>
+            )}
+            <Text
+              style={{
+                fontFamily: t.font.display,
+                fontWeight: '700',
+                fontSize: compact ? 20 : 28,
+                color: t.onPrimary,
+                letterSpacing: -0.6,
+              }}
+            >
               {title}
             </Text>
-            {subtitle && (
+            {/* The subtitle explains the screen; once you are typing you have read it. */}
+            {subtitle && !compact && (
               <Text style={{ fontSize: 13, color: t.onPrimary, opacity: 0.9, marginTop: 4 }}>{subtitle}</Text>
             )}
           </View>
@@ -82,19 +101,25 @@ export function AuthShell({
       </LinearGradient>
 
       <KeyboardAvoidingView
+        // Android resizes the window itself (app.json softwareKeyboardLayoutMode
+        // "resize"), so adding padding on top of that would double-count the
+        // keyboard and strand the submit button above it.
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
         style={{ flex: 1, marginTop: -16 }}
       >
         <ScrollView
           contentContainerStyle={{
             padding: 20,
-            paddingTop: 24,
+            paddingTop: compact ? 20 : 24,
+            paddingBottom: compact ? 28 : 20,
             gap: 14,
             maxWidth: 520,
             width: '100%',
             alignSelf: 'center',
           }}
           keyboardShouldPersistTaps="handled"
+          keyboardDismissMode="interactive"
+          showsVerticalScrollIndicator={false}
         >
           <View
             style={{
@@ -102,8 +127,8 @@ export function AuthShell({
               borderRadius: t.radius.xl,
               borderWidth: 1,
               borderColor: t.border,
-              padding: 18,
-              gap: 14,
+              padding: compact ? 14 : 18,
+              gap: compact ? 12 : 14,
               ...t.shadow2,
             }}
           >
