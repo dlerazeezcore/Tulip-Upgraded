@@ -80,21 +80,30 @@ export async function pollFibPayment(
   paymentId: string,
   opts: {
     intervalMs?: number;
+    /** Ceiling the interval backs off to. Keeps a long wait cheap. */
+    maxIntervalMs?: number;
     timeoutMs?: number;
     onTick?: (p: FibPayment) => void;
     isCancelled?: () => boolean;
     wakeOn?: (wake: () => void) => () => void;
   } = {},
 ): Promise<FibPayment> {
-  const interval = opts.intervalMs ?? 3000;
+  const baseInterval = opts.intervalMs ?? 3000;
+  const maxInterval = Math.max(baseInterval, opts.maxIntervalMs ?? 10000);
   const deadline = Date.now() + (opts.timeoutMs ?? 180000);
   let last: FibPayment | null = null;
+  let interval = baseInterval;
   while (Date.now() < deadline) {
     if (opts.isCancelled?.()) return last ?? { paymentId, status: 'pending' };
     last = await getFibPaymentStatus(paymentId, true);
     opts.onTick?.(last);
     if (TERMINAL.has(last.status.toLowerCase())) return last;
     await sleepUntil(interval, opts.wakeOn);
+    // Tight at first (the customer is deciding right now), then ease off so a
+    // wait that runs to FIB's full expiry window does not mean hundreds of
+    // round-trips. Returning to the app cuts any wait short via wakeOn, so
+    // backing off never costs responsiveness at the moment that matters.
+    interval = Math.min(maxInterval, Math.round(interval * 1.5));
   }
   return last ?? { paymentId, status: 'pending' };
 }

@@ -313,6 +313,7 @@ export default {
     fibPayByPhone: 'پارەدان بە مۆبایل',
     fibOr: 'یان',
     fibWaiting: 'چاوەڕێی پشتڕاستکردنەوەکەتین لە ئەپی FIB — ئەم شاشەیە خۆکارانە نوێ دەبێتەوە.',
+    fibConfirming: 'پارەدان پشتڕاست کرایەوە — eSIMـەکەت ئامادە دەکرێت…',
     fibExpiresIn: 'ئەم کۆدە لە ماوەی {{time}} بەسەردەچێت',
     fibCodeLabel: 'کۆد',
     fibClose: 'داخستن',

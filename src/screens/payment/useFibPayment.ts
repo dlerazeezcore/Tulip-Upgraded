@@ -11,6 +11,10 @@ import type { FibPayment } from '@/services/types';
 
 export type FibSheetStatus =
   | 'waiting'
+  // Charge confirmed, order being placed. A distinct state so the sheet stops
+  // saying "waiting for your confirmation in the FIB app" (and stops counting
+  // down to expiry) for the second or two that provisioning takes.
+  | 'confirming'
   | 'paid'
   | 'cancelled'
   | 'failed'
@@ -61,6 +65,20 @@ export type FibPaymentSheetVM = {
   /** Re-check THIS payment. Never creates another one — see checkNow. */
   checkNow: () => void;
 };
+
+/** States that mean "not confirmed YET" rather than a real outcome. Returning
+ *  to the app, or tapping check-now, resumes polling from any of these. */
+const RECOVERABLE_STATUSES = new Set<FibSheetStatus>(['waiting', 'timeout']);
+
+/** How long to keep watching one payment: until FIB says it expires, clamped so
+ *  a missing or absurd expiry can never mean "poll forever" or "give up now". */
+function pollWindowMsFor(p: FibPayment): number {
+  const expiry = p.expiresAt ? Date.parse(p.expiresAt) : NaN;
+  if (!Number.isFinite(expiry)) return 180000;
+  // A little grace past expiry: FIB can settle a just-in-time payment
+  // fractionally after the deadline, and stopping first strands that customer.
+  return Math.min(20 * 60 * 1000, Math.max(60000, expiry - Date.now() + 15000));
+}
 
 /** Pass through data:/http(s) as-is; treat anything else as raw base64 PNG. */
 function normalizeQrUri(qr: string | null | undefined): string | null {
@@ -131,7 +149,11 @@ export function useFibPayment() {
     let final: FibPayment;
     try {
       final = await pollFibPayment(p.paymentId, {
-        timeoutMs: 180000,
+        // Watch until FIB's own expiry rather than an arbitrary 3 minutes. A
+        // bank app with a PIN and an OTP routinely takes longer than that, and
+        // timing out on a customer who is about to pay produced a scary
+        // "we couldn't confirm your payment" on a charge that then succeeded.
+        timeoutMs: pollWindowMsFor(p),
         isCancelled: () => cancelledRef.current,
         wakeOn: wakeOnForeground,
       });
@@ -147,6 +169,11 @@ export function useFibPayment() {
       if (settledRef.current) return;
       settledRef.current = true;
       paidPaymentRef.current = final;
+      // Flip the sheet BEFORE the order round-trip: placing the order, two
+      // cache refreshes and a navigation take a couple of seconds, and showing
+      // the pay-in-FIB spinner through all of it reads as "nothing happened"
+      // on a charge that has already gone through.
+      setStatus('confirming');
       const cb = onPaidRef.current;
       if (cb) {
         // The charge is confirmed. If booking now fails we must NOT report a
@@ -187,7 +214,7 @@ export function useFibPayment() {
   // when the original loop is in fact alive, and settledRef keeps onPaid
   // exactly-once across both.
   useEffect(() => {
-    if (!visible || status !== 'waiting' || !payment) return;
+    if (!visible || !RECOVERABLE_STATUSES.has(status) || !payment) return;
     const sub = AppState.addEventListener('change', (next) => {
       if (next !== 'active') return;
       // Coming back from the FIB app is not a cancellation — whatever killed
@@ -263,7 +290,10 @@ export function useFibPayment() {
 
   const isWeb = Platform.OS === 'web';
   const qrUri = normalizeQrUri(payment?.qrCode);
-  const isTerminalNonPaid = status !== 'waiting' && status !== 'paid';
+  // 'confirming' is a success in progress, not an outcome — excluding it here
+  // is what stops the sheet flashing an error on a charge that just landed.
+  const isTerminalNonPaid =
+    status !== 'waiting' && status !== 'paid' && status !== 'confirming';
   // Only a decline/refund is a true failure. Cancelled is the user's own
   // action (neutral); expired / timeout / bookingFailed are recoverable
   // situations, not "your payment failed" (warning).
@@ -295,14 +325,17 @@ export function useFibPayment() {
     scanHint: tr('checkout.fibScanHint'),
     payByPhoneLabel: tr('checkout.fibPayByPhone'),
     orLabel: tr('checkout.fibOr'),
-    waitingLabel: tr('checkout.fibWaiting'),
+    waitingLabel:
+      status === 'confirming' ? tr('checkout.fibConfirming') : tr('checkout.fibWaiting'),
     codeLabel: tr('checkout.fibCodeLabel'),
     closeLabel: tr('checkout.fibClose'),
     retryLabel:
       status === 'bookingFailed' ? tr('checkout.fibRetryBooking') : tr('checkout.fibCheckAgain'),
     checkNowLabel: tr('checkout.fibCheckNow'),
-    // Only while genuinely waiting — a terminal state already has its own retry.
-    canCheckNow: visible && status === 'waiting' && !!payment,
+    // Waiting, or timed out — both mean "not confirmed YET", and both deserve a
+    // re-check that does NOT mint a second charge. A real decline / cancel /
+    // expiry has its own retry instead.
+    canCheckNow: visible && RECOVERABLE_STATUSES.has(status) && !!payment,
     payByPhone,
     close,
     retry,

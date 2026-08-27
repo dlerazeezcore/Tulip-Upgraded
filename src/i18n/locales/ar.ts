@@ -313,6 +313,7 @@ export default {
     fibPayByPhone: 'الدفع بالهاتف',
     fibOr: 'أو',
     fibWaiting: 'بانتظار تأكيدك في تطبيق FIB — يتم تحديث هذه الشاشة تلقائياً.',
+    fibConfirming: 'تم تأكيد الدفع — جاري تجهيز الـ eSIM…',
     fibExpiresIn: 'تنتهي صلاحية هذا الرمز خلال {{time}}',
     fibCodeLabel: 'الرمز',
     fibClose: 'إغلاق',

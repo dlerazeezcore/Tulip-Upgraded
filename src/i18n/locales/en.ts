@@ -312,6 +312,7 @@ export default {
     fibPayByPhone: 'Pay by phone',
     fibOr: 'or',
     fibWaiting: 'Waiting for your confirmation in the FIB app — this screen updates automatically.',
+    fibConfirming: 'Payment confirmed — setting up your eSIM…',
     fibExpiresIn: 'This code expires in {{time}}',
     fibCodeLabel: 'Code',
     fibClose: 'Close',
