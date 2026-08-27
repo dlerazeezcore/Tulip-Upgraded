@@ -61,6 +61,9 @@ const shared = {
     frostFg: '#717182',
     fill: 'rgba(255, 255, 255, 0.28)',
     border: 'rgba(255, 255, 255, 0.35)',
+    // Foreground text ON the brand gradient (launch screen, hero headings).
+    fg: '#FFFFFF',
+    fgMuted: 'rgba(255, 255, 255, 0.62)',
   },
   gradients: [
     ['#1967D2', '#0B4FB0'],

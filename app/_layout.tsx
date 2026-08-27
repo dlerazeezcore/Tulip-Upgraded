@@ -1,6 +1,5 @@
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import { Stack } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, initialWindowMetrics } from 'react-native-safe-area-context';
@@ -17,7 +16,6 @@ import {
   PlusJakartaSans_700Bold,
 } from '@expo-google-fonts/plus-jakarta-sans';
 import { ThemeProvider, useTheme } from '@/theme/ThemeContext';
-import { light } from '@/theme/tokens';
 import { useThemeStore } from '@/state/themeStore';
 import { useCurrencyStore } from '@/state/currencyStore';
 import { useAuthStore } from '@/state/authStore';
@@ -28,6 +26,8 @@ import { useLocaleStore } from '@/state/localeStore';
 import { useDeviceStore } from '@/state/deviceStore';
 import { configureForegroundPushHandler, configureNotificationHandler, registerDevice } from '@/services/push';
 import { UpdateAvailableModal } from '@/components/UpdateAvailableModal';
+import { TulipSplash } from '@/components/TulipSplash';
+import { SPLASH_MIN_MS } from '@/components/useTulipSplash';
 import { applySystemNavBar } from '@/lib/systemNavBar';
 import '@/i18n';
 
@@ -144,20 +144,26 @@ export default function RootLayout() {
   }, [authKey, refreshEsims, refreshOrders, refreshTravelers]);
 
   // On web, font loading can occasionally fail or timeout; don't block initial render forever.
-  const ready =
-    (outfitLoaded || !!outfitError) && (jakartaLoaded || !!jakartaError) && hydrated && localeHydrated;
+  const fontsReady = (outfitLoaded || !!outfitError) && (jakartaLoaded || !!jakartaError);
+  const ready = fontsReady && hydrated && localeHydrated;
 
+  // The launch screen has an animation to play (mark bloom → wordmark → loader
+  // fill). On a warm start everything above resolves in a frame or two, which
+  // would cut it off mid-bloom, so hold it for its minimum run either way.
+  const [minElapsed, setMinElapsed] = useState(false);
   useEffect(() => {
-    if (ready) SplashScreen.hideAsync().catch(() => {});
-  }, [ready]);
+    const id = setTimeout(() => setMinElapsed(true), SPLASH_MIN_MS);
+    return () => clearTimeout(id);
+  }, []);
 
-  if (!ready) {
-    // Pre-hydration splash: theme isn't resolved yet, so use light tokens.
-    return (
-      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: light.bg }}>
-        <ActivityIndicator size="large" color={light.primary} />
-      </View>
-    );
+  // Hand off from the NATIVE splash as soon as the JS one can paint, so the two
+  // are never both absent (a white flash) or both present (a double logo).
+  useEffect(() => {
+    SplashScreen.hideAsync().catch(() => {});
+  }, []);
+
+  if (!ready || !minElapsed) {
+    return <TulipSplash fontsLoaded={fontsReady} />;
   }
 
   return (

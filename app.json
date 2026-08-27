@@ -45,13 +45,13 @@
       [
         "expo-splash-screen",
         {
-          "image": "./assets/tulip-logo-full.png",
-          "imageWidth": 200,
+          "image": "./assets/tulip-mark-white.png",
+          "imageWidth": 206,
           "resizeMode": "contain",
-          "backgroundColor": "#1967D2",
+          "backgroundColor": "#1557B0",
           "dark": {
-            "image": "./assets/tulip-logo-full.png",
-            "backgroundColor": "#0B1120"
+            "image": "./assets/tulip-mark-white.png",
+            "backgroundColor": "#1557B0"
           }
         }
       ],

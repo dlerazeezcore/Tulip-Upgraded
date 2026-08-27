@@ -61,6 +61,14 @@ contract (see `SYNC-STRATEGY.md` §5b).
   byte-for-byte unchanged below the breakpoint.
 - **eSIM QR** always renders the Tulip petal mark centered on a small white badge with
   error-correction `H` — on-screen (`EsimInstallCard`) and in the shared/downloaded PNG.
+- **Launch screen** is Claude Design canvas *"Tulip Booking splash screens"* artboard **1a
+  "Deep blue — brand default"** (project `0ff3ecab-…`), implemented as `TulipSplash` +
+  `useTulipSplash`. It is theme-independent (brand gradient in BOTH light and dark, like the
+  hero surfaces). The native `expo-splash-screen` frame is only the white petal mark on
+  `brand.blue600` — it cannot render a gradient or animate, so it exists purely to hand off to
+  `TulipSplash`; keep `imageWidth: 206` so the native mark matches the JS one's 96pt ink width.
+  Never point the splash at `tulip-logo-full.png` — that asset is a blue mark on an opaque
+  WHITE square, which is why the old splash showed a white box on blue.
 
 ## CI/CD actions — do NOT break these
 These GitHub Actions are the release pipeline. Any change or edit must keep them green:
