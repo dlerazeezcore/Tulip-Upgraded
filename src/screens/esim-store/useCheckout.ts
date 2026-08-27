@@ -63,7 +63,7 @@ export function useCheckout() {
     orderTransactionId: string,
   ) => {
     if (!place || !bundle || !user) return;
-    await createManagedOrder({
+    const result = await createManagedOrder({
       transactionId: orderTransactionId,
       packageCode: bundle.packageCode!,
       periodNum: bundle.periodNum ?? bundle.days,
@@ -88,7 +88,23 @@ export function useCheckout() {
     clear();
     try { await refreshEsims(); } catch {}
     try { await refreshOrders(); } catch {}
-    router.replace('/manage/esim');
+    // Land on the eSIM they just bought, not the list. Buying is only half of
+    // what the customer came to do — the bundle is useless until it is
+    // installed, and the detail screen is where that happens (it polls for the
+    // activation code and shows Activate / QR / manual entry). Dropping people
+    // on the list left the last step to them, right after a payment that may
+    // have bounced them out to the FIB app and back.
+    //
+    // Read the store fresh rather than through the subscribed selector: this
+    // runs after an await, so the closure's copy predates the refresh above.
+    const orderItemId = result?.database?.orderItemId;
+    const profileId =
+      orderItemId != null ? useEsimStore.getState().idByOrderItemId(orderItemId) : undefined;
+    // No profile yet (the provider can lag) — the list is the honest fallback.
+    // Never guess at "the newest one": that is how a customer ends up staring
+    // at somebody else's earlier purchase.
+    if (profileId) router.replace(`/esim/${profileId}`);
+    else router.replace('/manage/esim');
   };
 
   const performPay = async () => {

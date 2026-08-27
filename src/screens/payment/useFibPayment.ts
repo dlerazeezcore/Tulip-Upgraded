@@ -4,7 +4,7 @@
 // returned `sheet` view-model; checkout / top-up call `start()` and run their
 // own `onPaid` (place order / apply top-up) once FIB confirms the charge.
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { Linking, Platform } from 'react-native';
+import { AppState, Linking, Platform } from 'react-native';
 import { useTranslation } from 'react-i18next';
 import { createFibPayment, pollFibPayment, fibOutcome } from '@/services/payments';
 import type { FibPayment } from '@/services/types';
@@ -97,12 +97,24 @@ export function useFibPayment() {
     return () => clearInterval(timer);
   }, [visible, status, expiresAt]);
 
+  // Paying takes the user out to the FIB app, so the poll below spends the
+  // decisive seconds backgrounded — where the OS throttles or suspends its
+  // timer. Re-check the moment they come back rather than waiting out an
+  // interval that may have stretched from 3s to 10s or stopped entirely.
+  const wakeOnForeground = useCallback((wake: () => void) => {
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next === 'active') wake();
+    });
+    return () => sub.remove();
+  }, []);
+
   const runPoll = useCallback(async (p: FibPayment) => {
     cancelledRef.current = false;
     setStatus('waiting');
     const final = await pollFibPayment(p.paymentId, {
       timeoutMs: 180000,
       isCancelled: () => cancelledRef.current,
+      wakeOn: wakeOnForeground,
     });
     const oc = fibOutcome(final);
     // Always honor a confirmed payment — even if the sheet was just closed —
@@ -129,7 +141,7 @@ export function useFibPayment() {
     // Otherwise, a closed/unmounted sheet stops silently; live ones show why.
     if (cancelledRef.current) return;
     setStatus(oc);
-  }, []);
+  }, [wakeOnForeground]);
 
   const start = useCallback(
     async (args: FibCreateArgs, opts: { onPaid: (p: FibPayment) => void | Promise<void> }) => {

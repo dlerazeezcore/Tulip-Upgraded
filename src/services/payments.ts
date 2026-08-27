@@ -42,9 +42,33 @@ export async function getFibPaymentStatus(paymentId: string, refresh = true): Pr
 
 const TERMINAL = new Set(['paid', 'failed', 'canceled', 'cancelled', 'expired', 'refunded']);
 
+/** Wait `ms`, or until `subscribe` fires — whichever comes first.
+ *  The subscription is always torn down, including on the timeout path. */
+function sleepUntil(ms: number, subscribe?: (wake: () => void) => () => void): Promise<void> {
+  return new Promise((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      clearTimeout(timer);
+      unsubscribe?.();
+      resolve();
+    };
+    const timer = setTimeout(finish, ms);
+    const unsubscribe = subscribe?.(finish);
+  });
+}
+
 /** Poll the payment until it reaches a terminal state or times out.
  *  Pass `isCancelled` so a closed sheet / unmounted screen stops the loop
- *  instead of leaking a 3-minute background poll. */
+ *  instead of leaking a 3-minute background poll.
+ *
+ *  `wakeOn` cuts the wait short. Paying happens in the FIB app, which means
+ *  this loop spends the decisive moments backgrounded, where the OS throttles
+ *  or suspends timers — an observed 3s interval stretched to 10s during the
+ *  2026-08-25 incident, and the one poll that did land arrived two seconds
+ *  before FIB flipped the payment to PAID. Waking on return turns "the user is
+ *  back" into an immediate re-check instead of a wait on a throttled timer. */
 export async function pollFibPayment(
   paymentId: string,
   opts: {
@@ -52,6 +76,7 @@ export async function pollFibPayment(
     timeoutMs?: number;
     onTick?: (p: FibPayment) => void;
     isCancelled?: () => boolean;
+    wakeOn?: (wake: () => void) => () => void;
   } = {},
 ): Promise<FibPayment> {
   const interval = opts.intervalMs ?? 3000;
@@ -62,7 +87,7 @@ export async function pollFibPayment(
     last = await getFibPaymentStatus(paymentId, true);
     opts.onTick?.(last);
     if (TERMINAL.has(last.status.toLowerCase())) return last;
-    await new Promise((r) => setTimeout(r, interval));
+    await sleepUntil(interval, opts.wakeOn);
   }
   return last ?? { paymentId, status: 'pending' };
 }

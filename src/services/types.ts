@@ -86,6 +86,10 @@ export type ManualEntry = { smdpAddress: string | null; activationCode: string |
 export type EsimProfile = {
   id: number | string;
   userId?: string;
+  /** The order line this eSIM came from. Matches `database.orderItemId` on the
+   *  managed-order response, which is how checkout finds the profile it just
+   *  bought instead of guessing at the newest one. */
+  orderItemId?: number | null;
   providerOrderNo?: string | null;
   esimTranNo?: string | null;
   iccid?: string | null;
@@ -146,6 +150,13 @@ export type ManagedOrderResult = {
   success: boolean;
   providerOrderNo?: string | null;
   orderNo?: string | null;
+  /** Our own records for the order, as opposed to the provider's. */
+  database?: {
+    customerOrderId?: number | null;
+    orderNumber?: string | null;
+    /** The order line the eSIM hangs off — see EsimProfile.orderItemId. */
+    orderItemId?: number | null;
+  } | null;
   data?: any;
 };
 

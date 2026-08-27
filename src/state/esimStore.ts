@@ -153,6 +153,9 @@ type EsimState = {
   loaded: boolean;
   error: string | null;
   byId: (id: string) => EsimProfile | undefined;
+  /** Resolve the profile an order line produced. Checkout uses it to land the
+   *  buyer on the eSIM they just paid for rather than on the list. */
+  idByOrderItemId: (orderItemId: number) => string | undefined;
   refresh: () => Promise<void>;
   refreshUsage: () => Promise<void>;
   refreshHistory: () => Promise<void>;
@@ -180,6 +183,11 @@ export const useEsimStore = create<EsimState>((set, get) => ({
   error: null,
 
   byId: (id) => get().raw[id] ?? get().historyRaw[id],
+
+  idByOrderItemId: (orderItemId) => {
+    const match = Object.values(get().raw).find((p) => p.orderItemId === orderItemId);
+    return match ? String(match.id) : undefined;
+  },
 
   refresh: async () => {
     if (!useAuthStore.getState().isAuthed()) {
