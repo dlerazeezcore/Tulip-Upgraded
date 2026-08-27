@@ -114,6 +114,25 @@ export function FibPaymentSheet({ sheet }: { sheet: FibPaymentSheetVM }) {
                   {sheet.expiresInLabel}
                 </Text>
               ) : null}
+              {sheet.canCheckNow ? (
+                <Pressable
+                  onPress={sheet.checkNow}
+                  accessibilityRole="button"
+                  style={({ pressed }) => ({
+                    marginTop: 6,
+                    paddingVertical: 8,
+                    paddingHorizontal: 14,
+                    borderRadius: t.radius.pill,
+                    borderWidth: 1.5,
+                    borderColor: t.primary,
+                    opacity: pressed ? 0.7 : 1,
+                  })}
+                >
+                  <Text style={{ color: t.primary, fontSize: 13, fontWeight: '700', fontFamily: t.font.displayMedium }}>
+                    {sheet.checkNowLabel}
+                  </Text>
+                </Pressable>
+              ) : null}
             </View>
           )}
         </View>

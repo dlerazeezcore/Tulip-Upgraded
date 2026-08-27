@@ -47,15 +47,22 @@ const TERMINAL = new Set(['paid', 'failed', 'canceled', 'cancelled', 'expired', 
 function sleepUntil(ms: number, subscribe?: (wake: () => void) => () => void): Promise<void> {
   return new Promise((resolve) => {
     let done = false;
+    // Declared with `let` BEFORE finish(): a subscriber that emits synchronously
+    // on subscribe would otherwise hit the temporal dead zone on `unsubscribe`,
+    // throw inside the executor, and leave this promise pending forever — a
+    // poll loop that never ticks again.
+    let unsubscribe: (() => void) | undefined;
+    let timer: ReturnType<typeof setTimeout> | undefined;
     const finish = () => {
       if (done) return;
       done = true;
-      clearTimeout(timer);
+      if (timer !== undefined) clearTimeout(timer);
       unsubscribe?.();
       resolve();
     };
-    const timer = setTimeout(finish, ms);
-    const unsubscribe = subscribe?.(finish);
+    timer = setTimeout(finish, ms);
+    unsubscribe = subscribe?.(finish);
+    if (done) unsubscribe?.();
   });
 }
 

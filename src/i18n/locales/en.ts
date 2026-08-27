@@ -316,6 +316,7 @@ export default {
     fibCodeLabel: 'Code',
     fibClose: 'Close',
     fibCheckAgain: 'Try again',
+    fibCheckNow: 'I’ve paid — check now',
     fibBookingFailed:
       "Your payment went through, but we couldn't finish setting up your eSIM. Tap below to try again — you won't be charged twice. If it keeps failing, please contact support.",
     fibRetryBooking: 'Finish setup',

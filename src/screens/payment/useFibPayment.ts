@@ -51,9 +51,15 @@ export type FibPaymentSheetVM = {
   codeLabel: string;
   closeLabel: string;
   retryLabel: string;
+  /** Label for the manual "I've paid — check now" action shown while waiting. */
+  checkNowLabel: string;
+  /** True while the sheet is waiting and a manual re-check is worth offering. */
+  canCheckNow: boolean;
   payByPhone: () => void;
   close: () => void;
   retry: () => void;
+  /** Re-check THIS payment. Never creates another one — see checkNow. */
+  checkNow: () => void;
 };
 
 /** Pass through data:/http(s) as-is; treat anything else as raw base64 PNG. */
@@ -76,6 +82,13 @@ export function useFibPayment() {
   // The confirmed payment, kept so a post-payment booking failure can be retried
   // WITHOUT creating (and charging) a second FIB payment.
   const paidPaymentRef = useRef<FibPayment | null>(null);
+  // Single-flight guard: exactly one poll loop at a time, so the
+  // restart-on-foreground below can be fired freely without stacking loops.
+  const pollingRef = useRef(false);
+  // The charge has been handled (order placed, or booking failed after a
+  // confirmed charge). Guarantees onPaid runs at most once even if a restarted
+  // loop and the original one both observe PAID.
+  const settledRef = useRef(false);
 
   // Stop any in-flight poll if the screen unmounts mid-payment.
   useEffect(() => () => { cancelledRef.current = true; }, []);
@@ -109,17 +122,30 @@ export function useFibPayment() {
   }, []);
 
   const runPoll = useCallback(async (p: FibPayment) => {
+    // One loop at a time. The foreground restart below can fire on every
+    // AppState change, so this is what keeps it idempotent.
+    if (pollingRef.current || settledRef.current) return;
+    pollingRef.current = true;
     cancelledRef.current = false;
     setStatus('waiting');
-    const final = await pollFibPayment(p.paymentId, {
-      timeoutMs: 180000,
-      isCancelled: () => cancelledRef.current,
-      wakeOn: wakeOnForeground,
-    });
+    let final: FibPayment;
+    try {
+      final = await pollFibPayment(p.paymentId, {
+        timeoutMs: 180000,
+        isCancelled: () => cancelledRef.current,
+        wakeOn: wakeOnForeground,
+      });
+    } finally {
+      // Released even on throw, so a failed poll can be restarted rather than
+      // wedging the sheet on "waiting" with nothing able to run again.
+      pollingRef.current = false;
+    }
     const oc = fibOutcome(final);
     // Always honor a confirmed payment — even if the sheet was just closed —
     // so the user never pays without getting the order placed.
     if (oc === 'paid') {
+      if (settledRef.current) return;
+      settledRef.current = true;
       paidPaymentRef.current = final;
       const cb = onPaidRef.current;
       if (cb) {
@@ -138,16 +164,55 @@ export function useFibPayment() {
       setStatus('paid');
       return;
     }
-    // Otherwise, a closed/unmounted sheet stops silently; live ones show why.
+    // A cancelled loop stops silently — but it must NOT leave the sheet stuck on
+    // "waiting" forever with nothing running. Returning from the FIB app used to
+    // land exactly here: the loop was dead, no status was set, and the sheet
+    // span forever (2026-08-27). The foreground effect below restarts it; this
+    // early return only skips the status write.
     if (cancelledRef.current) return;
     setStatus(oc);
   }, [wakeOnForeground]);
+
+  // THE fix for "paid in FIB, came back, sheet never went away".
+  //
+  // The old design leaned on ONE long-lived await chain surviving a background
+  // transition plus the tulip://payment/result deep link landing a route under
+  // an open Modal. It does not survive: production logs show the app returning
+  // to the foreground twice after a confirmed payment without issuing a single
+  // status request, leaving the sheet spinning on a charge that had already
+  // gone through.
+  //
+  // So do not depend on the loop surviving. Whenever the app comes back and the
+  // sheet is still waiting, start a fresh one. pollingRef makes that a no-op
+  // when the original loop is in fact alive, and settledRef keeps onPaid
+  // exactly-once across both.
+  useEffect(() => {
+    if (!visible || status !== 'waiting' || !payment) return;
+    const sub = AppState.addEventListener('change', (next) => {
+      if (next !== 'active') return;
+      // Coming back from the FIB app is not a cancellation — whatever killed
+      // the previous loop, the user is here and the payment is still open.
+      cancelledRef.current = false;
+      void runPoll(payment);
+    });
+    return () => sub.remove();
+  }, [visible, status, payment, runPoll]);
+
+  /** "I've paid — check now". The manual escape hatch: re-checks THIS payment
+   *  and never creates another one (unlike retry, which mints a new checkout).
+   *  Insurance for the case where even the foreground restart misses. */
+  const checkNow = useCallback(() => {
+    if (!payment) return;
+    cancelledRef.current = false;
+    void runPoll(payment);
+  }, [payment, runPoll]);
 
   const start = useCallback(
     async (args: FibCreateArgs, opts: { onPaid: (p: FibPayment) => void | Promise<void> }) => {
       lastArgsRef.current = args;
       onPaidRef.current = opts.onPaid;
       cancelledRef.current = false;
+      settledRef.current = false;
       const p = await createFibPayment(args);
       setPayment(p);
       setVisible(true);
@@ -176,6 +241,8 @@ export function useFibPayment() {
     const args = lastArgsRef.current;
     if (!args) return;
     try {
+      // A brand-new checkout is a brand-new charge to settle.
+      settledRef.current = false;
       const p = await createFibPayment(args);
       setPayment(p);
       await runPoll(p);
@@ -233,9 +300,13 @@ export function useFibPayment() {
     closeLabel: tr('checkout.fibClose'),
     retryLabel:
       status === 'bookingFailed' ? tr('checkout.fibRetryBooking') : tr('checkout.fibCheckAgain'),
+    checkNowLabel: tr('checkout.fibCheckNow'),
+    // Only while genuinely waiting — a terminal state already has its own retry.
+    canCheckNow: visible && status === 'waiting' && !!payment,
     payByPhone,
     close,
     retry,
+    checkNow,
   };
 
   return { sheet, start };
