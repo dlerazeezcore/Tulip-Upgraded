@@ -34,10 +34,14 @@ export type AdminOrderRowVM = {
 export type AdminOrdersViewModel = {
   isAdmin: boolean;
   goBack: () => void;
-  // filters
+  // filters — pre-shaped dropdown options; the screen just renders them
   year: number;
-  month: number | null;
+  month: number;
   esim: string;
+  yearOptions: { value: number; label: string }[];
+  monthOptions: { value: number; label: string }[];
+  esimOptions: { value: string; label: string }[];
+  monthLabel: (m: number) => string;
   setYear: (y: number) => void;
   setMonth: (m: number) => void;
   setEsim: (id: string) => void;
@@ -58,12 +62,20 @@ function orderDate(o: AdminOrder): string {
   return o.bookedAt || o.createdAt || '';
 }
 
+const MONTH_KEYS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'] as const;
+const ESIM_FILTER_IDS = ['all', 'installed', 'not_installed', 'expired', 'used'] as const;
+/** First year with orders. The list runs from here to the current year and
+ *  extends itself every January — it used to be a hardcoded [2026…2030]. */
+const FIRST_ORDER_YEAR = 2026;
+
 export function useAdminOrders(): AdminOrdersViewModel {
   const router = useRouter();
   const { t: tr } = useTranslation();
   const isAdmin = useAuthStore((s) => !!s.user?.isAdmin);
+  // Default to the CURRENT month so the report opens on real data instead of an
+  // empty "pick a year and month" state.
   const [year, setYear] = useState<number>(new Date().getFullYear());
-  const [month, setMonth] = useState<number | null>(null); // 1-12; null = nothing selected yet
+  const [month, setMonth] = useState<number>(new Date().getMonth() + 1); // 1-12
   const [orders, setOrders] = useState<AdminOrder[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -76,7 +88,6 @@ export function useAdminOrders(): AdminOrdersViewModel {
   // Reload the same month's orders after an admin refresh. Triggered by the
   // "Refresh from provider" button below.
   const reloadCurrentMonth = useCallback(() => {
-    if (month === null) return Promise.resolve();
     const key = `${year}-${String(month).padStart(2, '0')}`;
     return getAdminOrders({ month: key })
       .then((rows) => setOrders(rows))
@@ -101,13 +112,8 @@ export function useAdminOrders(): AdminOrdersViewModel {
     }
   };
 
-  // Load orders only once a year + month are chosen — filtered server-side, so
-  // nothing is fetched by default and we never pull the whole table.
+  // Always filtered server-side to one month, so we never pull the whole table.
   useEffect(() => {
-    if (month === null) {
-      setOrders([]);
-      return;
-    }
     const key = `${year}-${String(month).padStart(2, '0')}`;
     let cancelled = false;
     setLoading(true);
@@ -162,12 +168,40 @@ export function useAdminOrders(): AdminOrdersViewModel {
       });
   }, [orders, esim, expanded, tr]);
 
+  const monthLabel = useCallback(
+    (m: number) => tr(`admin.orders.months.${MONTH_KEYS[m - 1]}`),
+    [tr],
+  );
+
+  // Newest year first, so the default (current year) is at the top of the list.
+  const yearOptions = useMemo(() => {
+    const current = new Date().getFullYear();
+    const last = Math.max(current, FIRST_ORDER_YEAR);
+    const out: { value: number; label: string }[] = [];
+    for (let y = last; y >= FIRST_ORDER_YEAR; y -= 1) out.push({ value: y, label: String(y) });
+    return out.length ? out : [{ value: current, label: String(current) }];
+  }, []);
+
+  const monthOptions = useMemo(
+    () => MONTH_KEYS.map((_, i) => ({ value: i + 1, label: monthLabel(i + 1) })),
+    [monthLabel],
+  );
+
+  const esimOptions = useMemo(
+    () => ESIM_FILTER_IDS.map((id) => ({ value: id as string, label: tr(`admin.orders.filters.${id}`) })),
+    [tr],
+  );
+
   return {
     isAdmin,
     goBack: () => (router.canGoBack() ? router.back() : router.replace('/admin')),
     year,
     month,
     esim,
+    yearOptions,
+    monthOptions,
+    esimOptions,
+    monthLabel,
     setYear,
     setMonth,
     setEsim,

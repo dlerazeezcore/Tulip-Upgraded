@@ -3,18 +3,15 @@ import React from 'react';
 import { ScrollView, View, Text, Pressable } from 'react-native';
 import { Redirect } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Globe, ChevronDown, RefreshCw, Check, AlertCircle, CalendarDays, Receipt } from 'lucide-react-native';
+import { Globe, ChevronDown, RefreshCw, Check, AlertCircle, Receipt } from 'lucide-react-native';
 import { DirectionalChevron } from '@/components/DirectionalChevron';
 import { useTheme } from '@/theme/ThemeContext';
 import { Flag } from '@/components/Flag';
 import { EmptyState } from '@/components/EmptyState';
 import { OrderListSkeleton } from '@/components/Skeleton';
 import { ScreenSafeArea } from '@/components/ScreenSafeArea';
+import { SelectField } from '@/components/SelectField';
 import { useAdminOrders } from '@/screens/admin/useAdminOrders';
-
-const YEARS = [2026, 2027, 2028, 2029, 2030];
-const MONTH_KEYS = ['jan', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'aug', 'sep', 'oct', 'nov', 'dec'] as const;
-const ESIM_FILTER_IDS = ['all', 'installed', 'not_installed', 'expired', 'used'] as const;
 
 export default function AdminOrders() {
   const t = useTheme();
@@ -28,14 +25,7 @@ export default function AdminOrders() {
 
   if (!vm.isAdmin) return <Redirect href="/(tabs)/profile" />;
 
-  const monthLabel = (m: number) => tr(`admin.orders.months.${MONTH_KEYS[m - 1]}`);
-
-  const labelStyle = { fontSize: 11, fontWeight: '700' as const, color: t.fgMuted, textTransform: 'uppercase' as const, letterSpacing: 0.4 };
-  const Chip = ({ on, label, onPress }: { on: boolean; label: string; onPress: () => void }) => (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityState={{ selected: on }} style={{ paddingVertical: 7, paddingHorizontal: 14, borderRadius: t.radius.pill, backgroundColor: on ? t.primary : t.bgSunken }}>
-      <Text style={{ fontFamily: t.font.displayMedium, fontWeight: '700', fontSize: 12, color: on ? t.onPrimary : t.fgMuted }}>{label}</Text>
-    </Pressable>
-  );
+  const monthLabel = vm.monthLabel;
 
   return (
     <ScreenSafeArea style={{ flex: 1, backgroundColor: t.bg }}>
@@ -49,7 +39,7 @@ export default function AdminOrders() {
           <DirectionalChevron direction="back" size={18} color={t.fg} />
         </Pressable>
         <Text style={{ flex: 1, fontFamily: t.font.display, fontSize: 20, fontWeight: '700', color: t.fg }}>
-          {tr('admin.orders.title')}{month !== null && !loading ? ` · ${orders.length}` : ''}
+          {tr('admin.orders.title')}{loading ? '' : ` · ${orders.length}`}
         </Text>
         <Pressable
           onPress={onRefreshFromProvider}
@@ -95,28 +85,28 @@ export default function AdminOrders() {
       )}
 
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 14, maxWidth: 820, width: '100%', alignSelf: 'center' }}>
-        <View style={{ gap: 8 }}>
-          <Text style={labelStyle}>{tr('admin.orders.year')}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {YEARS.map((y) => <Chip key={y} on={year === y} label={String(y)} onPress={() => setYear(y)} />)}
-          </ScrollView>
-          <Text style={[labelStyle, { marginTop: 4 }]}>{tr('admin.orders.month')}</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-            {MONTH_KEYS.map((m, i) => <Chip key={m} on={month === i + 1} label={monthLabel(i + 1)} onPress={() => setMonth(i + 1)} />)}
-          </ScrollView>
-          {month !== null && (
-            <>
-              <Text style={[labelStyle, { marginTop: 4 }]}>{tr('admin.orders.esimStatusLabel')}</Text>
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8 }}>
-                {ESIM_FILTER_IDS.map((id) => <Chip key={id} on={esim === id} label={tr(`admin.orders.filters.${id}`)} onPress={() => setEsim(id)} />)}
-              </ScrollView>
-            </>
-          )}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          <SelectField
+            label={tr('admin.orders.year')}
+            value={year}
+            options={vm.yearOptions}
+            onChange={setYear}
+          />
+          <SelectField
+            label={tr('admin.orders.month')}
+            value={month}
+            options={vm.monthOptions}
+            onChange={setMonth}
+          />
+          <SelectField
+            label={tr('admin.orders.esimStatusLabel')}
+            value={esim}
+            options={vm.esimOptions}
+            onChange={setEsim}
+          />
         </View>
 
-        {month === null ? (
-          <EmptyState icon={CalendarDays} title={tr('admin.orders.selectYearMonth')} />
-        ) : loading ? (
+        {loading ? (
           <OrderListSkeleton />
         ) : error ? (
           <EmptyState icon={AlertCircle} title={tr('common.error')} subtitle={error} />
