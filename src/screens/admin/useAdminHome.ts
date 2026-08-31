@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { Users, Bell, Coins, MapPin, Receipt, Percent, type LucideIcon } from 'lucide-react-native';
+import { Users, Bell, Coins, MapPin, Receipt, Percent, Gift, type LucideIcon } from 'lucide-react-native';
 import { useAuthStore } from '@/state/authStore';
 import { useTheme } from '@/theme/ThemeContext';
 import { useIsWideWeb } from '@/lib/responsive';
@@ -38,6 +38,7 @@ export function useAdminHome() {
     { id: 'notif', title: tr('admin.notif.title'), sub: tr('admin.notif.sub'), Icon: Bell, color: t.accent.purple, route: '/admin/notifications' },
     { id: 'cur', title: tr('admin.currency.title'), sub: tr('admin.currency.sub'), Icon: Coins, color: t.accent.emerald, route: '/admin/currency' },
     { id: 'pricing', title: tr('admin.pricing.title'), sub: tr('admin.pricing.sub'), Icon: Percent, color: t.accent.pink, route: '/admin/pricing' },
+    { id: 'esimAssign', title: tr('admin.esimAssign.title'), sub: tr('admin.esimAssign.sub'), Icon: Gift, color: t.accent.teal, route: '/admin/esim-assign' },
   ];
 
   return {

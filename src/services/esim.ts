@@ -168,6 +168,15 @@ export type ManagedOrderInput = {
   paymentTransactionId?: string;
   salePriceMinor?: number; // display-only; server is authoritative
   customFields?: Record<string, any>;
+  /**
+   * Admin-only. Buy on a registered customer's behalf and attribute the order
+   * to them (see `assignEsimToUser` in @/services/admin). The server ignores
+   * `user` entirely when this is set, coerces the payment to loyalty, and
+   * rejects it outright on a normal user token that names anyone else.
+   */
+  targetUserId?: string;
+  platformCode?: string;
+  platformName?: string;
 };
 
 export function createManagedOrder(input: ManagedOrderInput): Promise<ManagedOrderResult> {
@@ -186,8 +195,9 @@ export function createManagedOrder(input: ManagedOrderInput): Promise<ManagedOrd
         ],
       },
       user: input.user,
-      platformCode: 'tulip-mobile-app',
-      platformName: 'Tulip Mobile App',
+      targetUserId: input.targetUserId,
+      platformCode: input.platformCode ?? 'tulip-mobile-app',
+      platformName: input.platformName ?? 'Tulip Mobile App',
       currencyCode: input.currencyCode ?? 'IQD',
       providerCurrencyCode: input.providerCurrencyCode ?? 'USD',
       providerPriceMinor: input.providerPriceMinor,

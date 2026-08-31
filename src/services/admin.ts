@@ -1,7 +1,9 @@
 // Admin wiring: users list/update, orders, exchange-rate save, featured-locations CRUD,
-// push notifications send/history, app version-info management.
+// admin-assigned eSIMs, push notifications send/history, app version-info management.
 import { apiFetch, unwrap } from '@/lib/api';
+import { createManagedOrder } from './esim';
 import type {
+  ManagedOrderResult,
   AdminOrder,
   AdminSendAppUpdatePayload,
   AdminSendPushPayload,
@@ -240,6 +242,56 @@ export async function saveFeaturedLocation(input: {
 
 export async function deleteFeaturedLocation(id: number): Promise<void> {
   await apiFetch(`/api/v1/admin/featured-locations/${id}`, { method: 'DELETE' });
+}
+
+// ─── Admin-assigned eSIMs (concierge sale) ──────────────────────────────────
+
+/**
+ * Buy an eSIM for a registered customer and attribute it to them, so it shows
+ * up in their app exactly as a self-purchase would — installable QR, an order
+ * at the normal retail price, live usage tracking.
+ *
+ * The money is collected outside the app. The order records `loyalty` (the
+ * existing "provisioned without charging" method), so the backend does no
+ * payment verification; it forces that method server-side regardless of what
+ * we send here, and stamps its own provenance. `platformCode: 'tulip-admin'`
+ * is what distinguishes these from a genuine VIP comp afterwards.
+ *
+ * `salePriceMinor` is audit-only — the server recomputes the authoritative IQD
+ * total from the pricing rules and only logs a deviation.
+ */
+export function assignEsimToUser(input: {
+  targetUserId: string;
+  packageCode: string;
+  providerPriceMinor: number;
+  periodNum?: number;
+  countryCode?: string;
+  countryName?: string;
+  packageName?: string;
+  salePriceMinor?: number;
+  user: { phone: string; name: string; email?: string | null };
+}): Promise<ManagedOrderResult> {
+  return createManagedOrder({
+    // Mirrors the APP- id minted in useCheckout.performPay: one id per attempt,
+    // and the backend treats a repeat of the same id as an idempotent resubmit.
+    transactionId: `ADMIN-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    packageCode: input.packageCode,
+    count: 1,
+    periodNum: input.periodNum,
+    providerPriceMinor: input.providerPriceMinor,
+    salePriceMinor: input.salePriceMinor,
+    countryCode: input.countryCode,
+    countryName: input.countryName,
+    packageName: input.packageName,
+    targetUserId: input.targetUserId,
+    // Sent for a consistent payload; the server ignores it and owns the order
+    // by targetUserId alone.
+    user: input.user,
+    paymentMethod: 'loyalty',
+    paymentStatus: 'paid',
+    platformCode: 'tulip-admin',
+    platformName: 'Tulip Admin',
+  });
 }
 
 // ─── Push notifications (admin) ─────────────────────────────────────────────
