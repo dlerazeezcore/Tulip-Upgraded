@@ -17,6 +17,7 @@ import { useIqdAmount } from '@/lib/pricing';
 import { packagesToBundles } from '@/lib/catalog';
 import { assignEsimToUser, getUsers, sendPushNotification } from '@/services/admin';
 import {
+  cachedCountries,
   getCountries,
   getFeaturedLocations,
   getRegions,
@@ -27,6 +28,23 @@ import type { AdminUserRow, ManagedOrderResult } from '@/services/types';
 import type { Bundle } from '@/data/esim';
 
 export type AssignTab = 'popular' | 'countries' | 'regions';
+
+/**
+ * Mirrors the backend's `_is_row_active`: an order can only be assigned to an
+ * account that is active, not blocked and not deleted. The admin users endpoint
+ * hides deleted rows by default but still returns BLOCKED ones, so without this
+ * the picker offers customers the assign call would reject with a 403.
+ *
+ * Field casing is defensive: /api/v1/admin/users serializes raw column names
+ * (blocked_at), while the AdminUserRow type describes a camelCase shape.
+ */
+function isAssignableUser(u: AdminUserRow): boolean {
+  const row = u as AdminUserRow & Record<string, unknown>;
+  const status = String(row.status ?? '').trim().toLowerCase();
+  const blocked = row.blocked_at ?? row.blockedAt ?? (u.isBlocked ? true : null);
+  const deleted = row.deleted_at ?? row.deletedAt ?? null;
+  return status === 'active' && !blocked && !deleted;
+}
 
 export type AssignPlace = { code: string; name: string; isRegion: boolean };
 
@@ -89,6 +107,10 @@ export function useEsimAssign(): EsimAssignViewModel {
 
   const [tab, setTab] = useState<AssignTab>('popular');
   const [places, setPlaces] = useState<AssignPlace[]>([]);
+  // Featured rows store whatever an admin typed in `name`, which for most of
+  // them is just the ISO code ("GB", "TR", "DE"). Resolve display names from the
+  // provider country list instead, same as the customer catalog does.
+  const [nameByCode, setNameByCode] = useState<Record<string, string>>({});
   const [loadingPlaces, setLoadingPlaces] = useState(false);
   const [placeSearch, setPlaceSearch] = useState('');
   const [selectedPlace, setSelectedPlace] = useState<AssignPlace | null>(null);
@@ -109,12 +131,37 @@ export function useEsimAssign(): EsimAssignViewModel {
     setLoadingUsers(true);
     const timer = setTimeout(() => {
       getUsers({ limit: 60, search: search.trim() || undefined })
-        .then(setUsers)
+        .then((rows) => setUsers(rows.filter(isAssignableUser)))
         .catch(() => setUsers([]))
         .finally(() => setLoadingUsers(false));
     }, 300);
     return () => clearTimeout(timer);
   }, [isAdmin, search]);
+
+  // ── Country/region name lookup, loaded once ────────────────────────
+  useEffect(() => {
+    if (!isAdmin) return;
+    let cancelled = false;
+    const merge = (rows: { code: string; name: string }[]) => {
+      if (cancelled || rows.length === 0) return;
+      setNameByCode((prev) => {
+        const next = { ...prev };
+        for (const r of rows) {
+          // Ignore placeholder names that are just the code again.
+          if (r.name && r.name.toUpperCase() !== r.code.toUpperCase()) {
+            next[r.code.toUpperCase()] = r.name;
+          }
+        }
+        return next;
+      });
+    };
+    merge(cachedCountries());
+    getCountries().then(merge).catch(() => {});
+    getRegions().then(merge).catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, [isAdmin]);
 
   // ── Step 2: destinations for the active tab ────────────────────────
   useEffect(() => {
@@ -201,10 +248,10 @@ export function useEsimAssign(): EsimAssignViewModel {
       .map(([days, items]) => ({ days, items: items.sort((x, y) => x.usd - y.usd) }));
   }, [bundles]);
 
-  const priceLabel = useCallback(
-    (b: Bundle) => money(iqdAmount(b.usd, b.saleIqdMinor)),
-    [money, iqdAmount],
-  );
+  // useMoney already resolves the sale price itself — (providerUsd, saleIqdOverride).
+  // Feeding it an already-converted IQD amount multiplies by the rate a second
+  // time. Same call shape as the customer catalog (app/esim-store/[place].tsx).
+  const priceLabel = useCallback((b: Bundle) => money(b.usd, b.saleIqdMinor), [money]);
 
   const bundleLabel = useCallback(
     (b: Bundle) =>
@@ -348,12 +395,23 @@ export function useEsimAssign(): EsimAssignViewModel {
   ]);
 
   const filteredPlaces = useMemo(() => {
+    // Resolve display names before filtering, so searching "Germany" matches a
+    // featured row whose stored name is only "DE". A name an admin actually
+    // typed wins; only the code-as-name placeholders get replaced.
+    const named = places.map((p) => {
+      const stored = (p.name ?? '').trim();
+      const isPlaceholder = !stored || stored.toUpperCase() === p.code.toUpperCase();
+      return {
+        ...p,
+        name: isPlaceholder ? nameByCode[p.code.toUpperCase()] ?? p.code : stored,
+      };
+    });
     const q = placeSearch.trim().toLowerCase();
-    if (!q) return places;
-    return places.filter(
+    if (!q) return named;
+    return named.filter(
       (p) => p.name.toLowerCase().includes(q) || p.code.toLowerCase().includes(q),
     );
-  }, [places, placeSearch]);
+  }, [places, placeSearch, nameByCode]);
 
   return {
     isAdmin,
