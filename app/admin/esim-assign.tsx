@@ -9,6 +9,7 @@ import { useTheme } from '@/theme/ThemeContext';
 import { PrimaryButton } from '@/components/PrimaryButton';
 import { PressableScale } from '@/components/PressableScale';
 import { ScreenSafeArea } from '@/components/ScreenSafeArea';
+import { CenteredModal } from '@/components/CenteredModal';
 import { useEsimAssign, type AssignTab } from '@/screens/admin/useEsimAssign';
 
 export default function AdminEsimAssign() {
@@ -299,6 +300,57 @@ export default function AdminEsimAssign() {
           </View>
         </View>
       </ScrollView>
+
+      {/* In-app confirm. Uses the shared admin dialog rather than
+          confirmAction(), which on web degrades to window.confirm and shows the
+          browser's own box for a step that spends money and names a customer. */}
+      <CenteredModal
+        visible={vm.confirmVisible}
+        onRequestClose={vm.cancelConfirm}
+        maxWidth={440}
+        dismissOnBackdrop={!vm.submitting}
+      >
+        <View style={{ alignItems: 'center', gap: 6 }}>
+          <View style={{ width: 52, height: 52, borderRadius: 26, backgroundColor: `${t.accent.teal}1A`, alignItems: 'center', justifyContent: 'center' }}>
+            <Gift size={24} color={t.accent.teal} strokeWidth={2} />
+          </View>
+          <Text style={{ fontFamily: t.font.display, fontSize: 18, fontWeight: '700', color: t.fg, textAlign: 'center' }}>
+            {tr('admin.esimAssign.confirmTitle')}
+          </Text>
+        </View>
+
+        {!!vm.confirmSummary && (
+          <View style={{ ...card, padding: 14, gap: 10 }}>
+            <Row label={tr('admin.esimAssign.stepCustomer')} value={vm.confirmSummary.name} t={t} />
+            <Row label={tr('admin.esimAssign.phone')} value={vm.confirmSummary.phone} t={t} />
+            <Row label={tr('admin.esimAssign.stepBundle')} value={`${vm.confirmSummary.place} · ${vm.confirmSummary.plan}`} t={t} />
+            <Row label={tr('admin.esimAssign.retailPrice')} value={vm.confirmSummary.price} t={t} strong />
+          </View>
+        )}
+
+        <Text style={{ fontSize: 12, color: t.fgMuted, lineHeight: 18, textAlign: 'center' }}>
+          {tr('admin.esimAssign.paidWith')}
+        </Text>
+        {!!vm.duplicateWarning && (
+          <Text style={{ fontSize: 12, color: t.accent.amber, lineHeight: 18, textAlign: 'center' }}>
+            {vm.duplicateWarning}
+          </Text>
+        )}
+
+        <PrimaryButton
+          label={vm.submitting ? tr('admin.esimAssign.submitting') : tr('admin.esimAssign.confirmCta')}
+          onPress={vm.confirmAssign}
+          disabled={vm.submitting}
+        />
+        <Pressable
+          onPress={vm.cancelConfirm}
+          disabled={vm.submitting}
+          accessibilityRole="button"
+          style={{ paddingVertical: 12, alignItems: 'center', opacity: vm.submitting ? 0.4 : 1 }}
+        >
+          <Text style={{ color: t.fgMuted, fontWeight: '700' }}>{tr('common.cancel')}</Text>
+        </Pressable>
+      </CenteredModal>
     </ScreenSafeArea>
   );
 }

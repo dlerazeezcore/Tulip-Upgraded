@@ -9,7 +9,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter } from 'expo-router';
 import { useTranslation } from 'react-i18next';
-import { confirmAction } from '@/lib/dialog';
 import { useAuthStore } from '@/state/authStore';
 import { useIsWideWeb } from '@/lib/responsive';
 import { useMoney } from '@/lib/money';
@@ -88,7 +87,19 @@ export type EsimAssignViewModel = {
   submitting: boolean;
   error: string | null;
   result: { providerOrderNo: string | null; orderItemId: number | null } | null;
+  /** Opens the in-app confirm dialog (does not order). */
   submit: () => void;
+  /** Places the order. Only called from the dialog's confirm button. */
+  confirmAssign: () => void;
+  confirmVisible: boolean;
+  cancelConfirm: () => void;
+  confirmSummary: {
+    name: string;
+    phone: string;
+    place: string;
+    plan: string;
+    price: string;
+  } | null;
   reset: () => void;
 };
 
@@ -121,6 +132,10 @@ export function useEsimAssign(): EsimAssignViewModel {
   const [selectedBundle, setSelectedBundle] = useState<Bundle | null>(null);
 
   const [duplicateWarning, setDuplicateWarning] = useState<string | null>(null);
+  // In-app confirm. Deliberately NOT confirmAction(): that falls back to
+  // window.confirm on web, which renders the browser's own chrome-styled dialog
+  // instead of the app's — for a step that spends money and names a customer.
+  const [confirmVisible, setConfirmVisible] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [result, setResult] = useState<EsimAssignViewModel['result']>(null);
@@ -266,6 +281,17 @@ export function useEsimAssign(): EsimAssignViewModel {
     [selectedBundle, priceLabel],
   );
 
+  const confirmSummary = useMemo(() => {
+    if (!selectedUser || !selectedBundle || !selectedPlace) return null;
+    return {
+      name: selectedUser.name || selectedUser.phone,
+      phone: selectedUser.phone,
+      place: selectedPlace.name,
+      plan: `${bundleLabel(selectedBundle)} · ${selectedBundle.days}d`,
+      price: priceLabel(selectedBundle),
+    };
+  }, [selectedUser, selectedBundle, selectedPlace, bundleLabel, priceLabel]);
+
   // ── Duplicate check: warn, never block ─────────────────────────────
   useEffect(() => {
     setDuplicateWarning(null);
@@ -328,32 +354,35 @@ export function useEsimAssign(): EsimAssignViewModel {
     [tr],
   );
 
-  const submit = useCallback(async () => {
+  /** Open the in-app confirm dialog. Validates first so an unorderable bundle
+   *  surfaces its error inline instead of inside the dialog. */
+  const submit = useCallback(() => {
+    const bundle = selectedBundle;
+    if (!selectedUser || !bundle || !selectedPlace) return;
+    // The provider price must come from the catalog row, never re-derived from
+    // the display float (a known silent rounding source). Refuse rather than guess.
+    if (bundle.providerPriceMinor == null || !bundle.packageCode) {
+      setError(tr('admin.esimAssign.bundleUnavailable'));
+      return;
+    }
+    setError(null);
+    setConfirmVisible(true);
+  }, [selectedUser, selectedBundle, selectedPlace, tr]);
+
+  const cancelConfirm = useCallback(() => setConfirmVisible(false), []);
+
+  const confirmAssign = useCallback(async () => {
     const user = selectedUser;
     const bundle = selectedBundle;
     const place = selectedPlace;
     if (!user || !bundle || !place) return;
-    // The provider price must come from the catalog row, never re-derived from
-    // the display float (a known silent rounding source). Refuse rather than guess.
     const providerPriceMinor = bundle.providerPriceMinor;
     const packageCode = bundle.packageCode;
     if (providerPriceMinor == null || !packageCode) {
       setError(tr('admin.esimAssign.bundleUnavailable'));
+      setConfirmVisible(false);
       return;
     }
-
-    const confirmed = await confirmAction({
-      title: tr('admin.esimAssign.confirmTitle'),
-      message: tr('admin.esimAssign.confirmBody', {
-        name: user.name || user.phone,
-        phone: user.phone,
-        place: place.name,
-        price: priceLabel(bundle),
-      }),
-      confirmLabel: tr('admin.esimAssign.confirmCta'),
-      cancelLabel: tr('common.cancel'),
-    });
-    if (!confirmed) return;
 
     setSubmitting(true);
     setError(null);
@@ -369,6 +398,7 @@ export function useEsimAssign(): EsimAssignViewModel {
         salePriceMinor: iqdAmount(bundle.usd, bundle.saleIqdMinor),
         user: { phone: user.phone, name: user.name, email: user.email ?? null },
       });
+      setConfirmVisible(false);
       setResult({
         providerOrderNo: res.providerOrderNo ?? res.orderNo ?? null,
         orderItemId: res.database?.orderItemId ?? null,
@@ -379,6 +409,8 @@ export function useEsimAssign(): EsimAssignViewModel {
         // Swallowed on purpose — see notifyCustomer.
       }
     } catch (e: any) {
+      // Close the dialog so the inline error on the form is what the admin sees.
+      setConfirmVisible(false);
       setError(e?.message || tr('common.somethingWrong'));
     } finally {
       setSubmitting(false);
@@ -388,7 +420,6 @@ export function useEsimAssign(): EsimAssignViewModel {
     selectedBundle,
     selectedPlace,
     tr,
-    priceLabel,
     bundleLabel,
     iqdAmount,
     notifyCustomer,
@@ -449,6 +480,10 @@ export function useEsimAssign(): EsimAssignViewModel {
     error,
     result,
     submit,
+    confirmAssign,
+    confirmVisible,
+    cancelConfirm,
+    confirmSummary,
     reset,
   };
 }

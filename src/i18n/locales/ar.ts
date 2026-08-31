@@ -654,6 +654,7 @@ export default {
       duplicateWarning: 'هذا العميل لديه بالفعل eSIM فعّالة لهذه الباقة.',
       paidWith: 'طريقة الدفع: الولاء · على حساب الإدارة. حصّل المبلغ بشكل منفصل.',
       retailPrice: 'سعر البيع',
+      phone: 'رقم الهاتف',
       confirmTitle: 'تخصيص هذه الـ eSIM؟',
       confirmBody: 'سيحصل {{name}} ({{phone}}) على eSIM لوجهة {{place}} في تطبيقه، مع طلب بقيمة {{price}}. حصّل المبلغ بشكل منفصل.',
       confirmCta: 'تخصيص',

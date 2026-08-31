@@ -654,6 +654,7 @@ export default {
       duplicateWarning: 'This customer already has an active eSIM for this plan.',
       paidWith: 'Paid with: Loyalty · comped by admin. Collect the payment separately.',
       retailPrice: 'Retail price',
+      phone: 'Phone',
       confirmTitle: 'Assign this eSIM?',
       confirmBody: '{{name}} ({{phone}}) will get a {{place}} eSIM in their app, with an order for {{price}}. Collect the money separately.',
       confirmCta: 'Assign',
